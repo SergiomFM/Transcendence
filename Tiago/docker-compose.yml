@@ -1,0 +1,78 @@
+
+networks: 
+  transcendance:
+    driver: bridge
+
+volumes:
+  code:
+    driver: local
+    driver_opts: 
+      type: none
+      device: ./
+      o: bind
+
+services:
+
+  API:
+    networks: 
+      - transcendance
+    image: node:18
+    container_name: API
+    ports:
+      - 4443:4443
+    env_file:
+      - .env
+    working_dir: /usr/src/app
+    volumes:
+      - code:/usr/src/app
+    command: npm run start
+    restart: unless-stopped
+
+  Test:
+    networks: 
+      - transcendance
+    image: node:18
+    container_name: test
+    env_file:
+      - .env
+    working_dir: /usr/src/app/services/test
+    volumes:
+      - code:/usr/src/app
+    command: npm run start
+    restart: unless-stopped
+
+  Auth:
+    networks: 
+      - transcendance
+    image: node:18
+    container_name: auth
+    env_file:
+      - .env
+    working_dir: /usr/src/app/services/auth
+    volumes:
+      - code:/usr/src/app
+    command: npm run start
+    restart: unless-stopped
+
+  Pong:
+    networks:
+      - transcendance
+    image: node:18
+    container_name: pong
+    env_file:
+      - .env
+    working_dir: /usr/src/app/services/pong
+    ports:
+      - 1236:1236
+      - 3000:3000
+    volumes:
+      - code:/usr/src/app
+      - ./views:/usr/src/app/views
+      - ./public:/usr/src/app/public
+    command: npm run start
+    restart: unless-stopped
+
+
+  
+  
+ 
