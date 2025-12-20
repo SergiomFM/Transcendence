@@ -3,7 +3,7 @@ import { TextBlock } from "@babylonjs/gui";
 import { Pong, FPS } from "./pong";
 import { CAMERA_ANIMATION_TIME } from "./pongCamera";
 
-const ANIMATION_FPS = 60;
+export const ANIMATION_FPS = 24;
 
 // "ENUMS"
 const X = 0;
