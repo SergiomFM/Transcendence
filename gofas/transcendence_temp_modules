@@ -1,0 +1,459 @@
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+WARNING, THIS IS A TEMPORARY WORK FILE THAT CONTAINS RESEARCH BY ME, lmiguel- , DO NOT TAKE THIS AS A BLUEPRINT OR INDICATION OF THE FINAL 
+WORK STRUCTURE, CONTENT OR OTHERWISE UNLESS EXPLICITLY STATED.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+1. Imports and setup
+
+MAKE SURE THESE ARE INSTALLED WITH DOCKER AND PRESENT IN THE DOCKERFILE
+
+npm install fastify fastify-passport passport passport-google-oauth20 fastify-secure-session
+
+user authentication has to use fastify, should be no problem with regex.
+regex for reference:
+
+//Username:
+
+// no special characters besides underscore "_"
+// no spaces
+// between 3 and 20 length
+// numbers allowed
+
+//regex for all of the above: /^[a-zA-Z0-9_]{3,20}$/
+
+
+//Password: 
+
+// minimum 8 length
+// at least one uppercase
+// at least one lowercase
+// at least one number
+// at least one special character
+// 
+// regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+
+//Email:
+
+// usual rules apply...
+//
+// regex: /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/
+
+import Fastify from 'fastify';
+import fastifyPassport from 'fastify-passport';
+import fastifySecureSession from '@fastify/secure-session';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import fs from 'fs';
+import speakeasy from "speakeasy";
+import QRCode from "qrcode";
+import dotenv from "dotenv";
+
+What’s happening here:
+
+passport → A flexible authentication library that integrates with many login methods.
+
+passport-google-oauth20 → A Passport “strategy” that handles Google’s OAuth 2.0 login.
+
+speakeasy → Creates and verifies 2FA (TOTP) codes.
+
+qrcode → Converts a secret into a scannable QR code for Google Authenticator.
+
+dotenv → Loads environment variables (like your Google client ID) from a .env file.
+
+Think of this section as “loading the tools we need.”
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+2. Initialize environment and Express
+dotenv.config();
+const app = express();
+
+
+dotenv.config() reads .env and adds each variable (like GOOGLE_CLIENT_ID) into process.env.
+
+const app = express() creates your web server application.
+
+From now on, you’ll attach routes and middleware to this app.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+3. Middleware configuration
+
+Parse incoming requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+express.json() allows Express to read JSON request bodies.
+
+express.urlencoded() lets it read data from HTML forms (<form method="POST">).
+
+Without these, req.body would be empty in your POST routes.
+
+Configure sessions
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+
+
+This tells Express to:
+
+Create a session cookie (stored in the browser).
+
+Keep session data on the server, so each user can have their own login state.
+
+Key options:
+
+secret: used to encrypt the cookie so others can’t fake it.
+
+resave: false: don’t re-save unchanged sessions.
+
+saveUninitialized: true: create a session even if it’s empty.
+
+Think of the session as a “memory slot” on the server for each user’s data.
+
+Enable Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+These two lines connect Passport to Express and allow it to use session support.
+
+passport.initialize() sets up the Passport system.
+
+passport.session() plugs Passport into the session system so users stay logged in after authenticating once.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+4. Simple “database” (in memory)
+const users = new Map();
+
+
+We’re simulating a database using a Map.
+It stores each user as key: value like this:
+
+{
+  "12345678901234567890": {
+    id: "12345678901234567890",
+    name: "Jane Doe",
+    email: "janedoe@gmail.com",
+    twofaEnabled: true,
+    secret: "BASE32SECRET..."
+  }
+}
+
+
+In a real app, you’d save this in a proper database (PostgreSQL, MongoDB, etc.).
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+🪪 5. Passport session handling
+passport.serializeUser((user, done) => done(null, user.id));
+passport.deserializeUser((id, done) => done(null, users.get(id)));
+
+Why this matters:
+
+When a user logs in, Passport needs to remember them across requests.
+
+Serialization: store the user’s unique ID inside the session cookie.
+
+Saves space — we don’t store the whole user object in the cookie.
+
+Deserialization: when the user returns, Passport reads the ID and looks them up in the users map.
+
+Think of this as “putting the user’s ID in a name tag” when they log in, and “looking them up in the guest list” when they return.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+6. Google OAuth Strategy
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    },
+    (accessToken, refreshToken, profile, done) => {
+      let user = users.get(profile.id);
+      if (!user) {
+        user = {
+          id: profile.id,
+          name: profile.displayName,
+          email: profile.emails[0].value,
+          twofaEnabled: false,
+        };
+        users.set(profile.id, user);
+      }
+      return done(null, user);
+    }
+  )
+);
+
+
+This is the core of Google login.
+
+What it does:
+
+Configures how Passport talks to Google:
+
+clientID & clientSecret: identify your app to Google.
+
+callbackURL: where Google will send users after login.
+
+The callback function runs after Google verifies the user.
+
+Inside that callback:
+
+Passport gives you the user’s profile (name, email, id).
+
+You either:
+
+Find them in your “database”, or
+
+Create a new record for first-time users.
+
+Finally, call done(null, user) to signal a successful login.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+7. Login routes (OAuth flow)
+Step 1: Start login
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+
+When someone visits /auth/google, Passport automatically:
+
+Redirects them to Google’s login page.
+
+Asks permission for their “profile” and “email”.
+
+They log in, and Google redirects back to your app.
+
+Step 2: Google callback
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    if (req.user.twofaEnabled) {
+      res.redirect("/2fa");
+    } else {
+      res.send(`
+        <h1>Welcome, ${req.user.name}!</h1>
+        <p>Email: ${req.user.email}</p>
+        <a href="/enable-2fa">Enable 2FA</a>
+      `);
+    }
+  }
+);
+
+
+Passport automatically exchanges Google’s code for an access token and fetches the user profile.
+
+If authentication succeeds, req.user is filled with your user object.
+
+If the user already has 2FA, redirect them to /2fa to verify it.
+
+Otherwise, greet them and suggest enabling 2FA.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+8. Enable 2FA
+app.get("/enable-2fa", (req, res) => {
+  const user = req.user;
+  if (!user) return res.redirect("/auth/google");
+
+
+Only logged-in users can access this.
+
+Generate a secret
+  const secret = speakeasy.generateSecret({
+    name: `ft_transcendence (${user.name})`,
+  });
+  user.tempSecret = secret.base32;
+
+
+Speakeasy generates a random secret key unique to this user.
+
+The key will be used by both your app and the Authenticator app to generate matching codes.
+
+We store it temporarily until the user verifies it.
+
+Create QR code
+  QRCode.toDataURL(secret.otpauth_url, (err, dataURL) => {
+    res.send(`
+      <h2>Scan this QR Code in Google Authenticator</h2>
+      <img src="${dataURL}" />
+      <form action="/verify-2fa" method="POST">
+        <input type="text" name="token" placeholder="Enter code"/>
+        <button type="submit">Verify</button>
+      </form>
+    `);
+  });
+});
+
+
+Converts the secret into a QR code that authenticator apps understand.
+
+The user scans it → the app starts generating 6-digit codes every 30 s.
+
+The otpauth:// URL format is a standard recognized by Google Authenticator and others.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+9. Verify 2FA setup
+app.post("/verify-2fa", (req, res) => {
+  const user = req.user;
+  const token = req.body.token;
+
+  const verified = speakeasy.totp.verify({
+    secret: user.tempSecret,
+    encoding: "base32",
+    token,
+  });
+
+
+The user types the 6-digit code from their Authenticator app.
+
+Speakeasy calculates what the code should be based on the secret and current time.
+
+If they match → verified.
+
+  if (verified) {
+    user.twofaEnabled = true;
+    user.secret = user.tempSecret;
+    delete user.tempSecret;
+    res.send("<h2>2FA enabled successfully!</h2>");
+  } else {
+    res.send("<h2>Invalid code, try again.</h2>");
+  }
+});
+
+
+If verified:
+
+Save the secret permanently (user.secret).
+
+Mark twofaEnabled = true.
+
+Delete the temporary secret.
+
+If not, prompt them to try again.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+10. Verify 2FA at login
+
+If a user already has 2FA enabled, we challenge them when they log in.
+
+The form:
+app.get("/2fa", (req, res) => {
+  if (!req.user) return res.redirect("/auth/google");
+  res.send(`
+    <form action="/2fa" method="POST">
+      <input type="text" name="token" placeholder="Enter 6-digit code"/>
+      <button type="submit">Verify</button>
+    </form>
+  `);
+});
+
+Verification:
+app.post("/2fa", (req, res) => {
+  const user = req.user;
+  const token = req.body.token;
+
+  const verified = speakeasy.totp.verify({
+    secret: user.secret,
+    encoding: "base32",
+    token,
+  });
+
+  if (verified) {
+    res.send(`<h1>Welcome, ${user.name}! You are fully logged in ✅</h1>`);
+  } else {
+    res.send("<h2>Invalid 2FA code ❌</h2>");
+  }
+});
+
+
+Compares the submitted code with what Speakeasy expects.
+
+If correct → success.
+
+If wrong → error.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+11. Logout
+app.get("/logout", (req, res) => {
+  req.logout(() => {
+    res.redirect("/");
+  });
+});
+
+
+req.logout() removes the user’s session info, effectively logging them out.
+
+Redirects back to home.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+12. Home route
+app.get("/", (req, res) => {
+  res.send(`<a href="/auth/google">Login with Google</a>`);
+});
+
+
+Displays a simple link to start Google login.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+13. Start the server
+app.listen(3000, () => console.log("🚀 Server running on http://localhost:3000"));
+
+
+This actually starts your app on localhost:3000, where you can open it in a browser.
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+14. End-to-end flow recap
+Step	URL	What Happens
+1️⃣	/	You click “Login with Google”
+2️⃣	/auth/google	Redirects to Google login
+3️⃣	/auth/google/callback	Google sends you back → app gets your info
+4️⃣	/enable-2fa	(First time) generates QR code for Authenticator
+5️⃣	/verify-2fa	You type the 6-digit code → app verifies and enables 2FA
+6️⃣	/2fa	(Next logins) asks for 2FA code before granting full access
+7️⃣	/logout	Clears session and logs out
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+15. Concepts reinforced
+Concept	What it means	Example
+OAuth 2.0	Lets users log in via Google without sharing passwords	“Login with Google”
+Passport Strategy	A plugin that tells Passport how to talk to Google	GoogleStrategy
+Session	Keeps user logged in between requests	Stored via express-session
+TOTP (2FA)	Time-based One-Time Password	Google Authenticator 6-digit codes
+Speakeasy	Library implementing TOTP generation & verification	speakeasy.totp.verify()
+QR Code	Visual way to transfer the secret key	Scanned by phone app
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+Final analogy
+
+You can think of your app as a club with two doors:
+
+Front door (Google OAuth): checks who you are — “Hi, I’m Jane from Google.”
+
+Second door (2FA): checks you have the right key — “Prove it by showing your one-time code.”
+
+Only when both pass do you get into the main area.
