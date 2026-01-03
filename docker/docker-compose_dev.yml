@@ -1,0 +1,100 @@
+
+networks: 
+  transcendance:
+    driver: bridge
+
+volumes:
+  code:
+    driver: local
+    driver_opts: 
+      type: none
+      device: ../
+      o: bind
+
+  dbVolume:
+    driver: local
+    driver_opts: 
+      type: none
+      device: /home/${USER}/transcendance_volume
+      o: bind 
+
+services:
+
+  frontend:
+    user: node
+    networks: 
+      - transcendance
+    image: node:22.18.0-slim
+    container_name: frontend
+    ports:
+      - 4443:4443
+    env_file:
+      - .env
+    working_dir: /usr/src/app/frontend
+    volumes:
+      - code:/usr/src/app
+    command: npm run dev
+    restart: unless-stopped
+    
+  api:
+    user: node
+    networks: 
+      - transcendance
+    image: node:22.18.0-slim
+    container_name: api
+    ports:
+      - 4444:4444
+    env_file:
+      - .env
+    working_dir: /usr/src/app/backend/api
+    volumes:
+      - code:/usr/src/app
+    command: npm run dev
+    restart: unless-stopped
+
+  
+  dataBase:
+    user: node
+    networks: 
+      - transcendance
+    build: ./imgs/dataBase
+    image: datBase_img
+    container_name: dataBase
+    env_file:
+      - ./imgs/dataBase/.env
+    working_dir: /usr/src/app/backend/dataBase
+    volumes:
+      - dbVolume:/data
+    command: npm run dev
+    restart: unless-stopped
+
+  auth:
+    user: node
+    networks: 
+      - transcendance
+    image: node:22.18.0-slim
+    container_name: auth
+    env_file:
+      - .env
+    working_dir: /usr/src/app/backend/auth
+    volumes:
+      - code:/usr/src/app
+    command: npm run dev
+    restart: unless-stopped
+
+  game:
+    user: node
+    networks:
+      - transcendance
+    image: node:22.18.0-slim
+    container_name: game
+    env_file:
+      - .env
+    working_dir: /usr/src/app/backend/game
+    volumes:
+      - code:/usr/src/app
+    command: npm run dev
+    restart: unless-stopped
+
+  
+ 
