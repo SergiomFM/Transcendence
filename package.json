@@ -1,27 +1,28 @@
-
 {
   "name": "transcendence",
   "version": "0.1.0",
   "private": true,
-  
   "main": "server.mjs",
   "type": "module",
-
   "engines": {
     "node": ">=22.18.0"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "frontend_dev",
+    "build": "frontend_build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "frontend_dev": "next dev frontend",
+    "frontend_build": "next build frontend"
   },
   "dependencies": {
+    "@prisma/client": "^7.2.0",
     "next": "16.0.10",
+    "nodemon": "^3.1.11",
+    "prisma": "^7.2.0",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
-
   "workspaces": [
     "backend/auth",
     "backend/api",
@@ -29,7 +30,6 @@
     "backend/db",
     "backend/game"
   ],
-
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
@@ -40,6 +40,4 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   }
-
-  
 }
