@@ -1,0 +1,66 @@
+MANDATORY WORK (validate in the end)
+
+Terms of service / Privacy policy (Mano GPT) - N/a 
+Containerization (Docker) - Sergio / Paulo
+Frontend (Tailwind / shadcn / Next.js / React) - Afonso
+Auth (API keys, env var, User Management, ..)(Fastify) - Lourenco
+DataBase - Sergio
+Web Serving (Traffic / nginx) - Paulo
+
+
+
+MODULES
+
+| FRONTEND |
+Frontend framework - React, Next.js (2) - Tiago / Afonso
+Custom-Made Components - shadcn (1) - Afonso
+Server Side Rendering - Next.js (1) - N/A
+
+| BACKEND |
+Backend framework - Fastify (2) - Todos
+ORM - DataBase Intefacce (1) - Sergio
+Remote Authentication - Google OAuth 2.0 / Maybe 42 (2) - Lourenco
+2FA - SpeakEasy / QRCode Fastify (1) - Lourenco
+
+| GAME |
+Web Based Game - Pong (2) - Tiago / Paulo
+3D Graphics - BabylonJS (2) - Tiago
+Realtime features - Sockets for the Game / Basic chat (2) - Paulo  
+Remote Play - Lan / Online (2) - Paulo
+Progressive Web App - Offline play / Installability (1) - Paulo / Afonso
+Gamification - XP / Achievements (1) - Afonso
+Game Customization - Settings / PowerUps (1) - Tiago
+-----------------------
+Spectator - Top view of the game / Game Chat (1)
+Real time user collab - Online drawing (1)
+Multiplayer - more than 2 players (2)
+Second Game - Rock Paper Scissors (2)
+
+| SOCIAL |
+Profile Management - Profile Information / Avatar / Friends (2) - Sergio
+File Upload - Profile Pictures (1) - Sergio
+Users interaction - Chat / Profile / Friends (2) - Lourenco
+Game Stats - Match History / Progression / Leaderboard (1) - Afonso
+Search Functionalities - Filter / Sorting by xp or alphabet (1) - Sergio
+Notification System - Creation / Update / Deletion -> E-mail (1) - Afonso
+Organization System - Clans (2) - Sergio / Afonso
+User activity analytics - Screen Time (1) - Tiago / Paulo / Sergio 
+
+| ACCESSIBILITY |
+Aditional Browsers - Edge / Firefox / Chrome (1) - N/A
+Languages - Portuguese / English / Cape Verde Creoule (1) - Lourenco
+
+| AI |
+LLM - Support Bot (2) - Afonso
+Content Moderation "AI" - Leiria doesn't exist (0)
+-----------------------
+AI Opponent - Machine Learning (2)
+
+| DEV OPS |
+Microservices - Docker (2) - Sergio
+
+ROLES
+Product Owner - Lourenco
+Project Manager - Tiago
+Technical Lead / Architect - Afonso
+Developers - Todos

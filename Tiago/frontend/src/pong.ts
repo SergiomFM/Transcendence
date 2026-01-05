@@ -4,6 +4,7 @@ import { createScene } from "./pongScene";
 import { Events } from "./pongEvents";
 import { Spell, BallAngleSwitch, BallStop } from "./pongSpells";
 import { GUI } from "./pongUI";
+import { ANIMATION_FPS } from "./pongAnimations";
 
 // Delta time not working properly!!! TO FIX
 
@@ -116,7 +117,7 @@ export class Player
 
 		// Making the hand always follow the paddle
 		let lastUpdate = 0;
-		const frameDuration = 1000 / FPS;
+		const frameDuration = 1000 / ANIMATION_FPS;
 		scene.registerBeforeRender(() =>
 		{
 			const now = performance.now();
