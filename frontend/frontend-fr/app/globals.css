@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'pongFont1';
+  src: url('/fonts/Micro5-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'pongFont2';
+  src: url('/fonts/Jacquard12-Regular.ttf') format('truetype');
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
