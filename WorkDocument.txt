@@ -5,7 +5,6 @@ Containerization (Docker) - Sergio / Paulo
 Frontend (Tailwind / shadcn / Next.js / React) - Afonso
 Auth (API keys, env var, User Management, ..)(Fastify) - Lourenco
 DataBase - Sergio
-Web Serving (Traffic / nginx) - Paulo
 
 
 
@@ -37,8 +36,8 @@ Multiplayer - more than 2 players (2)
 Second Game - Rock Paper Scissors (2)
 
 | SOCIAL |
-Profile Management - Profile Information / Avatar / Friends (2) - Sergio
-File Upload - Profile Pictures (1) - Sergio
+Profile Management - Profile Information / Avatar (Minio) / Friends (2) - Sergio
+File Upload - Profile Pictures (Minio) (1) - Sergio
 Users interaction - Chat / Profile / Friends (2) - Lourenco
 Game Stats - Match History / Progression / Leaderboard (1) - Afonso
 Search Functionalities - Filter / Sorting by xp or alphabet (1) - Sergio
