@@ -56,3 +56,8 @@ profile-*
 profile*
 *clinic*
 *flamegraph*
+
+
+# environment variables and secret key, used for google authenticator
+.env
+secret-key
