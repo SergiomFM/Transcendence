@@ -1,17 +1,13 @@
-"use client";
+import dynamic from "next/dynamic";
 
-import { startPong } from "@/components/Pong/main";
-import { useEffect } from "react";
+const PongComponent = dynamic(() => import("@/components/PongComponent"), {
+  ssr: false,
+});
 
 export default function Home() {
-
-  useEffect(() => {
-    startPong();
-  }, []);
-
   return (
     <div>
-      <canvas id="PongCanvas" />
+      <PongComponent />
     </div>
   );
 }

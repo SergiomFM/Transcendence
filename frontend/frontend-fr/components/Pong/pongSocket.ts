@@ -1,25 +1,20 @@
-"use client";
-
-export class Server extends WebSocket
-{
-	constructor()
-	{
-		super('ws://localhost:1237')
-	}
+export class Server extends WebSocket {
+  constructor() {
+    super("ws://localhost:1237");
+  }
 }
 
+const socket = new WebSocket("ws://localhost:8080");
 
-const socket = new WebSocket('ws://localhost:8080');
-
-socket.onopen = function(event) {
+socket.onopen = function (event) {
   // Handle connection open
 };
 
-socket.onmessage = function(event) {
+socket.onmessage = function (event) {
   // Handle received message
 };
 
-socket.onclose = function(event) {
+socket.onclose = function (event) {
   // Handle connection close
 };
 
