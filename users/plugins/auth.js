@@ -3,6 +3,7 @@ import fastifyPlugin from 'fastify-plugin';
 import fastifyPassport from '@fastify/passport';
 import fastifySecureSession from '@fastify/secure-session';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import crypto from 'node:crypto'
 import fs from 'fs';
 
 async function authPlugin(fastify){
@@ -25,9 +26,11 @@ async function authPlugin(fastify){
 	fastify.register(fastifyPassport.initialize());
 	fastify.register(fastifyPassport.secureSession());
 
-	fastifyPassport.registerUserSerializer(async (user) => user);
+	fastifyPassport.registerUserSerializer(async (user) => user.id);
 
-	fastifyPassport.registerUserDeserializer(async (user) => user);
+	fastifyPassport.registerUserDeserializer(async (id, req) => {
+		return fastify.users.findById.get(id)
+	});
 
 	// ACTUAL USE OF PASSPORT, IN SYNC WITH GOOGLE OAUTH //
 
@@ -42,15 +45,32 @@ async function authPlugin(fastify){
 			},
 			async (accessToken, refreshToken, profile, done) => {
 
-				const user = {
-					id: profile.id,
-					name: profile.displayName,
-					email: profile.emails?.[0]?.value
-				};
+				//troubleshooting tool, can remove later
+				console.log('GOOGLE PROFILE:', JSON.stringify(profile, null, 2))
 
-				//DATABASE STUFF GOES HERE
+				try {
 
-				return done(null, user);
+					const googleId = profile.id
+					const email = profile.emails[0].value
+					const alias = profile.displayName
+					let user = fastify.users.findByGoogleId.get(googleId)
+					if (!user) {
+						user = fastify.users.findByEmail.get(email)
+
+						if (user) {
+							fastify.users.updateAlias.run(alias, user.id)
+						}
+						else {
+							const id = crypto.randomUUID()
+							fastify.users.createGoogleUser.run(id, email, alias, googleId)
+							user = fastify.users.findById.get(id)
+						}
+					}
+					return done(null, user)
+				}
+					catch (err){
+						return done(err)
+					}
 			}
 		)
 	)
