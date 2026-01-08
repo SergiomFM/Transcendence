@@ -33,10 +33,10 @@ export abstract class Spell {
   abstract readonly cooldown: number;
   cooldownElapsed: number;
 
-  duration: number;
-  activeElapsed: number;
+  duration!: number;
+  activeElapsed!: number;
 
-  readonly maxSize: number;
+  readonly maxSize!: number;
   readonly initialSize: number;
 
   active: boolean;
@@ -45,21 +45,21 @@ export abstract class Spell {
   pong: Pong;
   player: Player;
   name: string;
-  hand: Mesh;
+  hand!: Mesh;
   arm: Vector3;
 
-  castingAnimation: Object;
-  castingVFX: Object;
+  castingAnimation!: any;
+  castingVFX!: any;
   castingAngle: number;
 
-  particle: ParticleSystem;
+  particle!: ParticleSystem;
   hemisphericEmitter: HemisphericParticleEmitter;
 
-  nextSpell: Spell;
+  nextSpell!: Spell;
 
-  abstract switchSpell();
-  abstract useSpell();
-  abstract loopAddon(elapsedTime: number);
+  abstract switchSpell(): any;
+  abstract useSpell(): any;
+  abstract loopAddon(elapsedTime: number): any;
 
   constructor(pong: Pong, player: Player, name: string) {
     this.cooldownElapsed = 0;
@@ -149,7 +149,7 @@ export abstract class Spell {
     updateArena(this.pong.scene, this.color, this.pong.ball);
 
     // Changing the light Object of the Ball and Walls
-    let light = this.pong.scene.getLightById("ball");
+    let light = this.pong.scene.getLightById("ball")!;
     light.diffuse.set(this.color.r, this.color.g, this.color.b);
   }
 
@@ -213,7 +213,7 @@ class BallShot extends Spell {
   readonly cooldown = 4000;
   readonly duration = 500;
   readonly speedBoost = 2;
-  originalSpeed: number;
+  originalSpeed!: number;
   color = new Color4(0, 1, 0, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -251,8 +251,8 @@ class BallShot extends Spell {
 class BallPortal extends Spell {
   readonly cooldown = 5000;
   readonly duration = 500;
-  lastXDir: number;
-  lastZDir: number;
+  lastXDir!: number;
+  lastZDir!: number;
 
   color = new Color4(1, 0, 0, 1);
 
@@ -302,7 +302,7 @@ class BallPortal extends Spell {
 export class BallStop extends Spell {
   readonly cooldown = 5000;
   readonly duration = 2000;
-  originalPosition: Vector3;
+  originalPosition!: Vector3;
 
   readonly color = new Color4(0, 1, 1, 1);
 

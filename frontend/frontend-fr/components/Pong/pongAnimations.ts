@@ -168,27 +168,29 @@ export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: any) {
 export function switchPlayerHandsPosition(pong: Pong, topView: boolean) {
   let player = pong.player1;
   let target = player;
-  if (topView) target = pong.player2;
+  if (topView) {
+    target = pong.player2;
+  }
 
   let leftX =
-    Math.abs(pong.player1.initialLeftHandPos.x) -
+    Math.abs(player.initialLeftHandPos.x) -
     Math.abs(target.initialLeftHandPos.x);
   let leftY =
     Math.abs(target.initialLeftHandPos.y) -
-    Math.abs(pong.player1.initialLeftHandPos.y);
+    Math.abs(player.initialLeftHandPos.y);
   let leftZ =
     Math.abs(target.initialLeftHandPos.z) -
-    Math.abs(pong.player1.initialLeftHandPos.z);
+    Math.abs(player.initialLeftHandPos.z);
 
   let rightX =
     Math.abs(target.initialRightHandPos.x) -
-    Math.abs(pong.player1.initialRightHandPos.x);
+    Math.abs(player.initialRightHandPos.x);
   let rightY =
     Math.abs(target.initialRightHandPos.y) -
-    Math.abs(pong.player1.initialRightHandPos.y);
+    Math.abs(player.initialRightHandPos.y);
   let rightZ =
     Math.abs(target.initialRightHandPos.z) -
-    Math.abs(pong.player1.initialRightHandPos.z);
+    Math.abs(player.initialRightHandPos.z);
 
   // Animating X, Y, Z in both hands (in order)
 
@@ -281,7 +283,7 @@ export function switchPlayerHandsPosition(pong: Pong, topView: boolean) {
   );
 }
 
-export function useSpellAnimation(arm: Vector3, ANIMATION: Object) {
+export function useSpellAnimation(arm: Vector3, ANIMATION: any) {
   const initialPosition = [arm.x, arm.y, arm.z];
 
   let nextX = arm.x + ANIMATION[X];

@@ -41,20 +41,20 @@ export class Player {
   maxSpeed = 1;
   drag = 7.5;
 
-  leftHand: Mesh;
+  leftHand!: Mesh;
   leftHandPos: Vector3;
   readonly initialLeftHandPos: Vector3;
 
-  rightHand: Mesh;
+  rightHand!: Mesh;
   rightHandPos: Vector3;
   readonly initialRightHandPos: Vector3;
 
   handMovementMultiplier = 0.2;
 
-  counterSpell: Spell;
-  offensiveSpell: Spell;
+  counterSpell!: Spell;
+  offensiveSpell!: Spell;
 
-  keys: Array<string>;
+  keys!: Array<string>;
   direction = 0;
   failed = false;
   ready = false;
@@ -94,18 +94,18 @@ export class Player {
 
   constructor(scene: Scene, pong: Pong, meshName: string) {
     // Getting a paddle mesh to use its vector
-    const mesh = scene.getMeshByName(meshName);
+    const mesh = scene.getMeshByName(meshName)!;
     this.vector = mesh.position;
-
-    //AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
     // Associating a paddle with the correct Player
     if (meshName == "paddle1") {
-      this.leftHand = scene.getNodeByName("leftPlayerArm") as Mesh;
-      this.rightHand = scene.getNodeByName("rightPlayerArm") as Mesh;
+      this.leftHand = scene.getNodeByName("leftPlayerArm")! as Mesh;
+      this.rightHand = scene.getNodeByName("rightPlayerArm")! as Mesh;
     } else if (meshName == "paddle2") {
-      this.leftHand = scene.getNodeByName("leftMageArm") as Mesh;
-      this.rightHand = scene.getNodeByName("rightMageArm") as Mesh;
+      this.leftHand = scene.getNodeByName("leftMageArm")! as Mesh;
+      this.rightHand = scene.getNodeByName("rightMageArm")! as Mesh;
+    } else {
+      throw new Error("Invalid mesh name for Player paddle");
     }
 
     this.initialLeftHandPos = this.leftHand.absolutePosition.clone();
@@ -116,7 +116,7 @@ export class Player {
 
     // Getting the paddle meshes size (Assuming meshes are the same size)
     this.size =
-      Math.abs(scene.getMeshByName("paddleEnd").position.x) + pong.ball.radius;
+      Math.abs(scene.getMeshByName("paddleEnd")!.position.x) + pong.ball.radius;
 
     // Making the hand always follow the paddle
     let lastUpdate = 0;
@@ -125,7 +125,7 @@ export class Player {
       const now = performance.now();
       if (now - lastUpdate >= frameDuration) {
         // Moving the hand meshes in relation with a "true" fixed position
-        this.leftHand.position.x =
+        this.leftHand!.position.x =
           this.leftHandPos.x + this.x * this.handMovementMultiplier;
 
         lastUpdate = now;
@@ -163,19 +163,19 @@ export class Player {
 }
 
 export class Pong {
-  widthLimit: number;
-  heightLimit: number;
+  widthLimit!: number;
+  heightLimit!: number;
 
   ball: Ball;
-  player1: Player;
-  player2: Player;
+  player1!: Player;
+  player2!: Player;
 
   readonly canvas: HTMLCanvasElement;
   engine: Engine;
-  scene: Scene;
-  camera: PongCamera;
-  server: WebSocket;
-  GUI: GUI;
+  scene!: Scene;
+  camera!: PongCamera;
+  server!: WebSocket;
+  GUI!: GUI;
 
   running = false;
   loaded = false;

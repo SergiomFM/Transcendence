@@ -17,7 +17,6 @@ import {
   PBRMaterial,
 } from "@babylonjs/core";
 import { AppendSceneAsync } from "@babylonjs/core/Loading/sceneLoader";
-import "@babylonjs/inspector";
 import {
   createCandleParticles,
   createWallParticles,
@@ -52,17 +51,15 @@ export async function createScene(pong: Pong): Promise<Scene> {
   // Creating all the compotents that compose the game scene
   await populateScene(scene, pong);
 
-  scene.debugLayer.show({
-    overlay: true, // no overlay, uses a side panel
-  });
-
   return scene;
 }
 
 // Changes the maximum number of lights in a scene (default = 4)
 function setMaxSimultaneousLights(scene: Scene) {
-  scene.materials.forEach(function (material: StandardMaterial) {
-    material.maxSimultaneousLights = MAX_LIGHTS;
+  scene.materials.forEach(function (material: Material) {
+    if (material instanceof StandardMaterial) {
+      material.maxSimultaneousLights = MAX_LIGHTS;
+    }
   });
 }
 
@@ -134,10 +131,10 @@ let vector = new Vector3();
 // Adds particles to the walls
 function createWalls(scene: Scene, pong: Pong) {
   // Getting the corner positions
-  let frontRight = scene.getMeshByName("frontRight").position;
-  let frontLeft = scene.getMeshByName("frontLeft").position;
-  let backRight = scene.getMeshByName("backRight").position;
-  let backLeft = scene.getMeshByName("backLeft").position;
+  let frontRight = scene.getMeshByName("frontRight")!.position;
+  let frontLeft = scene.getMeshByName("frontLeft")!.position;
+  let backRight = scene.getMeshByName("backRight")!.position;
+  let backLeft = scene.getMeshByName("backLeft")!.position;
 
   // Getting the mesh's reference to the map limits
   pong.heightLimit = frontRight.x;
@@ -168,7 +165,7 @@ function lightWall(
   // Creating a thin line of light
   let light = new RectAreaLight(name, Vector3.Zero(), width, 0.01, scene);
   light.intensity = 3.5;
-  light.diffuse = scene.getLightByName("ball").diffuse;
+  light.diffuse = scene.getLightByName("ball")!.diffuse;
 
   // Rotating the light to face downwards
   const lightNode = new TransformNode(name + "Node", scene);
@@ -197,9 +194,9 @@ function createPlayers(scene: Scene) {
   animateMeshes(scene);
 
   // Making a mesh not affectable by lights (always lit)
-  const eyes = scene.getMeshByName("leftEye");
+  const eyes = scene.getMeshByName("leftEye")!;
   (eyes.material as PBRMaterial).unlit = true;
-  const paddles = scene.getMeshByName("paddle1");
+  const paddles = scene.getMeshByName("paddle1")!;
   (paddles.material as PBRMaterial).unlit = true;
 }
 

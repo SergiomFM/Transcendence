@@ -18,6 +18,6 @@ socket.onclose = function (event) {
   // Handle connection close
 };
 
-function sendMessage(message) {
+function sendMessage(message: any) {
   socket.send(message);
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { startPong } from "./Pong/main";
 
 export default function PongComponent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -15,8 +14,11 @@ export default function PongComponent() {
 
     let cleanup: (() => void) | undefined;
 
-    startPong(canvas).then((pongRef) => {
-      cleanup = pongRef;
+    // Dynamically import Babylon code only on client-side after mount
+    import("./Pong/main").then(({ startPong }) => {
+      startPong(canvas).then((pongRef) => {
+        cleanup = pongRef;
+      });
     });
 
     return () => {

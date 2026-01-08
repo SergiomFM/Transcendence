@@ -9,12 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.1.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
     "@babylonjs/core": "^8.44.1",
     "@babylonjs/gui": "^8.44.1",
-    "@babylonjs/inspector": "^8.44.1"
+    "@babylonjs/loaders": "^8.45.0",
+    "next": "16.1.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

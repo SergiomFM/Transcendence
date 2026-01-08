@@ -203,7 +203,7 @@ function startParticle(scene: Scene, particle: ParticleSystem) {
 }
 
 // Creates the base attributes of a particle
-function createBaseParticle(scene: Scene, VFX: object) {
+function createBaseParticle(scene: Scene, VFX: any) {
   const particle = new ParticleSystem(VFX["NAME"], 1000, scene);
 
   // Coloring a blank texture to use as particle
@@ -279,7 +279,7 @@ export function splashEffect(
   position: Vector3,
   splashPower: number,
   angle: number,
-  VFX: Object
+  VFX: any
 ) {
   const particle = createBaseParticle(scene, VFX);
 
@@ -347,7 +347,7 @@ function wallExplosion(scene: Scene, wallName: string) {
   let particle = createBaseParticle(scene, WALL_EXPLOSION_VFX);
 
   particle.particleEmitterType =
-    scene.getParticleSystemById(wallName).particleEmitterType;
+    scene.getParticleSystemById(wallName)!.particleEmitterType!;
 
   // Rate and velocity of the particles
   particle.manualEmitCount = WALL_EXPLOSION_VFX["PARTICLE_NUMBER"];

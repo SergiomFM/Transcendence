@@ -124,7 +124,7 @@ export class GUI {
     this.createNewText(PLAYER_2_WIN);
   }
 
-  createNewText(attributes) {
+  createNewText(attributes: any) {
     // Creating a Text Block
     const textBlock = new UIElement();
     textBlock.text = attributes[1];
@@ -162,7 +162,7 @@ export class GUI {
 
   // Initial Texts Configuration
   setUpTextBlocks(scene: Scene) {
-    this.textBlocks.get("START").alpha = 1;
+    this.textBlocks.get("START")!.alpha = 1;
     this.toggleTextBlink(scene, "START");
 
     this.textFadeIn("WELCOME");
