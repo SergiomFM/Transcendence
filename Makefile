@@ -1,102 +1,94 @@
+all: prod
 
-all:  launch
+# Dev
+dev: dev-up
 
-fe-dev:
-	docker compose -f docker-compose.dev.yml up -d frontend
+dev-up:
+	docker compose --profile dev up -d
 
-fe-prod:
-	docker compose up -d --build frontend
+dev-down:
+	docker compose --profile dev down
 
-fe-logs:
-	docker compose logs -f frontend
+dev-stop:
+	docker compose --profile dev stop
 
-fe-stop:
-	docker compose stop frontend
+dev-start:
+	docker compose --profile dev start
 
-fix:
-	systemctl --user enable --now podman.socket
+dev-restart:
+	docker compose --profile dev restart
 
-launch: install volume scripts build up
+dev-logs:
+	docker compose --profile dev logs -f
 
-dev: install volume  dev_build dev_up
+# Single dev
+frontend-dev:
+	docker compose --profile dev up -d frontend-dev
 
-install:
-	npm install
+users-dev:
+	docker compose --profile dev up -d users-dev
 
-scripts:
-	npm run build
+game-dev:
+	docker compose --profile dev up -d game-dev
 
-volume:
-	mkdir -p  /home/$(USER)/transcendance_volume
+# Prod
+prod: prod-build prod-up
 
-build: 
-	docker compose -f docker/docker-compose.yml build
+prod-build:
+	docker compose --profile prod build
 
-stop:
-	docker compose -f docker/docker-compose.yml stop
+prod-up:
+	docker compose --profile prod up -d
 
-down:
-	docker compose -f  docker/docker-compose.yml down --rmi all -v
+prod-down:
+	docker compose --profile prod down
 
-start:
-	docker compose -f docker/docker-compose.yml start
+prod-stop:
+	docker compose --profile prod stop
 
-up:
-	docker compose -f docker/docker-compose.yml up -d
+prod-start:
+	docker compose --profile prod start
 
-dev_build: 
-	docker compose -f docker/docker-compose_dev.yml build
+prod-restart:
+	docker compose --profile prod restart
 
-dev_stop:
-	docker compose -f docker/docker-compose_dev.yml stop
+prod-logs:
+	docker compose --profile prod logs -f
 
-dev_down:
-	docker compose -f  docker/docker-compose_dev.yml down --rmi all -v
+# Single prod
+frontend-prod:
+	docker compose --profile prod up -d --build frontend
 
-dev_start:
-	docker compose -f docker/docker-compose_dev.yml start
+users-prod:
+	docker compose --profile prod up -d --build users
 
-dev_up:
-	docker compose -f docker/docker-compose_dev.yml up -d
+game-prod:
+	docker compose --profile prod up -d --build game
 
-logs:
-	@echo Api:
-	docker logs api
-	@echo "/////////////////////////"
-	@echo DataBase:
-	docker logs dataBase
-	@echo "/////////////////////////"
-	@echo Auth:
-	docker logs auth
-	@echo "/////////////////////////"
-	@echo Game:
-	docker logs game
-	@echo "/////////////////////////"
-	@echo Frontend:
-	docker logs frontend
-	@echo "/////////////////////////"
+# Logs for individual services
+logs-frontend:
+	docker compose logs -f frontend-dev frontend
 
+logs-users:
+	docker compose logs -f users-dev users
 
-clean: stop down dev_stop dev_down
-	
-	
-fclean: clean
-	rm -fr public/vendor/*
-	rm -fr public/vendor
-	rm -fr public/scripts/*
-	rm -fr node_modules/ 
-	rm -fr  /home/$(USER)/transcendance_volume
+logs-game:
+	docker compose logs -f game-dev game
 
+logs-minio:
+	docker compose logs -f minio
+
+# Status
 status:
-# 	docker-compose -f docker/docker-compose_dev.yml ps
-	docker compose -f docker/docker-compose.yml ps
+	docker compose ps -a
+
+clean: dev-down prod-down
+
+fclean: clean
+	docker compose --profile dev down -v --rmi all
+	docker compose --profile prod down -v --rmi all
+	rm -fr node_modules/
 
 re: fclean all
-
-NODE_VERSION=22.18.0
-
-node:
-	. $$HOME/.nvm/nvm.sh && nvm install $(NODE_VERSION)
-	. $$HOME/.nvm/nvm.sh && nvm use $(NODE_VERSION)
 	. $$HOME/.nvm/nvm.sh && nvm alias default $(NODE_VERSION)
 	node -v

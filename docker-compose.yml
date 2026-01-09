@@ -6,19 +6,67 @@ services:
             - "3000:3000"
         environment:
             - NODE_ENV=production
-        restart: unless-stopped
+        profiles:
+            - prod
 
     users:
         build:
             context: users
         ports:
             - "3001:3001"
+        profiles:
+            - prod
 
     game:
         build:
             context: game
         ports:
             - "3002:3002"
+        profiles:
+            - prod
+
+    frontend-dev:
+        image: oven/bun:1
+        working_dir: /app
+        command: sh -c "bun install && bun run dev"
+        ports:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=development
+            - HOSTNAME=0.0.0.0
+        volumes:
+            - ./frontend:/app:cached
+            - frontend_node_modules:/app/node_modules
+        profiles:
+            - dev
+
+    users-dev:
+        image: oven/bun:1
+        working_dir: /app
+        command: sh -c "bun install && bun run dev"
+        ports:
+            - "3001:3000"
+        environment:
+            - NODE_ENV=development
+        volumes:
+            - ./users:/app:cached
+            - users_node_modules:/app/node_modules
+        profiles:
+            - dev
+
+    game-dev:
+        image: oven/bun:1
+        working_dir: /app
+        command: sh -c "bun install && bun run dev"
+        ports:
+            - "3002:3000"
+        environment:
+            - NODE_ENV=development
+        volumes:
+            - ./game:/app:cached
+            - game_node_modules:/app/node_modules
+        profiles:
+            - dev
 
     minio:
         image: minio/minio:latest
@@ -33,3 +81,11 @@ services:
         ports:
             - "9001:9001"
             - "9000:9000"
+        profiles:
+            - prod
+            - dev
+
+volumes:
+    frontend_node_modules:
+    users_node_modules:
+    game_node_modules:
