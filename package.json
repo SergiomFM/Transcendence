@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@prisma/internals": "^7.2.0"
+  }
+}

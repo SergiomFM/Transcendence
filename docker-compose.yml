@@ -1,32 +1,61 @@
+networks: 
+  transcendence:
+    driver: bridge
+
+volumes:
+ 
+  dbVolume:
+    driver: local
+    driver_opts: 
+      type: none
+      device: /home/sergio/transcendence_db_volume
+      o: bind 
+
 services:
-    frontend:
-        build:
-            context: frontend/frontend-fr-fr
-        ports:
-            - "3000:3000"
+
+    # frontend:
+    #     build:
+    #         context: frontend/frontend-fr-fr
+    #     ports:
+    #         - "3000:3000"
 
     users:
+
+        networks: 
+            - transcendence
+
         build:
             context: users
+
         ports:
             - "3001:3001"
+    
+        container_name: users
 
-    game:
-        build:
-            context: game
-        ports:
-            - "3002:3002"
+        env_file:
+            - ./users/.env
 
-    minio:
-        image: minio/minio:latest
-        command: server /storage --console-address ":9001" --address ":9000"
         volumes:
-            - "./minio:/storage/:rw"
-        environment:
-            - MINIO_ROOT_USER=woiefghwenlkfgbouerwjfn
-            - MINIO_ROOT_PASSWORD=1p39rodufjeqnpwdglirekjgnp
-            - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
-            - MINIO_SERVER_URL=http://localhost:9000
-        ports:
-            - "9001:9001"
-            - "9000:9000"
+            - dbVolume:/app/data:Z
+
+        restart: unless-stopped
+
+    # game:
+    #     build:
+    #         context: game
+    #     ports:
+    #         - "3002:3002"
+
+    # minio:
+    #     image: minio/minio:latest
+    #     command: server /storage --console-address ":9001" --address ":9000"
+    #     volumes:
+    #         - "./minio:/storage/:rw"
+    #     environment:
+    #         - MINIO_ROOT_USER=woiefghwenlkfgbouerwjfn
+    #         - MINIO_ROOT_PASSWORD=1p39rodufjeqnpwdglirekjgnp
+    #         - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
+    #         - MINIO_SERVER_URL=http://localhost:9000
+    #     ports:
+    #         - "9001:9001"
+    #         - "9000:9000"
