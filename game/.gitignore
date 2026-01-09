@@ -30,11 +30,6 @@ build/Release
 node_modules
 jspm_packages
 
-# Lock files
-bun.lock
-bun.lockb
-package-lock.json
-
 # Optional npm cache directory
 .npm
 
