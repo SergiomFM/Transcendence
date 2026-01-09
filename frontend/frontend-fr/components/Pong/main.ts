@@ -8,8 +8,11 @@ export const startPong = async (canvas: HTMLCanvasElement) => {
   let lastFrameTime = 0;
   let elapsedTime = 0;
   const frameDuration = 1000 / FPS;
+  let isDisposed = false;
 
-  pong.engine.runRenderLoop(() => {
+  const renderLoop = () => {
+    if (isDisposed) return;
+
     const now = performance.now();
     elapsedTime = now - lastFrameTime;
     if (elapsedTime >= frameDuration) {
@@ -17,12 +20,30 @@ export const startPong = async (canvas: HTMLCanvasElement) => {
       pong.scene.render();
       lastFrameTime = now - (elapsedTime % frameDuration);
     }
-  });
+  };
+
+  pong.engine.runRenderLoop(renderLoop);
 
   // Return cleanup function
   return () => {
-    pong.scene.dispose();
-    pong.engine.stopRenderLoop();
-    pong.engine.dispose();
+    isDisposed = true;
+
+    // Stop render loop
+    pong.engine.stopRenderLoop(renderLoop);
+
+    // Dispose Pong resources (event listeners, etc)
+    if (pong && pong.dispose) {
+      pong.dispose();
+    }
+
+    // Dispose scene and all its resources
+    if (pong.scene) {
+      pong.scene.dispose();
+    }
+
+    // Dispose engine
+    if (pong.engine) {
+      pong.engine.dispose();
+    }
   };
 };

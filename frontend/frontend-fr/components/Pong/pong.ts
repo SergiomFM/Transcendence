@@ -181,6 +181,9 @@ export class Pong {
   loaded = false;
   online = false;
 
+  // Store bound resize handler for cleanup
+  private boundResizeHandler: (() => void) | null = null;
+
   constructor(canvasElement: HTMLCanvasElement) {
     // Creating a Ball
     this.ball = new Ball(0, BALL_Y, 0);
@@ -193,9 +196,26 @@ export class Pong {
     this.canvas.focus();
     this.resizeCanvas();
 
-    // Creating an Engine
-    this.engine = new Engine(this.canvas, false);
+    // Creating an Engine with proper configuration
+    // antialias set to FALSE for pixel art / low poly aesthetic
+    this.engine = new Engine(this.canvas, false, {
+      preserveDrawingBuffer: true,
+      stencil: true,
+      disableWebGL2Support: false,
+      powerPreference: "high-performance",
+      // Prevent context loss issues
+      deterministicLockstep: false,
+      lockstepMaxSteps: 4,
+    });
     this.engine.setSize(WIDTH, HEIGHT);
+
+    // Disable any WebGL-level texture smoothing
+    const gl = this.engine._gl;
+    if (gl) {
+      // Disable LINEAR filtering at WebGL level
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    }
   }
 
   // Initialization of the core game components
@@ -233,12 +253,22 @@ export class Pong {
     Events.registerEvents(this);
     Events.assignKeys(this);
 
-    // Updating the window to fit all screens with the desired size and porpotion
-    window.addEventListener("resize", this.resizeCanvas.bind(this));
-    window.addEventListener("DOMContentLoaded", this.resizeCanvas.bind(this));
+    // Bind and store resize handler for cleanup
+    this.boundResizeHandler = this.resizeCanvas.bind(this);
+    window.addEventListener("resize", this.boundResizeHandler);
+    window.addEventListener("DOMContentLoaded", this.boundResizeHandler);
 
     // The game is ready to be started
     this.loaded = true;
+  }
+
+  // Cleanup method to remove event listeners
+  public dispose() {
+    if (this.boundResizeHandler) {
+      window.removeEventListener("resize", this.boundResizeHandler);
+      window.removeEventListener("DOMContentLoaded", this.boundResizeHandler);
+      this.boundResizeHandler = null;
+    }
   }
 
   // Resizes the canvas to fit all screens with a setted size and porpotion

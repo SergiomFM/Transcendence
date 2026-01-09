@@ -7,7 +7,7 @@ const PongComponent = dynamic(() => import("@/components/PongComponent"), {
 
 export default function PongClient() {
   return (
-    <div>
+    <div style={{ imageRendering: 'pixelated' }}>
       <PongComponent />
     </div>
   );

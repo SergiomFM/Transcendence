@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Disable React Strict Mode to prevent double-mounting issues with WebGL
+  // React Strict Mode causes components to mount twice in development,
+  // which creates multiple WebGL contexts and causes the uniformMatrix4fv error
+  reactStrictMode: false,
+
   // Turbopack configuration for Next.js 16+
   turbopack: {},
 
@@ -10,6 +15,19 @@ const nextConfig: NextConfig = {
     "@babylonjs/gui",
     "@babylonjs/loaders",
   ],
+
+  // Webpack configuration for production builds
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Ensure Babylon.js modules are only loaded on client-side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;

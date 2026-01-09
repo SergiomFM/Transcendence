@@ -42,6 +42,9 @@ export async function createScene(pong: Pong): Promise<Scene> {
   // Linking the scene to the entire window instead of only the canva
   scene.attachControl(true, true, true);
 
+  // Critical: Prevent texture/rendering artifacts
+  scene.blockMaterialDirtyMechanism = false; // Allow material updates
+
   // Creating a solid 1x1 white texture to be used by the particles
   const blankTexture = new DynamicTexture("blankTexture", 1, scene, false);
   blankTexture.getContext().fillStyle = "#ffffff";
@@ -59,6 +62,60 @@ function setMaxSimultaneousLights(scene: Scene) {
   scene.materials.forEach(function (material: Material) {
     if (material instanceof StandardMaterial) {
       material.maxSimultaneousLights = MAX_LIGHTS;
+      fixPixelArtTextures(material);
+    } else if (material instanceof PBRMaterial) {
+      material.maxSimultaneousLights = MAX_LIGHTS;
+      fixPixelArtTexturesPBR(material);
+    }
+  });
+}
+
+// Fix textures for pixel art / low poly look
+function fixPixelArtTextures(material: StandardMaterial) {
+  const textures = [
+    material.diffuseTexture,
+    material.ambientTexture,
+    material.opacityTexture,
+    material.emissiveTexture,
+    material.specularTexture,
+    material.bumpTexture,
+  ];
+
+  textures.forEach((texture) => {
+    if (texture && texture instanceof Texture) {
+      // NEAREST filtering for crisp pixel art - no smoothing!
+      texture.updateSamplingMode(Texture.NEAREST_NEAREST);
+      // Disable anisotropic filtering for pixel art
+      texture.anisotropicFilteringLevel = 1;
+      // Proper wrapping
+      texture.wrapU = Texture.WRAP_ADDRESSMODE;
+      texture.wrapV = Texture.WRAP_ADDRESSMODE;
+    }
+  });
+}
+
+// Fix textures for pixel art / low poly look (PBR materials)
+function fixPixelArtTexturesPBR(material: PBRMaterial) {
+  const textures = [
+    material.albedoTexture,
+    material.ambientTexture,
+    material.opacityTexture,
+    material.emissiveTexture,
+    material.reflectivityTexture,
+    material.metallicTexture,
+    material.bumpTexture,
+    material.microSurfaceTexture,
+  ];
+
+  textures.forEach((texture) => {
+    if (texture && texture instanceof Texture) {
+      // NEAREST filtering for crisp pixel art - no smoothing!
+      texture.updateSamplingMode(Texture.NEAREST_NEAREST);
+      // Disable anisotropic filtering for pixel art
+      texture.anisotropicFilteringLevel = 1;
+      // Proper wrapping
+      texture.wrapU = Texture.WRAP_ADDRESSMODE;
+      texture.wrapV = Texture.WRAP_ADDRESSMODE;
     }
   });
 }
@@ -207,7 +264,10 @@ async function populateScene(scene: Scene, pong: Pong): Promise<Scene> {
   // Importing the game scene
   await AppendSceneAsync("/models/pong.glb", scene);
 
-  // Setting the maximum number of lights
+  // CRITICAL: Wait for all textures to be ready before continuing
+  await scene.whenReadyAsync();
+
+  // Setting the maximum number of lights AND fixing textures
   setMaxSimultaneousLights(scene);
 
   // Debugging meshes
