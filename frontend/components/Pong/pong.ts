@@ -188,9 +188,6 @@ export class Pong {
 
     // Configuring the Game Canvas
     this.canvas = canvasElement;
-    this.canvas.style.outline = "none";
-    this.canvas.style.border = "none";
-    this.canvas.style.imageRendering = "pixelated";
     this.canvas.focus();
 
     // Creating an Engine with proper configuration
