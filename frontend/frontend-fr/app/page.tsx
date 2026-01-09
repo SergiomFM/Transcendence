@@ -1,17 +1,5 @@
-"use client";
-
-import { startPong } from "@/components/Pong/main";
-import { useEffect } from "react";
+import PongClient from "@/app/PongClient";
 
 export default function Home() {
-
-  useEffect(() => {
-    startPong();
-  }, []);
-
-  return (
-    <div>
-      <canvas id="PongCanvas" />
-    </div>
-  );
+  return <PongClient />;
 }
