@@ -20,6 +20,7 @@
     "@fastify/secure-session": "^8.3.0",
     "@fastify/sensible": "^6.0.0",
     "@prisma/client": "^7.2.0",
+    "argon2": "^0.44.0",
     "better-sqlite3": "^12.5.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.0.0",

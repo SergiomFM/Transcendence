@@ -47,7 +47,7 @@ async function dbPlugin(fastify){
 		
 		fastify.decorate('db', db)
 
-		//helper functions
+		//helper functions, all of them consist of queries made to sqlite
 		
 		//search for previous logins
 
@@ -55,6 +55,7 @@ async function dbPlugin(fastify){
 			findByGoogleId: db.prepare(`SELECT * FROM users WHERE google_id = ?`),
 			findByEmail: db.prepare(`SELECT * FROM users WHERE email = ?`),
 			findById: db.prepare(`SELECT * FROM users WHERE id = ?`),
+			findByUsername: db.prepare(`SELECT * FROM users WHERE username = ?`),
 		
 			//create a user using google
 			createGoogleUser: db.prepare(`
@@ -62,7 +63,19 @@ async function dbPlugin(fastify){
 				VALUES (?, ?, ?, ?)
 			`),
 
+			//create a local user, to use with password
+			createLocalUser: db.prepare(`
+				INSERT INTO users (id, username, email, alias, password_hash)
+				VALUES (?, ?, ?, ?, ?)
+			`),
 
+
+			//create and set password in database
+			setPassword: db.prepare(`
+				UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+			`),
+
+			//update display name
 			updateAlias: db.prepare(`
 				UPDATE users SET alias = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 			`)

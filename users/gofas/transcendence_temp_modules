@@ -31,14 +31,18 @@ regex for reference:
 // at least one uppercase
 // at least one lowercase
 // at least one number
-// at least one special character
+// at least one special character from allowed characters (@ $ ! % * ? &)
 // 
 // regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
 
 //Email:
 
-// usual rules apply...
+// must contain exactly one @
+// must have a domain
+// subdomains are allowed
+// must not have spaces
+// must not have special characters
 //
 // regex: /^[\w.-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/
 
