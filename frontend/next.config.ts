@@ -13,7 +13,6 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     "@babylonjs/core",
     "@babylonjs/gui",
-    "@babylonjs/loaders",
   ],
 
   // Webpack configuration for production builds
