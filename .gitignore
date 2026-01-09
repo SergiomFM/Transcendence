@@ -1,9 +1,6 @@
 
 node_modules/
-package-lock.json
 
-
-frontend/public/*
 
 *.env
 .nfs*
@@ -11,6 +8,4 @@ frontend/public/*
 
 
 *node_modules/
-*package-lock.json
-
 
