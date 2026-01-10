@@ -1,6 +1,9 @@
 
 node_modules/
 
+minio/.minio.sys/
+minio/*
+!minio/.gitkeep
 
 *.env
 .nfs*
