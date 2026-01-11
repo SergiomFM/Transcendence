@@ -2,6 +2,9 @@ import { Pong, FPS } from "./pong";
 import { gameLogic } from "./pongLogic";
 
 export const startPong = async (canvas: HTMLCanvasElement) => {
+
+  //Fetch Constants from backend
+
   let pong = new Pong(canvas);
   await pong.initPong();
 

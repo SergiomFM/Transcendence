@@ -12,10 +12,27 @@ enum key {
 
 // Game loop (called each frame)
 export function gameLogic(pong: Pong, delta: number) {
+
+  /*
+  // fetching Ball info, player info from server if online
+  fetchLoopInfo(Pong.gameState) {
+    ball.position = Pong.gameState.ball.position
+    ball.speed = Pong.gameState.ball.speed
+    player1.position = Pong.gameState.player1.position
+    player2.position = Pong.gameState.player2.position...
+
+    Etc...
+  }
+  */
+
   // Game state
   if (!pong.running) {
-    if (!pong.loaded) return;
-    if (!pong.player1.ready && !pong.player2.ready) return;
+    if (!pong.loaded) {
+      return;
+    } 
+    if (!pong.player1.ready && !pong.player2.ready) {
+      return;
+    } 
     else {
       pong.running = true;
     }
@@ -23,8 +40,11 @@ export function gameLogic(pong: Pong, delta: number) {
 
   // Players movement
   if (pong.online) {
+    // isntead fetching the direction from the pressed keys, it will be fetched from the server
     /*direction = mage direction given by the server*/
-  } else movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
+  } else {
+    movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
+  }
   movePadle(pong, delta, getPlayerDirection(pong.player1), pong.player1);
 
   // Ball movement/collisions
@@ -78,7 +98,9 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
       -ball.angle,
       COLLISION_VFX
     );
-  } else paddle.failed = true;
+  } else {
+    paddle.failed = true;
+  } 
 }
 
 // Paddle movement function
@@ -101,12 +123,17 @@ function movePadle(
 
   // Smoothly stop the paddle
   player.currSpeed -= player.drag * delta;
-  if (player.currSpeed < 0) player.currSpeed = 0;
+  if (player.currSpeed < 0) {
+    player.currSpeed = 0;
+  }
 
   // Checking if the paddle has hit the wall
   const limit = pong.heightLimit - player.size;
-  if (player.x > limit) player.x = limit;
-  else if (player.x < -limit) player.x = -limit;
+  if (player.x > limit) {
+    player.x = limit;
+  } else if (player.x < -limit) {
+    player.x = -limit;
+  }
 }
 
 // Ball movement function
@@ -143,11 +170,17 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
   }
 
   // Paddle collisions
-  if (newZ >= pong.player1.z) paddleCollision(pong, pong.player1, -1);
-  else if (newZ <= pong.player2.z) paddleCollision(pong, pong.player2, 1);
+  if (newZ >= pong.player1.z) {
+    paddleCollision(pong, pong.player1, -1);
+  }
+  else if (newZ <= pong.player2.z) {
+    paddleCollision(pong, pong.player2, 1);
+  }
 
   // Goal scoring condidion
-  if (Math.abs(newZ) >= pong.widthLimit) playerScore(pong, ball);
+  if (Math.abs(newZ) >= pong.widthLimit) {
+    playerScore(pong, ball);
+  }
 }
 
 // Player scoring
@@ -158,8 +191,11 @@ function playerScore(pong: Pong, ball: Ball) {
     pong.GUI.toggleTextBlink(pong.scene, "START");
     ball.setAngle(Tools.ToRadians(90));
   } else {
-    if (pong.online) pong.GUI.textFadeIn("ROUND_WON");
-    else pong.GUI.textFadeIn("PLAYER_1_WIN");
+    if (pong.online) {
+      pong.GUI.textFadeIn("ROUND_WON");
+    } else {
+      pong.GUI.textFadeIn("PLAYER_1_WIN");
+    }
     pong.GUI.toggleTextBlink(pong.scene, "START");
     ball.setAngle(Tools.ToRadians(-90));
   }
