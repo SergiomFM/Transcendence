@@ -173,7 +173,9 @@ export abstract class Spell {
     }
 
     // Spell loop
-    if (this.active) this.loopAddon(elapsedTime);
+    if (this.active) {
+      this.loopAddon(elapsedTime);
+    }
   }
 }
 
