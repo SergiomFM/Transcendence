@@ -20,6 +20,7 @@ import {
   OFFENSIVE_CAST_VFX,
   COUNTER_CAST_VFX,
   diskExplosion,
+  spellReadyVFX,
 } from "./pongVFX";
 import {
   useSpellAnimation,
@@ -167,7 +168,7 @@ export abstract class Spell {
 
       if (this.cooldownElapsed >= this.cooldown) {
         this.ready = true;
-        diskExplosion(this.pong.scene, this.hand.absolutePosition);
+        spellReadyVFX(this.pong.scene, this);
       }
     }
 
@@ -183,7 +184,7 @@ export abstract class Spell {
 // Mirrors the Ball angle
 export class BallAngleSwitch extends Spell {
   readonly cooldown = 3000;
-  color = new Color4(0, 0, 1, 1);
+  color = new Color4(1, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
     super(pong, player, hand);
@@ -304,7 +305,7 @@ export class BallStop extends Spell {
   readonly duration = 2000;
   originalPosition!: Vector3;
 
-  readonly color = new Color4(0, 1, 1, 1);
+  readonly color = new Color4(0, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
     super(pong, player, hand);
