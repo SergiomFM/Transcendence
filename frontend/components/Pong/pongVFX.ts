@@ -328,6 +328,23 @@ export function diskExplosion(scene: Scene, position: Vector3) {
   return particle;
 }
 
+export function spellReadyVFX(scene: Scene, spell: Spell) {
+  let particle = createBaseParticle(scene, DISK_EXPLOSION_VFX);
+
+  particle.color1 = spell.particle.color1.clone();
+  particle.color2 = spell.particle.color2.clone();
+
+  // Rate and velocity of the particles
+  particle.manualEmitCount = DISK_EXPLOSION_VFX["PARTICLE_NUMBER"];
+
+  // Creating a cone to emit the particles
+  particle.createCylinderEmitter(0.01, 0);
+  particle.emitter = spell.hand.absolutePosition.clone();
+
+  startParticle(scene, particle);
+  return particle;
+}
+
 function updateOldParticles(scene: Scene, name: string, newColor: Color4) {
   let particle = scene.getParticleSystemById(name) as ParticleSystem;
   const originalUpdate = particle.updateFunction;

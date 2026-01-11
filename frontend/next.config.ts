@@ -12,9 +12,6 @@ const nextConfig: NextConfig = {
   // Turbopack configuration for Next.js 16+
   turbopack: {},
 
-  // Exclude Babylon.js from server-side bundling (it's client-only)
-  serverExternalPackages: ["@babylonjs/core", "@babylonjs/gui"],
-
   // Webpack configuration for production builds
   webpack: (config, { isServer }) => {
     if (!isServer) {
