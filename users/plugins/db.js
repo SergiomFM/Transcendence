@@ -35,11 +35,21 @@ async function dbPlugin(fastify){
 		password_hash TEXT,
 		two_factor_enabled INTEGER DEFAULT 0,
 		two_factor_secret TEXT,
+		two_factor_temp_secret TEXT,
 		role TEXT DEFAULT 'user',
 		is_active INTEGER DEFAULT 1,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run()
-		
+	
+	db.prepare(` CREATE TABLE IF NOT EXISTS recovery_codes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id TEXT NOT NULL,
+		code_hash TEXT NOT NULL,
+		used INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
+
+
 		fastify.log.info('Ensured Database schema...')
 		
 		
@@ -52,6 +62,8 @@ async function dbPlugin(fastify){
 		//search for previous logins
 
 		fastify.decorate('users', {
+			
+			//USERS
 			findByGoogleId: db.prepare(`SELECT * FROM users WHERE google_id = ?`),
 			findByEmail: db.prepare(`SELECT * FROM users WHERE email = ?`),
 			findById: db.prepare(`SELECT * FROM users WHERE id = ?`),
@@ -69,6 +81,26 @@ async function dbPlugin(fastify){
 				VALUES (?, ?, ?, ?, ?)
 			`),
 
+			//2FA (to be done after local password, FORCE GOOGLE USERS TO UNDERGO IT TOO)
+			enable2FA: db.prepare(`
+				UPDATE users SET two_factor_enabled = 1, two_factor_secret = ?, two_factor_temp_secret = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+			`),
+
+			disable2FA: db.prepare(`
+				UPDATE users SET two_factor_enabled = 0, two_factor_secret = NULL, two_factor_temp_secret = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+			`),
+
+			setTemp2FASecret: db.prepare(`
+				UPDATE users SET two_factor_temp_secret = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+			`),
+
+			getTemp2FASecret: db.prepare(`
+				SELECT two_factor_temp_secret FROM users WHERE id = ?
+			`),
+
+			get2FASecret: db.prepare(`
+				SELECT two_factor_secret FROM users WHERE id = ?
+			`),
 
 			//create and set password in database
 			setPassword: db.prepare(`
@@ -78,7 +110,28 @@ async function dbPlugin(fastify){
 			//update display name
 			updateAlias: db.prepare(`
 				UPDATE users SET alias = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-			`)
+			`),
+
+			//RECOVERY CODES
+
+			recovery: {
+				insert: db.prepare(`
+					INSERT INTO recovery_codes (user_id, code_hash)
+					VALUES (?, ?)
+				`),
+
+				findByUser: db.prepare(`
+					SELECT * FROM recovery_codes WHERE user_id = ?
+				`),
+
+				markUsed: db.prepare(`
+					UPDATE recovery_codes SET used = 1 WHERE id = ?
+				`),
+
+				deleteByUser: db.prepare(`
+					DELETE FROM recovery_codes WHERE user_id = ?
+				`)
+			}
 		})
 		
 		//shutdown if necessary, avoiding file corruption(unsure how important this is but a clean shutdown avoids issues...)

@@ -51,7 +51,15 @@ export default async function localAuthRoutes(fastify) {
 
 		await request.login(user)
 
-		reply.send({ message: 'Registration successful!', user})
+		reply.send({ message: 'Registration successful!', 
+			user: {
+				id : user.id,
+				username: user.username,
+				email: user.email,
+				alias: user.alias,
+				role: user.role
+			}
+		})
 	})
 
 	fastify.post('/auth/login', async (request, reply) => {
@@ -74,9 +82,22 @@ export default async function localAuthRoutes(fastify) {
 		if (!valid) {
 			return reply.code(401).send({ error: 'Invalid credentials.'})
 		}
-	
+
+		if (user.two_factor_enabled) {
+			request.session.pending2FA = user.id;
+			return reply.send({ twoFactorRequired: true });
+		}
+
 		await request.login(user)
 	
-		reply.send({ message: 'Logged in successfully!', user})
+		reply.send({ message: 'Logged in successfully!', 
+			user: {
+				id : user.id,
+				username: user.username,
+				email: user.email,
+				alias: user.alias,
+				role: user.role
+			}
+		})
 	})
 }

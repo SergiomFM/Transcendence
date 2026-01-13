@@ -17,7 +17,7 @@ async function authPlugin(fastify){
 		//REASON: Fastify doesn't store sessions in memory — it stores them in an encrypted cookie on the client.
 		key: fs.readFileSync('./secret-key'),
 		cookie:{
-			path: '/'
+			path: '/',
 		}
 	});
 
@@ -51,7 +51,7 @@ async function authPlugin(fastify){
 				try {
 
 					const googleId = profile.id
-					const email = profile.emails[0].value
+					const email = profile.emails[0].value.toLowerCase().trim()
 					const alias = profile.displayName
 					let user = fastify.users.findByGoogleId.get(googleId)
 					if (!user) {
@@ -65,6 +65,9 @@ async function authPlugin(fastify){
 							fastify.users.createGoogleUser.run(id, email, alias, googleId)
 							user = fastify.users.findById.get(id)
 						}
+					}
+					if (user && !user.is_active) {
+						return done(null, false, { message: "Account disabled" })
 					}
 					return done(null, user)
 				}
