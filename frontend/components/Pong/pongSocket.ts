@@ -68,6 +68,7 @@ function handleServerMessage(pong: Pong, message: any) {
       handleGameStart(pong, message);
       break;
 
+    case "STATE_UPDATE":
     case "GAME_STATE":
       handleGameState(pong, message);
       break;
