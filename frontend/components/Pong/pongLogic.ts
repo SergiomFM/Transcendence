@@ -1,6 +1,6 @@
-import { Vector3, Tools } from "@babylonjs/core";
+import { Vector3, Tools, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
-import { splashEffect, COLLISION_VFX } from "./pongVFX";
+import { splashEffect, COLLISION_VFX, updateArena } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
 
 enum key {
@@ -10,51 +10,127 @@ enum key {
   RIGHT,
 }
 
-// Game loop (called each frame)
 export function gameLogic(pong: Pong, delta: number) {
-
-  /*
-  // fetching Ball info, player info from server if online
-  fetchLoopInfo(Pong.gameState) {
-    ball.position = Pong.gameState.ball.position
-    ball.speed = Pong.gameState.ball.speed
-    player1.position = Pong.gameState.player1.position
-    player2.position = Pong.gameState.player2.position...
-
-    Etc...
+  if (pong.online) {
+    onlineGameLogic(pong, delta);
+  } else {
+    localGameLogic(pong, delta);
   }
-  */
+}
 
-  // Game state
+function localGameLogic(pong: Pong, delta: number) {
   if (!pong.running) {
     if (!pong.loaded) {
       return;
-    } 
+    }
     if (!pong.player1.ready && !pong.player2.ready) {
       return;
-    } 
-    else {
+    } else {
       pong.running = true;
     }
   }
 
-  // Players movement
-  if (pong.online) {
-    // isntead fetching the direction from the pressed keys, it will be fetched from the server
-    /*direction = mage direction given by the server*/
-  } else {
-    movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
-  }
+  movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
   movePadle(pong, delta, getPlayerDirection(pong.player1), pong.player1);
-
-  // Ball movement/collisions
   moveBall(pong, delta, pong.ball);
 
-  // Calling spells logic
   pong.player1.counterSpell.spellLoop(delta);
   pong.player2.counterSpell.spellLoop(delta);
   pong.player1.offensiveSpell.spellLoop(delta);
   pong.player2.offensiveSpell.spellLoop(delta);
+}
+
+function onlineGameLogic(pong: Pong, delta: number) {
+  const localPlayer = pong.playerId === 1 ? pong.player1 : pong.player2;
+  const playerDirection = getPlayerDirection(localPlayer);
+
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "INPUT",
+        input: {
+          direction: playerDirection,
+        },
+      })
+    );
+  }
+
+  if (pong.serverGameState) {
+    applyServerState(pong, pong.serverGameState);
+  }
+
+  pong.player1.counterSpell.spellLoop(delta);
+  pong.player2.counterSpell.spellLoop(delta);
+  pong.player1.offensiveSpell.spellLoop(delta);
+  pong.player2.offensiveSpell.spellLoop(delta);
+}
+
+function applyServerState(pong: Pong, serverState: any) {
+  if (serverState.ball) {
+    (pong.ball as any).x = serverState.ball.x;
+    (pong.ball as any).y = serverState.ball.y;
+
+    if (pong.playerId === 2) {
+      (pong.ball as any).z = -serverState.ball.z;
+      pong.ball.setAngle(-serverState.ball.angle);
+    } else {
+      (pong.ball as any).z = serverState.ball.z;
+      pong.ball.setAngle(serverState.ball.angle);
+    }
+
+    pong.ball.speed = serverState.ball.speed;
+
+    if (serverState.ball.color && pong.online) {
+      const c = serverState.ball.color;
+      if (!pong._lastArenaColor)
+        pong._lastArenaColor = { r: 1, g: 1, b: 1, a: 1 };
+      const last = pong._lastArenaColor;
+      if (
+        c.r !== last.r ||
+        c.g !== last.g ||
+        c.b !== last.b ||
+        c.a !== last.a
+      ) {
+        updateArena(pong.scene, new Color4(c.r, c.g, c.b, c.a), pong.ball);
+        pong._lastArenaColor = { r: c.r, g: c.g, b: c.b, a: c.a };
+      }
+    }
+  }
+
+  if (pong.playerId === 2) {
+    if (serverState.player2) {
+      pong.player1.x = serverState.player2.x;
+      pong.player1.currSpeed = serverState.player2.currSpeed;
+      pong.player1.ready = serverState.player2.ready;
+      pong.player1.failed = serverState.player2.failed;
+    }
+
+    if (serverState.player1) {
+      pong.player2.x = serverState.player1.x;
+      pong.player2.currSpeed = serverState.player1.currSpeed;
+      pong.player2.ready = serverState.player1.ready;
+      pong.player2.failed = serverState.player1.failed;
+    }
+  } else {
+    if (serverState.player1) {
+      pong.player1.x = serverState.player1.x;
+      pong.player1.currSpeed = serverState.player1.currSpeed;
+      pong.player1.ready = serverState.player1.ready;
+      pong.player1.failed = serverState.player1.failed;
+    }
+
+    if (serverState.player2) {
+      pong.player2.x = serverState.player2.x;
+      pong.player2.currSpeed = serverState.player2.currSpeed;
+      pong.player2.ready = serverState.player2.ready;
+      pong.player2.failed = serverState.player2.failed;
+    }
+  }
+
+  // Update game running state
+  if (serverState.running !== undefined) {
+    pong.running = serverState.running;
+  }
 }
 
 // Detecting the player inputs
@@ -100,7 +176,7 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
     );
   } else {
     paddle.failed = true;
-  } 
+  }
 }
 
 // Paddle movement function
@@ -172,8 +248,7 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
   // Paddle collisions
   if (newZ >= pong.player1.z) {
     paddleCollision(pong, pong.player1, -1);
-  }
-  else if (newZ <= pong.player2.z) {
+  } else if (newZ <= pong.player2.z) {
     paddleCollision(pong, pong.player2, 1);
   }
 
@@ -220,6 +295,14 @@ function playerScore(pong: Pong, ball: Ball) {
 
   pong.player2.counterSpell.resetSpell();
   pong.player2.offensiveSpell.resetSpell();
+
+  // Reset arena color to white
+  const defaultColor = new Color4(1, 1, 1, 1);
+  updateArena(pong.scene, defaultColor, ball);
+  let light = pong.scene.getLightById("ball")!;
+  if (light) {
+    light.diffuse.set(1, 1, 1);
+  }
 
   pong.running = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done

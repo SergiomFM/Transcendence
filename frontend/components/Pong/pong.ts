@@ -94,6 +94,7 @@ export class Player {
     // Getting a paddle mesh to use its vector
     const mesh = scene.getMeshByName(meshName)!;
     this.vector = mesh.position;
+    console.log(this.vector.z);
 
     // Associating a paddle with the correct Player
     if (meshName == "paddle1") {
@@ -163,6 +164,7 @@ export class Player {
 export class Pong {
   widthLimit!: number;
   heightLimit!: number;
+  _lastArenaColor?: { r: number; g: number; b: number; a: number };
 
   ball: Ball;
   player1!: Player;
@@ -178,6 +180,11 @@ export class Pong {
   running = false;
   loaded = false;
   online = false;
+
+  // Multiplayer properties
+  socket?: WebSocket;
+  serverGameState?: any;
+  playerId?: number;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -241,7 +248,7 @@ export class Pong {
 
     // Creating the Game UI elements
     this.GUI = new GUI();
-    this.GUI.setUpTextBlocks(this.scene);
+    this.GUI.setUpTextBlocks(this.scene, this.online);
 
     // Registering Key inputs
     Events.registerEvents(this);
