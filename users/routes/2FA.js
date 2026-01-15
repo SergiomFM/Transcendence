@@ -55,7 +55,7 @@ export default async function twoFARoutes(fastify){
 			return reply.code(400).send({ error: "Invalid authentication code." });
 		}
 
-		fastify.user.enable2FA.run(row.two_factor_temp_secret, userId);
+		fastify.users.enable2FA.run(row.two_factor_temp_secret, userId);
 		
 		fastify.users.recovery.deleteByUser.run(userId);
 		
@@ -95,7 +95,7 @@ export default async function twoFARoutes(fastify){
 		let usedRecovery = null;
 
 		if (!valid) {
-			usedRecovery = await verifyRecoveryCode(token, recoveryCodes);
+			usedRecovery = await verifyRecoveryCode(token, recovery);
 
 			if (!usedRecovery) {
 				return reply.code(401).send({ error: "Invalid authentication code." });

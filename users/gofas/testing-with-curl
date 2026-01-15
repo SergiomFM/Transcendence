@@ -1,0 +1,66 @@
+WHILE HTML IS BEING BUILT, PLEASE USE THESE CURL CODES TO CONNECT AND TEST ANYTHING SERVER RELATED:
+
+
+
+REGISTER USER:
+
+curl -X POST http://localhost:3000/auth/register \   
+  -H "Content-Type: application/json" \
+  -d '{"username":"YOUR USERNAME HERE","email":"YOUR EMAIL HERE","alias":"ANY ALIAS YOU WANT","password":"YOUR PASSWORD HERE"}' \     
+  -c cookies.txt
+
+
+
+SETUP 2FA:
+
+curl -X POST http://localhost:3000/auth/2fa/setup \  
+  -b cookies.txt -c cookies.txt  
+
+terminal will spit out a gigantic url, copy everything from "data:image:" until a comma (,)
+
+paste the url into a browser, scan the QR code and it should appear as Transcendence in your google authenticator app
+
+
+
+CONFIRM 2FA SETUP:
+
+curl -X POST http://localhost:3000/auth/2fa/confirm \
+  -H "Content-Type: application/json" \
+  -d '{"token":"GOOGLE AUTHENTICATOR CODE GOES HERE, SHOULD BE 6 DIGITS"}' \                                                                        
+  -b cookies.txt -c cookies.txt
+
+
+
+LOGIN:
+
+
+ % curl -X POST http://localhost:3000/auth/login \     
+  -H "Content-Type: application/json" \
+  -d '{"identifier":"USERNAME GOES HERE","password":"PASSWORD GOES HERE"}' \
+  -c cookies.txt
+
+should return a 2FA required error.
+
+
+
+VERIFY 2FA:
+
+curl -X POST http://localhost:3000/auth/2fa/verify \
+  -H "Content-Type: application/json" \
+  -d '{"token":"GOOGLE AUTHENTICATOR CODE GOES HERE"}' \
+  -b cookies.txt -c cookies.txt
+
+after this, attempt to curl into dashboard with:
+
+curl http://localhost:3000/dashboard -b cookies.txt
+
+and if credentials are returned, everything is working.
+
+EXAMPLE:
+
+curl http://localhost:3000/dashboard -b cookies.txt  
+
+
+{"message":"Welcome to our server.","user":{"id":"REDACTED","email":"gofas@gofas.com","username":"gofas","alias":"Test","role":"user"}}
+
+
