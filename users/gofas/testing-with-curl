@@ -4,10 +4,9 @@ WHILE HTML IS BEING BUILT, PLEASE USE THESE CURL CODES TO CONNECT AND TEST ANYTH
 
 REGISTER USER:
 
-curl -X POST http://localhost:3000/auth/register \   
-  -H "Content-Type: application/json" \
-  -d '{"username":"YOUR USERNAME HERE","email":"YOUR EMAIL HERE","alias":"ANY ALIAS YOU WANT","password":"YOUR PASSWORD HERE"}' \     
-  -c cookies.txt
+curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json" -d '{"username":"YOUR USERNAME HERE","email":"YOUR EMAIL HERE","alias":"ANY ALIAS YOU WANT","password":"YOUR PASSWORD HERE"}' -c cookies.txt
+
+curl -X POST http://localhost:3000/auth/register -H "Content-Type: application/json"   -d '{"username":"sergmigu","email":"fred@jojo.com","alias":"migalha","password":"safeS$1231010101"}'  -c cookies.txt
 
 
 
