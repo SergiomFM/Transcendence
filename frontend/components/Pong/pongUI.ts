@@ -35,9 +35,9 @@ const START = [
 ];
 
 // Round Won message
-const ROUND_WON = [
-  "ROUND_WON", // Name
-  "Round Won!", // Text
+const YOU_WON = [
+  "YOU_WON", // Name
+  "You Won!", // Text
   "white", // Color
   "20%", // Size (vertical screen %)
   "pongFont1", // Font
@@ -63,9 +63,9 @@ const PLAYER_1_WIN = [
 ];
 
 // Round Lost message
-const ROUND_LOST = [
-  "ROUND_LOST", // Name
-  "Round Lost!", // Text
+const YOU_LOST = [
+  "YOU_LOST", // Name
+  "You Lost!", // Text
   "white", // Color
   "20%", // Size (vertical screen %)
   "pongFont1", // Font
@@ -248,8 +248,8 @@ export class GUI {
 
     this.createNewText(WELCOME);
     this.createNewText(START);
-    this.createNewText(ROUND_WON);
-    this.createNewText(ROUND_LOST);
+    this.createNewText(YOU_WON);
+    this.createNewText(YOU_LOST);
     this.createNewText(PLAYER_1_WIN);
     this.createNewText(PLAYER_2_WIN);
     this.createNewText(PLAYER_1);

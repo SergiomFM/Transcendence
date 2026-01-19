@@ -1,92 +1,92 @@
 services:
-    frontend:
-        build:
-            context: frontend
-        ports:
-            - "3000:3000"
-        environment:
-            - NODE_ENV=production
-        profiles:
-            - prod
+  frontend:
+    build:
+      context: frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    profiles:
+      - prod
 
-    users:
-        build:
-            context: users
-        ports:
-            - "3001:3001"
-        profiles:
-            - prod
+  users:
+    build:
+      context: users
+    ports:
+      - "3001:3001"
+    profiles:
+      - prod
 
-    game:
-        build:
-            context: game
-        ports:
-            - "3002:3002"
-        profiles:
-            - prod
+  game:
+    build:
+      context: game
+    ports:
+      - "3002:3002"
+    profiles:
+      - prod
 
-    frontend-dev:
-        image: oven/bun:1
-        working_dir: /app
-        command: sh -c "bun install && bun run dev"
-        ports:
-            - "3000:3000"
-        environment:
-            - NODE_ENV=development
-            - HOSTNAME=0.0.0.0
-        volumes:
-            - ./frontend:/app:cached
-            - frontend_node_modules:/app/node_modules
-        profiles:
-            - dev
+  frontend-dev:
+    image: oven/bun:latest
+    working_dir: /app
+    command: sh -c "bun install && bun run dev"
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./frontend:/app:cached
+      - frontend_node_modules:/app/node_modules
+    profiles:
+      - dev
 
-    users-dev:
-        image: oven/bun:1
-        working_dir: /app
-        command: sh -c "bun install && bun run dev"
-        ports:
-            - "3001:3000"
-        environment:
-            - NODE_ENV=development
-        volumes:
-            - ./users:/app:cached
-            - users_node_modules:/app/node_modules
-        profiles:
-            - dev
+  users-dev:
+    image: oven/bun:latest
+    working_dir: /app
+    command: sh -c "bun install && bun run dev"
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./users:/app:cached
+      - users_node_modules:/app/node_modules
+    profiles:
+      - dev
 
-    game-dev:
-        image: oven/bun:1
-        working_dir: /app
-        command: sh -c "bun install && bun run dev"
-        ports:
-            - "3002:3000"
-        environment:
-            - NODE_ENV=development
-        volumes:
-            - ./game:/app:cached
-            - ./frontend/public/models:/app/public/models
-            - game_node_modules:/app/node_modules
-        profiles:
-            - dev
+  game-dev:
+    image: oven/bun:1
+    working_dir: /app
+    command: sh -c "bun install && bun run dev"
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./game:/app:cached
+      - ./frontend/public/models:/app/public/models
+      - game_node_modules:/app/node_modules
+    profiles:
+      - dev
 
-    minio:
-        image: minio/minio:latest
-        command: server /storage --console-address ":9001" --address ":9000"
-        volumes:
-            - "./minio:/storage/:rw"
-        environment:
-            - MINIO_ROOT_USER=woiefghwenlkfgbouerwjfn
-            - MINIO_ROOT_PASSWORD=1p39rodufjeqnpwdglirekjgnp
-            - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
-            - MINIO_SERVER_URL=http://localhost:9000
-        ports:
-            - "9001:9001"
-            - "9000:9000"
-        profiles:
-            - prod
-            - dev
+  minio:
+    image: minio/minio:latest
+    command: server /storage --console-address ":9001" --address ":9000"
+    volumes:
+      - "./minio:/storage/:rw"
+    environment:
+      - MINIO_ROOT_USER=woiefghwenlkfgbouerwjfn
+      - MINIO_ROOT_PASSWORD=1p39rodufjeqnpwdglirekjgnp
+      - MINIO_BROWSER_REDIRECT_URL=http://localhost:9001
+      - MINIO_SERVER_URL=http://localhost:9000
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    profiles:
+      - prod
+      - dev
 
 volumes:
-    frontend_node_modules:
-    users_node_modules:
-    game_node_modules:
+  frontend_node_modules:
+  users_node_modules:
+  game_node_modules:

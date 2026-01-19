@@ -46,9 +46,11 @@ class GameRoom {
       }
       switch (spell) {
         case "angleSwitch":
+          this._angleActive = true;
           this.physics.setBallAngle(Math.PI - this.ball.angle);
           break;
         case "shot":
+          this._shotActive = true;
           this.ball.speed *= 2;
           if (this.ball.angle > 0 && this.ball.angle < Math.PI)
             this.physics.setBallAngle(degreesToRadians(90));
@@ -68,6 +70,7 @@ class GameRoom {
           };
           break;
         case "back":
+          this._backActive = true;
           this.physics.setBallAngle(this.ball.angle + Math.PI);
           break;
         case "iman":
@@ -102,7 +105,7 @@ class GameRoom {
     // Game loop
     this.lastUpdate = Date.now();
     this.lastStateUpdate = Date.now();
-    this.gameLoopInterval = null;
+    this.gameLoopTimeout = null;
   }
 
   createPlayer(id, zPosition) {
@@ -129,7 +132,6 @@ class GameRoom {
       dashDuration: GAME_CONSTANTS.DASH_DURATION,
       dashElapsedActive: 0,
 
-      // Spells (placeholder for now)
       spells: {
         counter: { active: false, cooldown: 0 },
         offensive: { active: false, cooldown: 0 },
@@ -163,9 +165,9 @@ class GameRoom {
     this.players.delete(connection);
 
     // Stop game if a player leaves
-    if (this.gameLoopInterval) {
-      clearInterval(this.gameLoopInterval);
-      this.gameLoopInterval = null;
+    if (this.gameLoopTimeout) {
+      clearTimeout(this.gameLoopTimeout);
+      this.gameLoopTimeout = null;
     }
 
     // Return true if room is now empty
@@ -198,23 +200,56 @@ class GameRoom {
   }
 
   startGameLoop() {
-    if (this.gameLoopInterval) return;
+    if (this.gameLoopTimeout) return;
+    let lastUpdate = Date.now();
 
-    this.gameLoopInterval = setInterval(() => {
-      this.update();
-    }, GAME_CONSTANTS.TICK_RATE);
+    const loop = () => {
+      const now = Date.now();
+      const delta = now - lastUpdate;
+      if (delta >= GAME_CONSTANTS.TICK_RATE) {
+        this.update(delta / 1000, now); // Convert to seconds
+        lastUpdate = now - (delta % GAME_CONSTANTS.TICK_RATE);
+      }
+      this.gameLoopTimeout = setTimeout(loop, 1);
+    };
+    loop();
   }
 
-  update() {
-    const now = Date.now();
-    const delta = (now - this.lastUpdate) / 1000; // Convert to seconds
-    this.lastUpdate = now;
-
+  update(delta, now) {
     // Check if both players are ready
     if (!this.running) {
       if (!this.loaded) return;
       if (!this.player1.ready || !this.player2.ready) return;
       this.running = true;
+    }
+
+    // SPELL: BallAngleSwitch (reverse ball direction once)
+    if (this._angleActive) {
+      this._angleDuration = (this._angleDuration || 0) + delta * 1000;
+      if (this._angleDuration >= 500) {
+        this._angleActive = false;
+        this._angleDuration = 0;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+      }
+    }
+    // SPELL: BallShot (speed boost with duration)
+    if (this._shotActive) {
+      this._shotDuration = (this._shotDuration || 0) + delta * 1000;
+      if (this._shotDuration >= 500) {
+        this._shotActive = false;
+        this._shotDuration = 0;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+      }
+    }
+
+    // SPELL: BallBack (reverse ball direction once)
+    if (this._backActive) {
+      this._backDuration = (this._backDuration || 0) + delta * 1000;
+      if (this._backDuration >= 500) {
+        this._backActive = false;
+        this._backDuration = 0;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+      }
     }
 
     // SPELL: BallStop (stop ball for duration)
@@ -228,6 +263,7 @@ class GameRoom {
         // 2s duration
         this._stopActive = false;
         this._stopDuration = 0;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
       }
     }
 
@@ -236,7 +272,7 @@ class GameRoom {
       let player = this._imanPlayer;
       let ballToPaddleAngle = Math.atan2(
         player.z - this.ball.z,
-        player.x - this.ball.x
+        player.x - this.ball.x,
       );
       let direction = -1;
       if (
@@ -252,6 +288,7 @@ class GameRoom {
         this._imanActive = false;
         this._imanDuration = 0;
         this._imanPlayer = null;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
       }
     }
 
@@ -267,6 +304,13 @@ class GameRoom {
       }
       this._portalLastXDir = Math.sign(this.ball.cos);
       this._portalLastZDir = Math.sign(this.ball.sin);
+      this._portalDuration = (this._portalDuration || 0) + delta * 1000;
+      if (this._portalDuration >= 500) {
+        this._portalActive = false;
+        this._portalDuration = 0;
+        this._portalPlayer = null;
+        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+      }
     }
 
     // Update physics (skip ball update if stop spell is active)
@@ -281,9 +325,9 @@ class GameRoom {
     if (collision) {
       this.broadcastEvent(collision);
 
-      // If it's a goal, stop the game
       if (collision.type === "GOAL") {
         this.running = false;
+        this.broadcastState();
       }
     }
 
@@ -356,9 +400,9 @@ class GameRoom {
   }
 
   cleanup() {
-    if (this.gameLoopInterval) {
-      clearInterval(this.gameLoopInterval);
-      this.gameLoopInterval = null;
+    if (this.gameLoopTimeout) {
+      clearTimeout(this.gameLoopTimeout);
+      this.gameLoopTimeout = null;
     }
   }
 }

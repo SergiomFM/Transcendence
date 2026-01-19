@@ -51,12 +51,13 @@ function onlineGameLogic(pong: Pong, delta: number) {
         input: {
           direction: playerDirection,
         },
-      })
+      }),
     );
   }
 
-  if (pong.serverGameState) {
+  if (pong.serverGameState && !pong.serverGameStateApplied) {
     applyServerState(pong, pong.serverGameState);
+    pong.serverGameStateApplied = true;
   }
 
   pong.player1.counterSpell.spellLoop(delta);
@@ -67,14 +68,14 @@ function onlineGameLogic(pong: Pong, delta: number) {
 
 function applyServerState(pong: Pong, serverState: any) {
   if (serverState.ball) {
-    (pong.ball as any).x = serverState.ball.x;
-    (pong.ball as any).y = serverState.ball.y;
+    pong.ball.x = serverState.ball.x;
+    pong.ball.y = serverState.ball.y;
 
     if (pong.playerId === 2) {
-      (pong.ball as any).z = -serverState.ball.z;
+      pong.ball.z = -serverState.ball.z;
       pong.ball.setAngle(-serverState.ball.angle);
     } else {
-      (pong.ball as any).z = serverState.ball.z;
+      pong.ball.z = serverState.ball.z;
       pong.ball.setAngle(serverState.ball.angle);
     }
 
@@ -92,6 +93,8 @@ function applyServerState(pong: Pong, serverState: any) {
         c.a !== last.a
       ) {
         updateArena(pong.scene, new Color4(c.r, c.g, c.b, c.a), pong.ball);
+        let light = pong.scene.getLightById("ball")!;
+        light.diffuse.set(c.r, c.g, c.b);
         pong._lastArenaColor = { r: c.r, g: c.g, b: c.b, a: c.a };
       }
     }
@@ -172,7 +175,7 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
       new Vector3(ball.x, ball.y, paddle.z),
       ball.speed,
       -ball.angle,
-      COLLISION_VFX
+      COLLISION_VFX,
     );
   } else {
     paddle.failed = true;
@@ -184,7 +187,7 @@ function movePadle(
   pong: Pong,
   delta: number,
   direction: number,
-  player: Player
+  player: Player,
 ) {
   player.playerDashLogic(delta * 1000, direction);
 
@@ -237,7 +240,7 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
       new Vector3(Xlimit * sign, ball.y, (newZ + oldZ) * 0.5),
       ball.speed,
       Tools.ToRadians(0 + 180 * Number(newX > 0)),
-      COLLISION_VFX
+      COLLISION_VFX,
     );
 
     // Changing the ball angle and x value to the amount it should reflect
@@ -261,13 +264,13 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
 // Player scoring
 function playerScore(pong: Pong, ball: Ball) {
   if (ball.z > 0) {
-    if (pong.online) pong.GUI.textFadeIn("ROUND_LOST");
+    if (pong.online) pong.GUI.textFadeIn("YOU_LOST");
     else pong.GUI.textFadeIn("PLAYER_2_WIN");
     pong.GUI.toggleTextBlink(pong.scene, "START");
     ball.setAngle(Tools.ToRadians(90));
   } else {
     if (pong.online) {
-      pong.GUI.textFadeIn("ROUND_WON");
+      pong.GUI.textFadeIn("YOU_WON");
     } else {
       pong.GUI.textFadeIn("PLAYER_1_WIN");
     }

@@ -5,7 +5,7 @@ import { Events } from "./pongEvents";
 
 export function connectToGameServer(
   pong: Pong,
-  serverUrl: string = "ws://localhost:3002/pong"
+  serverUrl: string = "ws://localhost:3002/pong",
 ) {
   console.log("Connecting to game server:", serverUrl);
 
@@ -22,7 +22,7 @@ export function connectToGameServer(
           name: "Player",
           timestamp: Date.now(),
         },
-      })
+      }),
     );
   };
 
@@ -148,6 +148,7 @@ function handleGameStart(pong: Pong, message: any) {
 
 function handleGameState(pong: Pong, message: any) {
   pong.serverGameState = message.state;
+  pong.serverGameStateApplied = false;
 }
 
 function handleGameEvent(pong: Pong, message: any) {
@@ -192,7 +193,7 @@ function handleCollision(pong: Pong, message: any) {
     new Vector3(position.x, position.y, splashZ),
     speed,
     splashAngle,
-    COLLISION_VFX
+    COLLISION_VFX,
   );
 }
 
@@ -203,9 +204,9 @@ function handleScore(pong: Pong, message: any) {
 
   if (pong.GUI) {
     if (winner === pong.playerId) {
-      pong.GUI.textFadeIn("ROUND_WON");
+      pong.GUI.textFadeIn("YOU_WON");
     } else {
-      pong.GUI.textFadeIn("ROUND_LOST");
+      pong.GUI.textFadeIn("YOU_LOST");
     }
     pong.GUI.toggleTextBlink(pong.scene, "START");
   }
@@ -259,7 +260,7 @@ export function sendReady(pong: Pong) {
     pong.socket.send(
       JSON.stringify({
         type: "READY",
-      })
+      }),
     );
   }
 }
@@ -269,7 +270,7 @@ export function sendDash(pong: Pong) {
     pong.socket.send(
       JSON.stringify({
         type: "DASH",
-      })
+      }),
     );
   }
 }
@@ -280,7 +281,7 @@ export function sendSpell(pong: Pong, spellType: string) {
       JSON.stringify({
         type: "SPELL",
         spellType: spellType,
-      })
+      }),
     );
   }
 }

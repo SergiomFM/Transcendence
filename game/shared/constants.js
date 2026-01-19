@@ -27,7 +27,7 @@ async function loadConstantsFromGLB() {
   } catch (error) {
     console.error("❌ Failed to load GLB constants:", error.message);
     throw new Error(
-      "Cannot start server without GLB constants. Please ensure the file frontend/public/models/pong.glb exists"
+      "Cannot start server without GLB constants. Please ensure the file frontend/public/models/pong.glb exists",
     );
   }
 }
@@ -52,10 +52,10 @@ const GAME_CONSTANTS = {
 
   // Game physics
   FPS: 60,
-  TICK_RATE: 1000 / 60, // ms per tick
+  TICK_RATE: 1000 / 240, // ms per tick
 
   // State update frequency (send to clients less frequently than game ticks)
-  STATE_UPDATE_RATE: 1000 / 30, // 30 updates per second
+  STATE_UPDATE_RATE: 1000 / 120, // 240 updates per second
 
   // Player positions (from GLB - will be set dynamically at startup)
   PLAYER1_Z: null,

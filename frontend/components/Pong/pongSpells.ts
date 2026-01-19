@@ -180,14 +180,8 @@ export abstract class Spell {
       }
     }
 
-    const wasActive = this.active;
-
     if (this.active && !this.pong.online) {
       this.loopAddon(elapsedTime);
-    }
-
-    if (wasActive && !this.active) {
-      this.resetArenaColor();
     }
   }
 }

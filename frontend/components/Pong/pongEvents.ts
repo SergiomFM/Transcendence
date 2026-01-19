@@ -91,14 +91,14 @@ export namespace Events {
         // Send ready signal to server
         sendReady(pong);
         pong.player1.ready = true;
-        pong.GUI.textFadeOut("ROUND_WON");
-        pong.GUI.textFadeOut("ROUND_LOST");
+        pong.GUI.textFadeOut("YOU_WON");
+        pong.GUI.textFadeOut("YOU_LOST");
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
         pong.GUI.toggleTextBlink(pong.scene, "START");
-        pong.GUI.textFadeOut("ROUND_WON");
-        pong.GUI.textFadeOut("ROUND_LOST");
+        pong.GUI.textFadeOut("YOU_WON");
+        pong.GUI.textFadeOut("YOU_LOST");
         pong.GUI.textFadeOut("PLAYER_1_WIN");
         pong.GUI.textFadeOut("PLAYER_2_WIN");
       }
