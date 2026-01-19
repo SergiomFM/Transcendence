@@ -122,9 +122,9 @@ function fixPixelArtTexturesPBR(material: PBRMaterial) {
 
 // See all imported meshe's information
 function importInfo(scene: Scene) {
-  scene.meshes.forEach((m) => console.log("Mesh:", m.name));
-  scene.transformNodes.forEach((t) => console.log("TransformNode:", t.name));
-  scene.rootNodes.forEach((r) => console.log("RootNode:", r.name));
+  scene.meshes.forEach((m: any) => console.log("Mesh:", m.name));
+  scene.transformNodes.forEach((t: any) => console.log("TransformNode:", t.name));
+  scene.rootNodes.forEach((r: any) => console.log("RootNode:", r.name));
 }
 
 // Create a persistent clandle light flickering
@@ -257,6 +257,18 @@ function createPlayers(scene: Scene) {
   (paddles.material as PBRMaterial).unlit = true;
 }
 
+// Lighting unlit areas for better ambience
+function lightAmbience(scene: Scene) {
+  // Creating a low intensity hemispheric light to light unlit areas
+  let light = new PointLight(
+    "candle",
+    new Vector3(0, 0, 1.25),
+    scene
+  );
+  light.intensity = CANDLE_LIGHT_INTENSITY / 8;
+  light.diffuse = CANDLE_COLOR;
+}
+
 // Populating a scene
 async function populateScene(scene: Scene, pong: Pong): Promise<Scene> {
   scene.useRightHandedSystem = true;
@@ -284,6 +296,9 @@ async function populateScene(scene: Scene, pong: Pong): Promise<Scene> {
 
   // Animating the player meshes
   createPlayers(scene);
+
+  // Lighting unlit areas for better ambience
+  lightAmbience(scene);
 
   return scene;
 }
