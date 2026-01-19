@@ -1,9 +1,9 @@
 
 node_modules/
-package-lock.json
 
-
-frontend/public/*
+minio/.minio.sys/
+minio/*
+!minio/.gitkeep
 
 *.env
 .nfs*
@@ -11,6 +11,4 @@ frontend/public/*
 
 
 *node_modules/
-*package-lock.json
-
 
