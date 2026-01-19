@@ -51,11 +51,7 @@ const GAME_CONSTANTS = {
   DASH_POWER: 2,
 
   // Game physics
-  FPS: 60,
-  TICK_RATE: 1000 / 240, // ms per tick
-
-  // State update frequency (send to clients less frequently than game ticks)
-  STATE_UPDATE_RATE: 1000 / 120, // 240 updates per second
+  TICK_RATE: 1000 / 480, // ms per tick
 
   // Player positions (from GLB - will be set dynamically at startup)
   PLAYER1_Z: null,

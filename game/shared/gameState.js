@@ -201,13 +201,13 @@ class GameRoom {
 
   startGameLoop() {
     if (this.gameLoopTimeout) return;
-    let lastUpdate = Date.now();
+    let lastUpdate = performance.now();
 
     const loop = () => {
-      const now = Date.now();
+      const now = performance.now();
       const delta = now - lastUpdate;
       if (delta >= GAME_CONSTANTS.TICK_RATE) {
-        this.update(delta / 1000, now); // Convert to seconds
+        this.update(delta / 1000); // Convert to seconds
         lastUpdate = now - (delta % GAME_CONSTANTS.TICK_RATE);
       }
       this.gameLoopTimeout = setTimeout(loop, 1);
@@ -215,7 +215,7 @@ class GameRoom {
     loop();
   }
 
-  update(delta, now) {
+  update(delta) {
     // Check if both players are ready
     if (!this.running) {
       if (!this.loaded) return;
@@ -331,11 +331,7 @@ class GameRoom {
       }
     }
 
-    // Send state updates at a lower frequency
-    if (now - this.lastStateUpdate >= GAME_CONSTANTS.STATE_UPDATE_RATE) {
-      this.broadcastState();
-      this.lastStateUpdate = now;
-    }
+    this.broadcastState();
   }
 
   getState() {
