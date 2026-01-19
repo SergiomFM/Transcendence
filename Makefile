@@ -1,10 +1,24 @@
 all: prod
 
+# Multiplayer dev test
+pong-dev:
+	docker compose --profile dev up frontend-dev game-dev
+
+pong-down:
+	docker compose --profile dev stop frontend-dev game-dev
+
+pong-logs:
+	docker compose --profile dev logs -f frontend-dev game-dev
+
+pong-restart:
+	docker compose --profile dev restart frontend-dev game-dev
+
+
 # Dev
 dev: dev-up
 
 dev-up:
-	docker compose --profile dev up -d
+	docker compose --profile dev up
 
 dev-down:
 	docker compose --profile dev down
@@ -23,13 +37,13 @@ dev-logs:
 
 # Single dev
 frontend-dev:
-	docker compose --profile dev up -d frontend-dev
+	docker compose --profile dev up frontend-dev
 
 users-dev:
-	docker compose --profile dev up -d users-dev
+	docker compose --profile dev up users-dev
 
 game-dev:
-	docker compose --profile dev up -d game-dev
+	docker compose --profile dev up game-dev
 
 # Prod
 prod: prod-build prod-up

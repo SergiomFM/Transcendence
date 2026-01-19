@@ -2,6 +2,7 @@ import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { PongCamera } from "./pongCamera";
 import { Pong } from "./pong";
+import { sendReady, sendDash } from "./pongSocket";
 
 enum PLAYER_KEYS {
   UP,
@@ -87,15 +88,17 @@ export namespace Events {
   function waitingForStartEvents(key: any, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online) {
-        //Send to Backend Player1 is ready
-        //console.log("sent: ", keyStatus[key]);
+        // Send ready signal to server
+        sendReady(pong);
+        pong.player1.ready = true;
+        pong.GUI.textFadeOut("YOU_WON");
+        pong.GUI.textFadeOut("YOU_LOST");
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
         pong.GUI.toggleTextBlink(pong.scene, "START");
-        pong.GUI.textFadeOut("WELCOME");
-        pong.GUI.textFadeOut("ROUND_WON");
-        pong.GUI.textFadeOut("ROUND_LOST");
+        pong.GUI.textFadeOut("YOU_WON");
+        pong.GUI.textFadeOut("YOU_LOST");
         pong.GUI.textFadeOut("PLAYER_1_WIN");
         pong.GUI.textFadeOut("PLAYER_2_WIN");
       }
@@ -126,7 +129,13 @@ export namespace Events {
 
   function playerDashEvent(key: any, pong: Pong) {
     if (key == player1Keys[PLAYER_KEYS.DASH]) {
-      if (pong.player1.dashReady) pong.player1.dashActive = true;
+      if (pong.player1.dashReady) {
+        pong.player1.dashActive = true;
+        // Send dash to server if online
+        if (pong.online) {
+          sendDash(pong);
+        }
+      }
     }
     if (key == player2Keys[PLAYER_KEYS.DASH]) {
       if (pong.player2.dashReady) pong.player2.dashActive = true;
@@ -171,7 +180,23 @@ export namespace Events {
 
   // Assigning keys to each player
   export function assignKeys(pong: Pong) {
-    pong.player1.keys = player1Keys;
-    pong.player2.keys = player2Keys;
+    if (pong.online && pong.playerId) {
+      console.log(`[assignKeys] Online mode, playerId: ${pong.playerId}`);
+      if (pong.playerId === 1) {
+        // Player 1: use WASD to control player1 paddle
+        pong.player1.keys = player1Keys;
+        pong.player2.keys = []; // Don't control player2
+        console.log(`[assignKeys] Player 1: WASD controls player1`);
+      } else if (pong.playerId === 2) {
+        // Player 2: use WASD to control player2 paddle (more intuitive)
+        pong.player2.keys = player1Keys; // Use WASD for their paddle
+        pong.player1.keys = []; // Don't control player1
+        console.log(`[assignKeys] Player 2: WASD controls player2`);
+      }
+    } else {
+      pong.player1.keys = player1Keys;
+      pong.player2.keys = player2Keys;
+      console.log(`[assignKeys] Local mode or waiting for playerId`);
+    }
   }
 }

@@ -8,18 +8,22 @@
   },
   "scripts": {
     "test": "node --test test/**/*.test.js",
-    "start": "fastify start -l info app.js",
-    "dev": "fastify start -w -l info -a 0.0.0.0 app.js"
+    "start": "fastify start -l warn app.js",
+    "dev": "fastify start -w -l warn -a 0.0.0.0 app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fastify": "^5.0.0",
-    "fastify-plugin": "^5.0.0",
     "@fastify/autoload": "^6.0.0",
+    "@fastify/cors": "^10.0.0",
     "@fastify/sensible": "^6.0.0",
-    "fastify-cli": "^7.4.1"
+    "@fastify/websocket": "^11.2.0",
+    "@gltf-transform/core": "^4.3.0",
+    "@gltf-transform/extensions": "^4.3.0",
+    "fastify": "^5.0.0",
+    "fastify-cli": "^7.4.1",
+    "fastify-plugin": "^5.0.0"
   },
   "devDependencies": {}
 }

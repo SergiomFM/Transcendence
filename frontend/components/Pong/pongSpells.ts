@@ -22,6 +22,7 @@ import {
   diskExplosion,
   spellReadyVFX,
 } from "./pongVFX";
+import { sendSpell } from "./pongSocket";
 import {
   useSpellAnimation,
   OFFENSIVE_CASTING,
@@ -154,6 +155,13 @@ export abstract class Spell {
     light.diffuse.set(this.color.r, this.color.g, this.color.b);
   }
 
+  resetArenaColor() {
+    const defaultColor = new Color4(1, 1, 1, 1);
+    updateArena(this.pong.scene, defaultColor, this.pong.ball);
+    let light = this.pong.scene.getLightById("ball")!;
+    light.diffuse.set(1, 1, 1);
+  }
+
   // Function to monitor and animate the Power
   spellLoop(delta: number) {
     let elapsedTime = delta * 1000;
@@ -172,8 +180,7 @@ export abstract class Spell {
       }
     }
 
-    // Spell loop
-    if (this.active) {
+    if (this.active && !this.pong.online) {
       this.loopAddon(elapsedTime);
     }
   }
@@ -186,6 +193,7 @@ export abstract class Spell {
 // Mirrors the Ball angle
 export class BallAngleSwitch extends Spell {
   readonly cooldown = 3000;
+  readonly duration = 500;
   color = new Color4(1, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -201,13 +209,20 @@ export class BallAngleSwitch extends Spell {
 
   useSpell() {
     if (!this.ready) return;
-
+    if (this.pong.online) {
+      sendSpell(this.pong, "angleSwitch");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
     this.pong.ball.setAngle(Math.PI - this.pong.ball.angle);
   }
 
   loopAddon(elapsedTime: number) {
-    elapsedTime;
+    this.activeElapsed += elapsedTime;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+    }
   }
 }
 
@@ -232,7 +247,11 @@ class BallShot extends Spell {
 
   useSpell() {
     if (!this.ready) return;
-
+    if (this.pong.online) {
+      sendSpell(this.pong, "shot");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
     this.originalSpeed = this.pong.ball.speed;
     this.pong.ball.speed *= this.speedBoost;
@@ -272,7 +291,11 @@ class BallPortal extends Spell {
 
   useSpell() {
     if (!this.ready) return;
-
+    if (this.pong.online) {
+      sendSpell(this.pong, "portal");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
     this.lastXDir = Math.sign(this.pong.ball.cos);
     this.lastZDir = Math.sign(this.pong.ball.sin);
@@ -322,7 +345,11 @@ export class BallStop extends Spell {
 
   useSpell() {
     if (!this.ready) return;
-
+    if (this.pong.online) {
+      sendSpell(this.pong, "stop");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
     this.originalPosition = this.pong.ball.clone();
   }
@@ -342,6 +369,7 @@ export class BallStop extends Spell {
 // Makes the Ball go backwards
 class BallBack extends Spell {
   readonly cooldown = 4000;
+  readonly duration = 500;
   readonly color = new Color4(1, 1, 0, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -357,13 +385,20 @@ class BallBack extends Spell {
 
   useSpell() {
     if (!this.ready) return;
+    if (this.pong.online) {
+      sendSpell(this.pong, "back");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
     this.pong.ball.setAngle(this.pong.ball.angle + Math.PI);
   }
 
   loopAddon(elapsedTime: number) {
     this.activeElapsed += elapsedTime;
-    if (this.activeElapsed >= this.duration) this.active = false;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+    }
   }
 }
 
@@ -387,6 +422,11 @@ class BallIman extends Spell {
 
   useSpell() {
     if (!this.ready) return;
+    if (this.pong.online) {
+      sendSpell(this.pong, "iman");
+      this.activateSpell();
+      return;
+    }
     this.activateSpell();
   }
 

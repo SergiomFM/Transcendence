@@ -72,7 +72,7 @@ const WALL_EXPLOSION_VFX = {
   EMIT_RATE: 100,
   MIN_POWER: 1.8,
   MAX_POWER: 2.7,
-  PARTICLE_NUMBER: 200,
+  PARTICLE_NUMBER: 100,
 };
 
 // Walls
@@ -84,7 +84,7 @@ export const WALL_VFX = {
   MAX_SIZE: 0.01,
   MIN_TIME: 3,
   MAX_TIME: 4,
-  EMIT_RATE: 200,
+  EMIT_RATE: 100,
   MIN_POWER: 0.1,
   MAX_POWER: 0.15,
   HEIGHT: 0.5,

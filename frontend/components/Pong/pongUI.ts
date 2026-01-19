@@ -15,7 +15,7 @@ const WELCOME = [
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
+  "-40%", // Vertical deviation from center (vertical screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -35,9 +35,9 @@ const START = [
 ];
 
 // Round Won message
-const ROUND_WON = [
-  "ROUND_WON", // Name
-  "Round Won!", // Text
+const YOU_WON = [
+  "YOU_WON", // Name
+  "You Won!", // Text
   "white", // Color
   "20%", // Size (vertical screen %)
   "pongFont1", // Font
@@ -63,9 +63,9 @@ const PLAYER_1_WIN = [
 ];
 
 // Round Lost message
-const ROUND_LOST = [
-  "ROUND_LOST", // Name
-  "Round Lost!", // Text
+const YOU_LOST = [
+  "YOU_LOST", // Name
+  "You Lost!", // Text
   "white", // Color
   "20%", // Size (vertical screen %)
   "pongFont1", // Font
@@ -90,9 +90,122 @@ const PLAYER_2_WIN = [
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
+// Multiplayer: Player 1 label
+const PLAYER_1 = [
+  "PLAYER_1", // Name
+  "Player 1", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Player 2 label
+const PLAYER_2 = [
+  "PLAYER_2", // Name
+  "Player 2", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Waiting for opponent
+const WAITING = [
+  "WAITING", // Name
+  "Waiting for opponent...", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "0%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Game ready
+const READY = [
+  "READY", // Name
+  "Get Ready!", // Text
+  "white", // Color
+  "20%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Fight message
+const FIGHT = [
+  "FIGHT", // Name
+  "FIGHT!", // Text
+  "white", // Color
+  "20%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Opponent disconnected
+const OPPONENT_LEFT = [
+  "OPPONENT_LEFT", // Name
+  "Opponent Disconnected", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: You disconnected
+const DISCONNECTED = [
+  "DISCONNECTED", // Name
+  "Disconnected from Server", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Player 2 connected
+const PLAYER_2_CONNECTED = [
+  "PLAYER_2_CONNECTED", // Name
+  "Player 2 Connected", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
 class UIElement extends TextBlock {
   blinking = false;
   private lastUpdate = 0;
+  private fadeOutTimer?: NodeJS.Timeout;
 
   constructor() {
     super();
@@ -106,11 +219,28 @@ class UIElement extends TextBlock {
       this.isVisible = !this.isVisible;
     }
   };
+
+  // Clear any pending fade-out timer
+  clearFadeOutTimer() {
+    if (this.fadeOutTimer) {
+      clearTimeout(this.fadeOutTimer);
+      this.fadeOutTimer = undefined;
+    }
+  }
+
+  // Schedule automatic fade-out after duration
+  scheduleAutoFadeOut(duration: number) {
+    this.clearFadeOutTimer();
+    this.fadeOutTimer = setTimeout(() => {
+      animateAttribute(this, 0, "alpha", FADING_TIME, FPS);
+    }, duration);
+  }
 }
 
 export class GUI {
   GUI: AdvancedDynamicTexture;
   textBlocks: Map<string, UIElement>; // Text Blocks Map
+  online: boolean = false;
 
   constructor() {
     this.GUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -118,10 +248,18 @@ export class GUI {
 
     this.createNewText(WELCOME);
     this.createNewText(START);
-    this.createNewText(ROUND_WON);
-    this.createNewText(ROUND_LOST);
+    this.createNewText(YOU_WON);
+    this.createNewText(YOU_LOST);
     this.createNewText(PLAYER_1_WIN);
     this.createNewText(PLAYER_2_WIN);
+    this.createNewText(PLAYER_1);
+    this.createNewText(PLAYER_2);
+    this.createNewText(WAITING);
+    this.createNewText(READY);
+    this.createNewText(FIGHT);
+    this.createNewText(OPPONENT_LEFT);
+    this.createNewText(DISCONNECTED);
+    this.createNewText(PLAYER_2_CONNECTED);
   }
 
   createNewText(attributes: any) {
@@ -150,6 +288,7 @@ export class GUI {
       text.isVisible = false;
       text.blinking = false;
       text.alpha = 0;
+      text.clearFadeOutTimer();
     });
   }
 
@@ -161,26 +300,48 @@ export class GUI {
   }
 
   // Initial Texts Configuration
-  setUpTextBlocks(scene: Scene) {
+  setUpTextBlocks(scene: Scene, online: boolean = false) {
     this.textBlocks.get("START")!.alpha = 1;
-    this.toggleTextBlink(scene, "START");
-
-    this.textFadeIn("WELCOME");
+    this.online = online;
+    if (!online) {
+      this.toggleTextBlink(scene, "START");
+    }
+    this.textFadeIn("WELCOME", 2000);
   }
 
-  textFadeIn(name: string) {
+  textFadeIn(name: string, duration?: number) {
     let text = this.textBlocks.get(name);
-    if (!text || text.alpha) return;
+    if (!text) return;
+
+    text.clearFadeOutTimer();
+
+    if (text.alpha >= 1) {
+      if (duration) {
+        text.scheduleAutoFadeOut(duration);
+      }
+      return;
+    }
 
     text.isVisible = true;
     animateAttribute(text, 1, "alpha", FADING_TIME, FPS);
+
+    if (duration) {
+      text.scheduleAutoFadeOut(duration + FADING_TIME);
+    }
   }
 
   textFadeOut(name: string) {
     let text = this.textBlocks.get(name);
-    if (!text || !text.alpha) return;
+    if (!text) return;
+
+    text.clearFadeOutTimer();
+    if (text.alpha <= 0) return;
 
     animateAttribute(text, 0, "alpha", FADING_TIME, FPS);
+    if (name === "READY") {
+      text.isVisible = false;
+      text.alpha = 0;
+    }
   }
 
   // Blink a Text Block
@@ -189,9 +350,11 @@ export class GUI {
     if (!text) return;
 
     text.blinking = !text.blinking;
-    if (text.blinking) scene.registerBeforeRender(text.onBeforeRender);
-    else {
+    if (text.blinking) {
+      scene.registerBeforeRender(text.onBeforeRender);
+    } else {
       text.isVisible = false;
+      text.alpha = 0;
       scene.unregisterBeforeRender(text.onBeforeRender);
     }
   }
