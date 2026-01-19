@@ -1,0 +1,9 @@
+via CHATGPT:
+
+Data			|	Stored how			|	Why				|
+
+Passwords		|	hashed (argon2)		|	authentication	|
+2FA secrets		|	encrypted			|	shared secret	|
+Emails			|	plaintext			|	lookup & contact|
+Usernames		|	plaintext			|	public identity	|
+Google IDs		|	plaintext			|	external mapping|
