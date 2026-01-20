@@ -30,6 +30,11 @@ class Physics {
     // Wall collision (X-axis)
     if (Math.abs(newX) > this.heightLimit) {
       const sign = newX > 0 ? 1 : -1;
+      
+      // Calculate the actual collision point Z position
+      const t = (this.heightLimit * sign - oldX) / (newX - oldX);
+      const collisionZ = oldZ + (newZ - oldZ) * t;
+      
       ball.x = this.heightLimit * sign - (newX - this.heightLimit * sign);
       this.setBallAngle(Math.PI - ball.angle);
 
@@ -39,7 +44,7 @@ class Physics {
         position: {
           x: this.heightLimit * sign,
           y: ball.y,
-          z: (newZ + oldZ) * 0.5,
+          z: collisionZ,
         },
         speed: ball.speed,
         angle: ball.angle,
@@ -77,14 +82,20 @@ class Physics {
 
     if (!atPaddleZ) return null;
 
+    // Calculate the actual collision point X position when ball crossed paddle.z
+    // Using the ball's angle: deltaX / deltaZ = cos / sin
+    const deltaZ = ball.z - paddle.z;
+    const deltaX = deltaZ * (ball.cos / ball.sin);
+    const collisionX = ball.x - deltaX;
+
     // Check if ball is within paddle width
     if (
-      ball.x <= paddle.x + paddle.size &&
-      ball.x >= paddle.x - paddle.size &&
+      collisionX <= paddle.x + paddle.size &&
+      collisionX >= paddle.x - paddle.size &&
       !paddle.failed
     ) {
       // Calculate bounce angle based on hit position
-      const hitOffset = (ball.x - paddle.x) / paddle.size;
+      const hitOffset = (collisionX - paddle.x) / paddle.size;
       const deviation = Math.max(-1, Math.min(1, hitOffset));
       const bounceAngle =
         90 - deviation * GAME_CONSTANTS.PADDLE_MAX_DEVIATION_ANGLE;
@@ -100,7 +111,7 @@ class Physics {
       return {
         type: "PADDLE_COLLISION",
         playerId: paddle.id,
-        position: { x: ball.x, y: ball.y, z: paddle.z },
+        position: { x: collisionX, y: ball.y, z: paddle.z },
         speed: ball.speed,
         angle: ball.angle,
       };
