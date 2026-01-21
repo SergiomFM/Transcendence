@@ -7,7 +7,8 @@ place this in a .env file:
 
 GOOGLE_CLIENT_ID=//501227513152-ikjj8arfo462l0iqon88n0mo2igqt37a.apps.googleusercontent.com 
 
-GOOGLE_CLIENT_SERRET=//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
+GOOGLE_CLIENT_SERRET=//GOCSPX-_
+_KcIAxEZUDsivBlJ7VpjWy5D0Z2
 
 switch SERRET with SECRET
 
