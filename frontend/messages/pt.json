@@ -1,0 +1,34 @@
+{
+  "common": {
+    "login": "Entrar",
+    "signup": "Registar",
+    "logout": "Sair",
+    "email": "Email",
+    "password": "Palavra-passe",
+    "confirmPassword": "Confirmar Palavra-passe",
+    "username": "Nome de utilizador",
+    "submit": "Submeter",
+    "loading": "A carregar...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "auth": {
+    "loginTitle": "Bem-vindo de Volta",
+    "loginSubtitle": "Entra na tua conta",
+    "signupTitle": "Criar Conta",
+    "signupSubtitle": "Regista uma nova conta",
+    "noAccount": "Não tens uma conta?",
+    "hasAccount": "Já tens uma conta?",
+    "invalidCredentials": "Email ou palavra-passe inválidos",
+    "emailRequired": "Email é obrigatório",
+    "passwordRequired": "Palavra-passe é obrigatória",
+    "usernameRequired": "Nome de utilizador é obrigatório",
+    "passwordMismatch": "As palavras-passe não coincidem",
+    "signupSuccess": "Conta criada com sucesso",
+    "loginSuccess": "Sessão iniciada com sucesso"
+  },
+  "navbar": {
+    "home": "Início",
+    "play": "Jogar"
+  }
+}
