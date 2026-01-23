@@ -60,6 +60,8 @@ function onlineGameLogic(pong: Pong, delta: number) {
     pong.serverGameStateApplied = true;
   }
 
+  // passar variaveis necessarias para a visualizacao do cooldown do spell (cooldownElapsed)
+  // depois apgar as quatro funcoes abaixo
   pong.player1.counterSpell.spellLoop(delta);
   pong.player2.counterSpell.spellLoop(delta);
   pong.player1.offensiveSpell.spellLoop(delta);
@@ -103,14 +105,12 @@ function applyServerState(pong: Pong, serverState: any) {
   if (pong.playerId === 2) {
     if (serverState.player2) {
       pong.player1.x = serverState.player2.x;
-      pong.player1.currSpeed = serverState.player2.currSpeed;
       pong.player1.ready = serverState.player2.ready;
       pong.player1.failed = serverState.player2.failed;
     }
 
     if (serverState.player1) {
       pong.player2.x = serverState.player1.x;
-      pong.player2.currSpeed = serverState.player1.currSpeed;
       pong.player2.ready = serverState.player1.ready;
       pong.player2.failed = serverState.player1.failed;
     }
@@ -300,11 +300,11 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.offensiveSpell.resetSpell();
 
   // Reset arena color to white
-  const defaultColor = new Color4(1, 1, 1, 1);
+  const defaultColor = new Color4(0, 0, 0, 0);
   updateArena(pong.scene, defaultColor, ball);
   let light = pong.scene.getLightById("ball")!;
   if (light) {
-    light.diffuse.set(1, 1, 1);
+    light.diffuse.set(0, 0, 0);
   }
 
   pong.running = false;

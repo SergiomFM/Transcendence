@@ -1,6 +1,6 @@
 import { Pong } from "./pong";
 import { splashEffect, COLLISION_VFX } from "./pongVFX";
-import { Vector3 } from "@babylonjs/core";
+import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
 
 export function connectToGameServer(
@@ -87,6 +87,10 @@ function handleServerMessage(pong: Pong, message: any) {
 
     case "SPELL_ACTIVATED":
       handleSpellActivation(pong, message);
+      break;
+
+    case "SPELL_SWITCHED":
+      handleSpellSwitched(pong, message);
       break;
 
     case "PLAYER_DISCONNECTED":
@@ -181,11 +185,11 @@ function handleCollision(pong: Pong, message: any) {
   const { position, speed, angle, type } = message.collision;
 
   let splashZ = position.z;
-  let splashAngle = angle;
+  let splashAngle = -angle;
 
   if (pong.playerId === 2) {
     splashZ = -position.z;
-    splashAngle = -angle;
+    splashAngle = angle;
   }
 
   splashEffect(
@@ -245,6 +249,37 @@ function handleSpellActivation(pong: Pong, message: any) {
   }
 }
 
+function handleSpellSwitched(pong: Pong, message: any) {
+  console.log("Spell switched:", message);
+
+  // Update the opponent's spell color
+  let opponent;
+  if (message.playerId === pong.playerId) {
+    opponent = pong.player2; // I switched, update opponent
+  } else {
+    opponent = pong.player1; // Opponent switched, update their view
+  }
+
+  const color = new Color4(
+    message.spellColor.r,
+    message.spellColor.g,
+    message.spellColor.b,
+    message.spellColor.a,
+  );
+
+  if (message.isOffensive) {
+    if (opponent.offensiveSpell) {
+      opponent.offensiveSpell.color = color;
+      opponent.offensiveSpell.setSpellColor();
+    }
+  } else {
+    if (opponent.counterSpell) {
+      opponent.counterSpell.color = color;
+      opponent.counterSpell.setSpellColor();
+    }
+  }
+}
+
 function handlePlayerDisconnected(pong: Pong, message: any) {
   console.log("Player disconnected:", message.message);
 
@@ -281,6 +316,17 @@ export function sendSpell(pong: Pong, spellType: string) {
       JSON.stringify({
         type: "SPELL",
         spellType: spellType,
+      }),
+    );
+  }
+}
+
+export function sendSwitchSpell(pong: Pong, spellType: string) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "SWITCH_SPELL",
+        spellKey: spellType,
       }),
     );
   }

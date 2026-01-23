@@ -1,18 +1,33 @@
 // Game state manager for Pong multiplayer
-const { GAME_CONSTANTS, degreesToRadians } = require("./constants");
+const { GAME_CONSTANTS, degreesToRadians, spellTypes } = require("./constants");
 const Physics = require("./physics");
 const { EventEmitter } = require("./spells");
 
 class GameRoom {
   constructor(roomId) {
     this.roomId = roomId;
-    this.players = new Map(); // WebSocket -> player data
-    this.maxPlayers = 2;
     this.createdAt = Date.now();
     this.running = false;
     this.loaded = false;
 
-    // Game state
+    this.initializeBall();
+
+    this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
+    this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
+
+    this.physics = new Physics(this);
+    this.events = new EventEmitter();
+
+    // Event to handle spell related player Inputs
+    this.createSpellEvent();
+
+    // Game loop variables
+    this.lastUpdate = Date.now();
+    this.lastStateUpdate = Date.now();
+    this.gameLoopTimeout = null;
+  }
+
+  initializeBall() {
     this.ball = {
       x: 0,
       y: GAME_CONSTANTS.BALL_Y,
@@ -24,44 +39,51 @@ class GameRoom {
       radius: GAME_CONSTANTS.BALL_RADIUS,
       color: { r: 1, g: 1, b: 1, a: 1 },
     };
+  }
 
-    this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
-    this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
-
-    this.physics = new Physics(this);
-    this.events = new EventEmitter();
-
-    this.events.on("spell", (spell, gamePlayer) => {
-      // Assign a color for each spell
-      const spellColors = {
-        angleSwitch: { r: 1, g: 0, b: 1, a: 1 }, // magenta
-        shot: { r: 0, g: 1, b: 0, a: 1 }, // green
-        portal: { r: 1, g: 0, b: 0, a: 1 }, // red
-        stop: { r: 0, g: 0, b: 1, a: 1 }, // blue
-        back: { r: 1, g: 1, b: 0, a: 1 }, // yellow
-        iman: { r: 1, g: 0, b: 1, a: 1 }, // magenta
-      };
-      if (spellColors[spell]) {
-        this.ball.color = spellColors[spell];
+  broadcastSpellActivated({ playerId, spellType, spellColor }) {
+    const message = JSON.stringify({
+      type: "SPELL_ACTIVATED",
+      playerId,
+      spellType,
+      spellColor,
+    });
+    this.players.forEach((player) => {
+      try {
+        player.connection.send(message);
+      } catch (error) {
+        console.error("Error sending SPELL_ACTIVATED to player:", error);
       }
+    });
+  }
+
+  createSpellEvent() {
+    this.events.on("spell", (spell, gamePlayer) => {
+      if (spellTypes[spell]) {
+        this.ball.color = spellTypes[spell];
+      }
+
+      // Cast Spells in the backend
       switch (spell) {
-        case "angleSwitch":
+        case "ballAngleSwitch":
           this._angleActive = true;
           this.physics.setBallAngle(Math.PI - this.ball.angle);
           break;
-        case "shot":
+        case "ballShot":
           this._shotActive = true;
           this.ball.speed *= 2;
-          if (this.ball.angle > 0 && this.ball.angle < Math.PI)
+          if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
             this.physics.setBallAngle(degreesToRadians(90));
-          else this.physics.setBallAngle(degreesToRadians(270));
+          } else {
+            this.physics.setBallAngle(degreesToRadians(270));
+          }
           break;
-        case "portal":
+        case "ballPortal":
           this._portalActive = true;
           this._portalLastXDir = Math.sign(this.ball.cos);
           this._portalLastZDir = Math.sign(this.ball.sin);
           break;
-        case "stop":
+        case "ballStop":
           this._stopActive = true;
           this._stopOriginalPosition = {
             x: this.ball.x,
@@ -69,43 +91,25 @@ class GameRoom {
             z: this.ball.z,
           };
           break;
-        case "back":
+        case "ballBack":
           this._backActive = true;
           this.physics.setBallAngle(this.ball.angle + Math.PI);
           break;
-        case "iman":
+        case "ballIman":
           this._imanActive = true;
           this._imanPlayer = gamePlayer;
           break;
         default:
           break;
       }
+
+      // Update all clients about the spell activation
       this.broadcastSpellActivated({
         playerId: gamePlayer.id,
         spellType: spell,
+        spellColor: spellTypes[spell],
       });
     });
-    GameRoom.prototype.broadcastSpellActivated = function ({
-      playerId,
-      spellType,
-    }) {
-      const message = JSON.stringify({
-        type: "SPELL_ACTIVATED",
-        playerId,
-        spellType,
-      });
-      this.players.forEach((player) => {
-        try {
-          player.connection.send(message);
-        } catch (error) {
-          console.error("Error sending SPELL_ACTIVATED to player:", error);
-        }
-      });
-    };
-    // Game loop
-    this.lastUpdate = Date.now();
-    this.lastStateUpdate = Date.now();
-    this.gameLoopTimeout = null;
   }
 
   createPlayer(id, zPosition) {
@@ -175,27 +179,66 @@ class GameRoom {
   }
 
   handlePlayerInput(connection, input) {
-    const player = this.players.get(connection);
+    const player = connection.playerId === 1 ? this.player1 : this.player2;
     if (!player) return;
 
-    const gamePlayer = player.id === 1 ? this.player1 : this.player2;
-
     // Update input direction
-    gamePlayer.inputDirection = input.direction || 0;
+    player.inputDirection = input.direction || 0;
 
     // Handle ready state
     if (input.ready !== undefined) {
-      gamePlayer.ready = input.ready;
+      player.ready = input.ready;
     }
 
     // Handle dash activation
-    if (input.dash && gamePlayer.dashReady) {
-      gamePlayer.dashActive = true;
+    if (input.dash && player.dashReady) {
+      player.dashActive = true;
     }
 
     // Handle spell activation
     if (input.spell) {
-      this.events.emit("spell", input.spell, gamePlayer);
+      this.events.emit("spell", input.spell, player);
+    }
+  }
+
+  updatePlayerSpell(playerId, spellType) {
+    const color = Object.values(spellType).slice(0, 3);
+    if (playerId === this.player1.id) {
+      if (spellType.offensive) {
+        // Update opponent's offensive spell color
+        this.player2.offensiveSpell.color = color;
+      } else {
+        // Update opponent's defensive spell color
+        this.player2.defensiveSpell.color = color;
+      }
+    } else if (playerId === this.player2.id) {
+      if (spellType.offensive) {
+        // Update opponent's offensive spell color
+        this.player1.offensiveSpell.color = color;
+      } else {
+        // Update opponent's defensive spell color
+        this.player1.defensiveSpell.color = color;
+      }
+    }
+
+    // Broadcast the spell change to all players
+    this.broadcastSpellSwitched(playerId, spellType);
+  }
+
+  updatePlayerSpell(playerId, spellKey) {
+    const color = Object.values(spellKey).slice(0, 3);
+    if (playerId === this.player1.id) {
+      if (spellKey.offensive) {
+        this.player2.offensiveSpell.color = color;
+      } else {
+        this.player2.defensiveSpell.color = color;
+      }
+    } else if (playerId === this.player2.id) {
+      if (spellKey.offensive) {
+        this.player1.offensiveSpell.color = color;
+      } else {
+        this.player1.defensiveSpell.color = color;
+      }
     }
   }
 
@@ -229,7 +272,7 @@ class GameRoom {
       if (this._angleDuration >= 500) {
         this._angleActive = false;
         this._angleDuration = 0;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
     // SPELL: BallShot (speed boost with duration)
@@ -238,7 +281,7 @@ class GameRoom {
       if (this._shotDuration >= 500) {
         this._shotActive = false;
         this._shotDuration = 0;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -248,7 +291,7 @@ class GameRoom {
       if (this._backDuration >= 500) {
         this._backActive = false;
         this._backDuration = 0;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -263,7 +306,7 @@ class GameRoom {
         // 2s duration
         this._stopActive = false;
         this._stopDuration = 0;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 }; // Reset color to transparent
       }
     }
 
@@ -288,7 +331,7 @@ class GameRoom {
         this._imanActive = false;
         this._imanDuration = 0;
         this._imanPlayer = null;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -309,7 +352,7 @@ class GameRoom {
         this._portalActive = false;
         this._portalDuration = 0;
         this._portalPlayer = null;
-        this.ball.color = { r: 1, g: 1, b: 1, a: 1 }; // Reset color to white
+        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 

@@ -49,13 +49,13 @@ class Physics {
     // Paddle collision check
     const player1Collision = this.checkPaddleCollision(
       this.gameState.player1,
-      -1
+      -1,
     );
     if (player1Collision) return player1Collision;
 
     const player2Collision = this.checkPaddleCollision(
       this.gameState.player2,
-      1
+      1,
     );
     if (player2Collision) return player2Collision;
 
@@ -149,7 +149,7 @@ class Physics {
     ball.x = 0;
     ball.z = 0;
     ball.speed = GAME_CONSTANTS.BALL_INITIAL_SPEED;
-    ball.color = { r: 1, g: 1, b: 1, a: 1 };
+    ball.color = { r: 0, g: 0, b: 0, a: 0 };
 
     // Reset players
     p1.x = 0;

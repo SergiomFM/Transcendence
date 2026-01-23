@@ -1,5 +1,6 @@
 // WebSocket route for Pong multiplayer game
 const { GameRoomManager } = require("../../shared/gameState");
+const { spellTypes } = require("../../shared/constants");
 
 // Global room manager
 const roomManager = new GameRoomManager();
@@ -21,7 +22,7 @@ module.exports = async function (fastify, opts) {
             // Find or create a room for this player
             const result = roomManager.findOrCreateRoom(
               connection,
-              data.playerData || {}
+              data.playerData || {},
             );
             currentRoom = result.room;
             playerId = result.playerId;
@@ -31,7 +32,7 @@ module.exports = async function (fastify, opts) {
                 : `Player${playerId}`;
 
             console.log(
-              `Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`
+              `Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`,
             );
 
             // Send confirmation to client
@@ -42,7 +43,7 @@ module.exports = async function (fastify, opts) {
                 roomId: currentRoom.roomId,
                 playerCount: currentRoom.players.size,
                 maxPlayers: currentRoom.maxPlayers,
-              })
+              }),
             );
 
             // Notify when room is full and game can start
@@ -56,7 +57,7 @@ module.exports = async function (fastify, opts) {
                 JSON.stringify({
                   type: "WAITING",
                   message: "Waiting for opponent...",
-                })
+                }),
               );
             }
             break;
@@ -100,6 +101,14 @@ module.exports = async function (fastify, opts) {
             }
             break;
 
+          case "SWITCH_SPELL":
+            if (currentRoom) {
+              currentRoom.updatePlayerSpell(
+                connection.playerId,
+                spellTypes[data.spellKey],
+              );
+            }
+
           default:
             console.log("Unknown message type:", data.type);
         }
@@ -109,7 +118,7 @@ module.exports = async function (fastify, opts) {
           JSON.stringify({
             type: "ERROR",
             message: "Invalid message format",
-          })
+          }),
         );
       }
     });
@@ -127,7 +136,7 @@ module.exports = async function (fastify, opts) {
       console.log(
         `Disconnected: id=${playerId || "?"}, name=${playerName || "?"}, room=${
           currentRoom ? currentRoom.roomId : "?"
-        }`
+        }`,
       );
 
       if (currentRoom) {
@@ -154,7 +163,7 @@ module.exports = async function (fastify, opts) {
       activeRooms: roomManager.rooms.size,
       totalPlayers: Array.from(roomManager.rooms.values()).reduce(
         (sum, room) => sum + room.players.size,
-        0
+        0,
       ),
       rooms: Array.from(roomManager.rooms.values()).map((room) => ({
         id: room.roomId,

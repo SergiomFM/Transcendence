@@ -61,7 +61,7 @@ export namespace Events {
   export function keyPressEvent(
     pong: Pong,
     camera: PongCamera,
-    event: ActionEvent
+    event: ActionEvent,
   ) {
     let key = event.sourceEvent.key;
     if (key !== "Shift") {
@@ -166,15 +166,15 @@ export namespace Events {
     // Registering Key Pressing
     pong.scene.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnKeyDownTrigger, (event) =>
-        keyPressEvent(pong, pong.camera, event)
-      )
+        keyPressEvent(pong, pong.camera, event),
+      ),
     );
 
     // Registering Key Releasing
     pong.scene.actionManager.registerAction(
       new ExecuteCodeAction(ActionManager.OnKeyUpTrigger, (event) =>
-        keyReleaseEvent(pong, event)
-      )
+        keyReleaseEvent(pong, event),
+      ),
     );
   }
 
