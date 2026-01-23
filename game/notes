@@ -1,0 +1,14 @@
+FRONTEND
+    sends
+        SWITCH_SPELL
+            offensive : true / false
+        USE_SPELL
+            offensive : true / false
+
+    handles
+        SPELL_SWITCHED
+            enemy: true / false
+            offensive : true / false   
+        SPELL_USED
+            enemy: true / false
+            offensive : true / false

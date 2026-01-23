@@ -92,7 +92,7 @@ module.exports = async function (fastify, opts) {
             }
             break;
 
-          case "SPELL":
+          case "USE_SPELL":
             // Handle spell activation
             if (currentRoom) {
               currentRoom.handlePlayerInput(connection, {
@@ -105,7 +105,7 @@ module.exports = async function (fastify, opts) {
             if (currentRoom) {
               currentRoom.updatePlayerSpell(
                 connection.playerId,
-                spellTypes[data.spellKey],
+                spellTypes[data.spellType],
               );
             }
 

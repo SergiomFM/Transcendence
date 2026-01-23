@@ -1,8 +1,9 @@
 import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { PongCamera } from "./pongCamera";
-import { Pong } from "./pong";
-import { sendReady, sendDash } from "./pongSocket";
+import { Ball, Pong } from "./pong";
+import { sendReady, sendDash, sendSwitchSpell, sendUseSpell } from "./pongSocket";
+import { send } from "process";
 
 enum PLAYER_KEYS {
   UP,
@@ -70,6 +71,7 @@ export namespace Events {
     if (key in keyStatus && keyStatus[key] != true) {
       keyStatus[key] = true;
       if (pong.online) {
+        
         //Send to Backend Info - TODO
         //console.log("sent: ", keyStatus[key]);
       }
@@ -77,13 +79,17 @@ export namespace Events {
       // Changes the camera perspective and moves scene elements
       camera.switchCameraPOV();
       switchPlayerHandsPosition(pong, camera.topView);
-    } else if (pong.loaded && !pong.running) waitingForStartEvents(key, pong);
+    } else if (pong.loaded && !pong.running) {
+      waitingForStartEvents(key, pong);
+    }
 
-    playerSpellsEvent(key, pong);
+    playerUseSpellEvent(key, pong);
     playerDashEvent(key, pong);
 
     console.log(key);
   }
+
+
 
   function waitingForStartEvents(key: any, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
@@ -97,34 +103,45 @@ export namespace Events {
         pong.player1.ready = true;
         pong.player2.ready = true;
         pong.GUI.toggleTextBlink(pong.scene, "START");
-        pong.GUI.textFadeOut("YOU_WON");
-        pong.GUI.textFadeOut("YOU_LOST");
         pong.GUI.textFadeOut("PLAYER_1_WIN");
         pong.GUI.textFadeOut("PLAYER_2_WIN");
       }
-    } else playerSwitchSpellEvent(key, pong);
+    } else {
+      playerSwitchSpellEvent(key, pong);
+    }
   }
 
   function playerSwitchSpellEvent(key: any, pong: Pong) {
-    if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL])
-      pong.player1.counterSpell.switchSpell();
-    else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
-      pong.player1.offensiveSpell.switchSpell();
-    if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL])
-      pong.player2.counterSpell.switchSpell();
-    else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
-      pong.player2.offensiveSpell.switchSpell();
+    if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
+      pong.online ? sendSwitchSpell(pong, false) : pong.player1.counterSpell.switchSpell();
+    } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
+      pong.online ? sendSwitchSpell(pong, true) : pong.player1.offensiveSpell.switchSpell();
+    }
+
+    // Dont check for player 2 inputs if the game is online
+    if (!pong.online) {
+      if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL]) {
+          pong.player2.counterSpell.switchSpell();
+      }
+      else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
+          pong.player2.offensiveSpell.switchSpell();
+      }
+    }
   }
 
-  function playerSpellsEvent(key: any, pong: Pong) {
-    if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL])
-      pong.player1.counterSpell.useSpell();
-    else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
-      pong.player1.offensiveSpell.useSpell();
-    if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL])
-      pong.player2.counterSpell.useSpell();
-    else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
-      pong.player2.offensiveSpell.useSpell();
+  function playerUseSpellEvent(key: any, pong: Pong) {
+    if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
+      pong.online ? sendUseSpell(pong, false) : pong.player1.counterSpell.useSpell();
+    } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
+      pong.online ? sendUseSpell(pong, true) : pong.player1.offensiveSpell.useSpell();
+    }
+
+    if (!pong.online) {
+      if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL])
+        pong.player2.counterSpell.useSpell();
+      else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
+        pong.player2.offensiveSpell.useSpell();
+    }
   }
 
   function playerDashEvent(key: any, pong: Pong) {

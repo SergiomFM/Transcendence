@@ -2,6 +2,7 @@ import { Pong } from "./pong";
 import { splashEffect, COLLISION_VFX } from "./pongVFX";
 import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
+import { GENERATE_SPELLS } from "./pongSpells";
 
 export function connectToGameServer(
   pong: Pong,
@@ -85,8 +86,8 @@ function handleServerMessage(pong: Pong, message: any) {
       handleScore(pong, message);
       break;
 
-    case "SPELL_ACTIVATED":
-      handleSpellActivation(pong, message);
+    case "SPELL_USED":
+      handleSpellUsed(pong, message);
       break;
 
     case "SPELL_SWITCHED":
@@ -216,70 +217,6 @@ function handleScore(pong: Pong, message: any) {
   }
 }
 
-function handleSpellActivation(pong: Pong, message: any) {
-  console.log("Spell activated:", message);
-
-  let player;
-  if (message.playerId === pong.playerId) {
-    player = pong.player1; // me
-  } else {
-    player = pong.player2; // opponent
-  }
-
-  // Map spellType to the correct spell instance
-  // Offensive spells (right hand)
-  if (["angleSwitch", "shot", "portal"].includes(message.spellType)) {
-    if (
-      player.offensiveSpell &&
-      typeof player.offensiveSpell.activateSpell === "function"
-    ) {
-      player.offensiveSpell.activateSpell();
-    }
-  }
-  // Counter spells (left hand)
-  else if (["stop", "back", "iman"].includes(message.spellType)) {
-    if (
-      player.counterSpell &&
-      typeof player.counterSpell.activateSpell === "function"
-    ) {
-      player.counterSpell.activateSpell();
-    }
-  } else {
-    console.warn("Unknown spellType in SPELL_ACTIVATED", message.spellType);
-  }
-}
-
-function handleSpellSwitched(pong: Pong, message: any) {
-  console.log("Spell switched:", message);
-
-  // Update the opponent's spell color
-  let opponent;
-  if (message.playerId === pong.playerId) {
-    opponent = pong.player2; // I switched, update opponent
-  } else {
-    opponent = pong.player1; // Opponent switched, update their view
-  }
-
-  const color = new Color4(
-    message.spellColor.r,
-    message.spellColor.g,
-    message.spellColor.b,
-    message.spellColor.a,
-  );
-
-  if (message.isOffensive) {
-    if (opponent.offensiveSpell) {
-      opponent.offensiveSpell.color = color;
-      opponent.offensiveSpell.setSpellColor();
-    }
-  } else {
-    if (opponent.counterSpell) {
-      opponent.counterSpell.color = color;
-      opponent.counterSpell.setSpellColor();
-    }
-  }
-}
-
 function handlePlayerDisconnected(pong: Pong, message: any) {
   console.log("Player disconnected:", message.message);
 
@@ -310,32 +247,60 @@ export function sendDash(pong: Pong) {
   }
 }
 
-export function sendSpell(pong: Pong, spellType: string) {
-  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
-    pong.socket.send(
-      JSON.stringify({
-        type: "SPELL",
-        spellType: spellType,
-      }),
-    );
-  }
-}
-
-export function sendSwitchSpell(pong: Pong, spellType: string) {
-  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
-    pong.socket.send(
-      JSON.stringify({
-        type: "SWITCH_SPELL",
-        spellKey: spellType,
-      }),
-    );
-  }
-}
-
 export function disconnectFromServer(pong: Pong) {
   if (pong.socket) {
     pong.socket.close();
     pong.socket = undefined;
     pong.online = false;
+  }
+}
+
+
+// REVISED FUNCTIONS BELOW
+
+function handleSpellUsed(pong: Pong, message: any) {
+  console.log("Spell used:", message);
+
+  let player;
+  message.enemy ? player = pong.player2 : player = pong.player1;
+
+  let spellHand;
+  message.offensive ? spellHand = player.offensiveSpell : spellHand = player.counterSpell;
+
+  spellHand.activateSpell();
+}
+
+function handleSpellSwitched(pong: Pong, message: any) {
+  console.log("Spell switched:", message);
+
+  let player;
+  message.enemy ? player = pong.player2 : player = pong.player1;
+
+  let spellHand;
+  message.offensive ? spellHand = player.offensiveSpell : spellHand = player.counterSpell;
+
+  const SpellConstructor = GENERATE_SPELLS[message.spellType as keyof typeof GENERATE_SPELLS];
+  spellHand = new SpellConstructor(pong, player, spellHand.name);
+}
+
+export function sendUseSpell(pong: Pong, offensive: boolean) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "USE_SPELL",
+        offensive: offensive
+      }),
+    );
+  }
+}
+
+export function sendSwitchSpell(pong: Pong, offensive: boolean) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "SWITCH_SPELL",
+        offensive: offensive
+      }),
+    );
   }
 }

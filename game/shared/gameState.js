@@ -43,7 +43,7 @@ class GameRoom {
 
   broadcastSpellActivated({ playerId, spellType, spellColor }) {
     const message = JSON.stringify({
-      type: "SPELL_ACTIVATED",
+      type: "SPELL_USED",
       playerId,
       spellType,
       spellColor,
@@ -52,7 +52,7 @@ class GameRoom {
       try {
         player.connection.send(message);
       } catch (error) {
-        console.error("Error sending SPELL_ACTIVATED to player:", error);
+        console.error("Error sending SPELL_USED to player:", error);
       }
     });
   }
