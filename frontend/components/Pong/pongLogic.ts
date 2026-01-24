@@ -3,13 +3,6 @@ import { Events } from "./pongEvents";
 import { splashEffect, COLLISION_VFX, updateArena } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
 
-enum key {
-  UP,
-  LEFT,
-  DOWN,
-  RIGHT,
-}
-
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
     onlineGameLogic(pong, delta);
@@ -30,8 +23,8 @@ function localGameLogic(pong: Pong, delta: number) {
     }
   }
 
-  movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
-  movePadle(pong, delta, getPlayerDirection(pong.player1), pong.player1);
+  movePadle(pong, delta, pong.player2);
+  movePadle(pong, delta, pong.player1);
   moveBall(pong, delta, pong.ball);
 
   pong.player1.counterSpell.spellLoop(delta);
@@ -41,31 +34,10 @@ function localGameLogic(pong: Pong, delta: number) {
 }
 
 function onlineGameLogic(pong: Pong, delta: number) {
-  const localPlayer = pong.playerId === 1 ? pong.player1 : pong.player2;
-  const playerDirection = getPlayerDirection(localPlayer);
-
-  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
-    pong.socket.send(
-      JSON.stringify({
-        type: "INPUT",
-        input: {
-          direction: playerDirection,
-        },
-      }),
-    );
-  }
-
   if (pong.serverGameState && !pong.serverGameStateApplied) {
     applyServerState(pong, pong.serverGameState);
     pong.serverGameStateApplied = true;
   }
-
-  // passar variaveis necessarias para a visualizacao do cooldown do spell (cooldownElapsed)
-  // depois apgar as quatro funcoes abaixo
-  pong.player1.counterSpell.spellLoop(delta);
-  pong.player2.counterSpell.spellLoop(delta);
-  pong.player1.offensiveSpell.spellLoop(delta);
-  pong.player2.offensiveSpell.spellLoop(delta);
 }
 
 function applyServerState(pong: Pong, serverState: any) {
@@ -136,22 +108,6 @@ function applyServerState(pong: Pong, serverState: any) {
   }
 }
 
-// Detecting the player inputs
-function getPlayerDirection(player: Player) {
-  if (
-    Events.keyStatus[player.keys[key.DOWN]] ||
-    Events.keyStatus[player.keys[key.RIGHT]]
-  )
-    return 1;
-  if (
-    Events.keyStatus[player.keys[key.UP]] ||
-    Events.keyStatus[player.keys[key.LEFT]]
-  )
-    return -1;
-
-  return 0;
-}
-
 // Paddle collision check
 function paddleCollision(pong: Pong, paddle: Player, signal: number) {
   let ball = pong.ball;
@@ -186,24 +142,24 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
 function movePadle(
   pong: Pong,
   delta: number,
-  direction: number,
   player: Player,
 ) {
-  player.playerDashLogic(delta * 1000, direction);
+  player.playerDashLogic(delta * 1000, player.direction);
 
   // Refreshing the paddle movement when there is input
-  if (direction) {
+  if (player.direction) {
     player.currSpeed = player.maxSpeed;
-    player.direction = direction;
+    player.currDirection = player.direction;
   }
 
   // Moving the paddle if it wants to move
-  player.x += player.currSpeed * delta * player.direction;
+  player.x += player.currSpeed * delta * player.currDirection;
 
   // Smoothly stop the paddle
   player.currSpeed -= player.drag * delta;
   if (player.currSpeed < 0) {
     player.currSpeed = 0;
+    player.currDirection = 0;
   }
 
   // Checking if the paddle has hit the wall

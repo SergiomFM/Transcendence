@@ -202,22 +202,18 @@ class GameRoom {
   }
 
   updatePlayerSpell(playerId, spellType) {
-    const color = Object.values(spellType).slice(0, 3);
+
     if (playerId === this.player1.id) {
       if (spellType.offensive) {
-        // Update opponent's offensive spell color
-        this.player2.offensiveSpell.color = color;
+       
       } else {
-        // Update opponent's defensive spell color
-        this.player2.defensiveSpell.color = color;
+        
       }
     } else if (playerId === this.player2.id) {
       if (spellType.offensive) {
-        // Update opponent's offensive spell color
-        this.player1.offensiveSpell.color = color;
+        
       } else {
-        // Update opponent's defensive spell color
-        this.player1.defensiveSpell.color = color;
+       
       }
     }
 
@@ -226,18 +222,17 @@ class GameRoom {
   }
 
   updatePlayerSpell(playerId, spellKey) {
-    const color = Object.values(spellKey).slice(0, 3);
     if (playerId === this.player1.id) {
       if (spellKey.offensive) {
-        this.player2.offensiveSpell.color = color;
+        
       } else {
-        this.player2.defensiveSpell.color = color;
+        
       }
     } else if (playerId === this.player2.id) {
       if (spellKey.offensive) {
-        this.player1.offensiveSpell.color = color;
+        
       } else {
-        this.player1.defensiveSpell.color = color;
+        
       }
     }
   }

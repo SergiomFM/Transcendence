@@ -1,8 +1,8 @@
 import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { PongCamera } from "./pongCamera";
-import { Ball, Pong } from "./pong";
-import { sendReady, sendDash, sendSwitchSpell, sendUseSpell } from "./pongSocket";
+import { Ball, Player, Pong } from "./pong";
+import { sendReady, sendDash, sendSwitchSpell, sendUseSpell, sendPlayerDirection } from "./pongSocket";
 import { send } from "process";
 
 enum PLAYER_KEYS {
@@ -59,22 +59,13 @@ export namespace Events {
   };
 
   // Key press input
-  export function keyPressEvent(
-    pong: Pong,
-    camera: PongCamera,
-    event: ActionEvent,
-  ) {
+  export function keyPressEvent( pong: Pong, camera: PongCamera, event: ActionEvent ) {
     let key = event.sourceEvent.key;
     if (key !== "Shift") {
       key = key.toLowerCase();
     }
     if (key in keyStatus && keyStatus[key] != true) {
-      keyStatus[key] = true;
-      if (pong.online) {
-        
-        //Send to Backend Info - TODO
-        //console.log("sent: ", keyStatus[key]);
-      }
+      PlayerDirectionEvent(key, pong, true);
     } else if (key == menuKeys[MENU_KEY.SWITCH_VIEW]) {
       // Changes the camera perspective and moves scene elements
       camera.switchCameraPOV();
@@ -108,6 +99,43 @@ export namespace Events {
       }
     } else {
       playerSwitchSpellEvent(key, pong);
+    }
+  }
+
+  // Detecting the player inputs
+  function getPlayerDirection(player: Player) {
+    let direction = 0;
+
+    if (
+      Events.keyStatus[player.keys[PLAYER_KEYS.DOWN]] ||
+      Events.keyStatus[player.keys[PLAYER_KEYS.RIGHT]]
+    )
+      direction += 1;
+    if (
+      Events.keyStatus[player.keys[PLAYER_KEYS.UP]] ||
+      Events.keyStatus[player.keys[PLAYER_KEYS.LEFT]]
+    )
+      direction -= 1;
+  
+    return direction;
+  }
+
+  function PlayerDirectionEvent(key: any, pong: Pong, isKeyDown: boolean) {
+    keyStatus[key] = isKeyDown;
+    console.log(keyStatus);
+  
+    const player1Keys = Object.keys(keyStatus).slice(0, 4);
+    const player2Keys = Object.keys(keyStatus).slice(4, 8);
+    
+    if (player1Keys.includes(key)) {
+      const direction = getPlayerDirection(pong.player1);
+      pong.player1.direction = direction;
+      if (pong.online) {
+        sendPlayerDirection(pong, direction);
+      }
+    }
+    if (player2Keys.includes(key)) {
+      pong.player2.direction = getPlayerDirection(pong.player2);
     }
   }
 
@@ -166,13 +194,8 @@ export namespace Events {
       key = key.toLowerCase();
     }
     if (key in keyStatus && keyStatus[key] != false) {
-      keyStatus[key] = false;
-      if (pong.online) {
-        //Send to Backend Info - TODO
-        //console.log(keyStatus[key]);
-      }
+      PlayerDirectionEvent(key, pong, false);
     }
-    //console.log(key);
   }
 
   // Registering events

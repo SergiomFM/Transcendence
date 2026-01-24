@@ -4,6 +4,8 @@ FRONTEND
             offensive : true / false
         USE_SPELL
             offensive : true / false
+        PLAYER_DIRECTION
+            direction : -1 / 0 / 1
 
     handles
         SPELL_SWITCHED

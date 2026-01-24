@@ -304,3 +304,14 @@ export function sendSwitchSpell(pong: Pong, offensive: boolean) {
     );
   }
 }
+
+export function sendPlayerDirection(pong: Pong, direction: number) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "PLAYER_DIRECTION",
+        direction: direction,
+      }),
+    );
+  }
+}

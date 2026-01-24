@@ -36,6 +36,7 @@ export class Ball extends Vector3 {
 export class Player {
   public vector: Vector3;
   currSpeed = 0;
+  currDirection = 0;
   maxSpeed = 1;
   drag = 7.5;
 
