@@ -233,7 +233,7 @@ class GameRoom {
     if (!player) return;
 
     // Update input direction
-    player.inputDirection = input.direction || 0;
+    player.inputDirection = input.direction;
 
     // Handle ready state
     if (input.ready !== undefined) {

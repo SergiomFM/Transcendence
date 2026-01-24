@@ -98,7 +98,6 @@ export namespace Events {
   // Detecting the player inputs
   function getPlayerDirection(player: Player) {
     let direction = 0;
-
     if (
       Events.keyStatus[player.keys[PLAYER_KEYS.DOWN]] ||
       Events.keyStatus[player.keys[PLAYER_KEYS.RIGHT]]
