@@ -6,8 +6,6 @@ import { Spell, BallAngleSwitch, BallStop } from "./pongSpells";
 import { GUI } from "./pongUI";
 import { ANIMATION_FPS } from "./pongAnimations";
 
-// Delta time not working properly!!! TO FIX
-
 export const FPS = 60;
 
 const BALL_Y = 0.25;
@@ -69,6 +67,8 @@ export class Player {
   dashElapsedActive = 0;
   dashPower = 2;
   originalMaxSpeed = this.maxSpeed;
+
+  connected = false;
 
   get x() {
     return this.vector.x;
@@ -186,7 +186,6 @@ export class Pong {
   socket?: WebSocket;
   serverGameState?: any;
   serverGameStateApplied = false;
-  playerId?: number;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;

@@ -2,12 +2,31 @@ FRONTEND
     sends
         SWITCH_SPELL
             offensive : boolean
+
         USE_SPELL
             offensive : boolean
+
+        USE_DASH (**)
+
+        PLAYER_READY (**) 
+
         PLAYER_DIRECTION
             direction : -1 / 0 / 1 (*)
 
     handles
+        GAME_JOINED
+            roomId: number
+            alone: boolean
+
+        GAME_READY (**)
+
+        GAME_START (**)
+
+        GAME_DISCONNECTION (**)
+
+        GAME_SCORE
+            enemy: boolean
+
         SPELL_SWITCHED
             enemy: boolean
             offensive : boolean 
@@ -16,18 +35,27 @@ FRONTEND
             enemy: boolean
             offensive : boolean
 
+        COLLISION
+            x: number
+            z: number
+            speed: number
+            angle: number
+
+
         GAME_STATE
             ball
-                x : number (*)
-                z : number (*)
+                x: number (*)
+                z: number (*)
 
             player1
-                x : number (*)
+                x: number (*)
 
             player2
-                x : number (*)
+                x: number (*)
 
-            running : boolean
+            running: boolean
 
 
 * -> Backend might want to invert depending on the connection ID
+
+** -> Sending just a message with "type" 

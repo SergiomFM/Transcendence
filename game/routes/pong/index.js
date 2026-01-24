@@ -20,46 +20,28 @@ module.exports = async function (fastify, opts) {
         switch (data.type) {
           case "JOIN_GAME": {
             // Find or create a room for this player
-            const result = roomManager.findOrCreateRoom(
-              connection,
-              data.playerData || {},
-            );
+            const result = roomManager.findOrCreateRoom(connection, data.playerData || {});
             currentRoom = result.room;
             playerId = result.playerId;
-            playerName =
-              data.playerData && data.playerData.name
-                ? data.playerData.name
-                : `Player${playerId}`;
-
-            console.log(
-              `Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`,
-            );
+            playerName = data.playerData && data.playerData.name ? data.playerData.name : `Player${playerId}`;
+            console.log(`Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`);
 
             // Send confirmation to client
             connection.send(
               JSON.stringify({
-                type: "JOINED_GAME",
-                playerId: playerId,
+                type: "GAME_JOINED",
                 roomId: currentRoom.roomId,
-                playerCount: currentRoom.players.size,
-                maxPlayers: currentRoom.maxPlayers,
+                alone: !currentRoom.player1.connection || !currentRoom.player2.connection ? true : false,
               }),
             );
 
             // Notify when room is full and game can start
-            if (currentRoom.players.size === currentRoom.maxPlayers) {
+            if (currentRoom.player1.connection && currentRoom.player2.connection) {
               currentRoom.broadcastEvent({
-                type: "GAME_READY",
-                message: "Both players connected. Press SPACE to start!",
+                type: "GAME_READY"
               });
-            } else {
-              connection.send(
-                JSON.stringify({
-                  type: "WAITING",
-                  message: "Waiting for opponent...",
-                }),
-              );
             }
+
             break;
           }
 
@@ -125,14 +107,6 @@ module.exports = async function (fastify, opts) {
 
     // Handle connection close
     connection.on("close", () => {
-      // Try to get playerId and name from room if not set
-      if ((!playerId || !playerName) && currentRoom && currentRoom.players) {
-        const player = currentRoom.players.get(connection);
-        if (player) {
-          playerId = player.id;
-          playerName = player.name || `Player${playerId}`;
-        }
-      }
       console.log(
         `Disconnected: id=${playerId || "?"}, name=${playerName || "?"}, room=${
           currentRoom ? currentRoom.roomId : "?"
@@ -162,12 +136,12 @@ module.exports = async function (fastify, opts) {
     return {
       activeRooms: roomManager.rooms.size,
       totalPlayers: Array.from(roomManager.rooms.values()).reduce(
-        (sum, room) => sum + room.players.size,
+        (sum, room) => sum + (room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
         0,
       ),
       rooms: Array.from(roomManager.rooms.values()).map((room) => ({
         id: room.roomId,
-        players: room.players.size,
+        players: (room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
         running: room.running,
         score: {
           player1: room.player1.score,

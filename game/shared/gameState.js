@@ -14,6 +14,10 @@ class GameRoom {
 
     this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
     this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
+    
+    // Player connection tracking
+    this.player1.connection = null;
+    this.player2.connection = null;
 
     this.physics = new Physics(this);
     this.events = new EventEmitter();
@@ -36,35 +40,45 @@ class GameRoom {
       angle: degreesToRadians(GAME_CONSTANTS.BALL_INITIAL_ANGLE_DEG),
       cos: 0,
       sin: 1,
-      radius: GAME_CONSTANTS.BALL_RADIUS,
-      color: { r: 1, g: 1, b: 1, a: 1 },
+      radius: GAME_CONSTANTS.BALL_RADIUS
     };
   }
 
-  broadcastSpellActivated({ playerId, spellType, spellColor }) {
-    const message = JSON.stringify({
+  broadcastSpellUsed(playerID, offensive) {
+    const player1Message = JSON.stringify({
       type: "SPELL_USED",
-      playerId,
-      spellType,
-      spellColor,
+      enemy: playerID === 1 ? false : true,
+      offensive: offensive,
     });
-    this.players.forEach((player) => {
+
+    const player2Message = JSON.stringify({
+      type: "SPELL_USED",
+      enemy: playerID === 2 ? false : true,
+      offensive: offensive,
+    });
+
+    // Send to both players
+    if (this.player1.connection) {
       try {
-        player.connection.send(message);
+        this.player1.connection.send(player1Message);
       } catch (error) {
-        console.error("Error sending SPELL_USED to player:", error);
+        console.error("Error sending SPELL_USED to player1:", error);
       }
-    });
+    }
+
+    if (this.player2.connection) {
+      try {
+        this.player2.connection.send(player2Message);
+      } catch (error) {
+        console.error("Error sending SPELL_USED to player2:", error);
+      }
+    }
   }
 
-  createSpellEvent() {
-    this.events.on("spell", (spell, gamePlayer) => {
-      if (spellTypes[spell]) {
-        this.ball.color = spellTypes[spell];
-      }
-
+  createSpellUsedEvent() {
+    this.events.on("spellUsed", (spellType, player) => {
       // Cast Spells in the backend
-      switch (spell) {
+      switch (spellType) {
         case "ballAngleSwitch":
           this._angleActive = true;
           this.physics.setBallAngle(Math.PI - this.ball.angle);
@@ -97,18 +111,14 @@ class GameRoom {
           break;
         case "ballIman":
           this._imanActive = true;
-          this._imanPlayer = gamePlayer;
+          this._imanPlayer = player;
           break;
         default:
           break;
       }
 
-      // Update all clients about the spell activation
-      this.broadcastSpellActivated({
-        playerId: gamePlayer.id,
-        spellType: spell,
-        spellColor: spellTypes[spell],
-      });
+      // Update all clients about the spell usage
+      this.broadcastSpellUsed(player.id, spellTypes[spellType]);
     });
   }
 
@@ -145,38 +155,49 @@ class GameRoom {
   }
 
   addPlayer(connection, playerData) {
-    if (this.players.size >= this.maxPlayers) {
-      return { success: false, reason: "Room is full" };
+    // Try to add to player1 slot first
+    if (!this.player1.connection) {
+      this.player1.connection = connection;
+      connection.playerId = 1;
+      return { success: true, playerId: 1 };
     }
-
-    const playerId = this.players.size === 0 ? 1 : 2;
-
-    this.players.set(connection, {
-      id: playerId,
-      connection: connection,
-      ...playerData,
-    });
-
-    // If room is full, start the game
-    if (this.players.size === this.maxPlayers) {
+    
+    // Then try player2 slot
+    if (!this.player2.connection) {
+      this.player2.connection = connection;
+      connection.playerId = 2;
+      
+      // Both players connected, start game loop
       this.loaded = true;
       this.startGameLoop();
+      
+      return { success: true, playerId: 2 };
     }
 
-    return { success: true, playerId: playerId };
+    // Room is full
+    return { success: false, reason: "Room is full" };
   }
 
   removePlayer(connection) {
-    this.players.delete(connection);
+    // Remove from player slot
+    if (this.player1.connection === connection) {
+      this.player1.connection = null;
+      this.player1.ready = false;
+    } else if (this.player2.connection === connection) {
+      this.player2.connection = null;
+      this.player2.ready = false;
+    }
 
     // Stop game if a player leaves
     if (this.gameLoopTimeout) {
       clearTimeout(this.gameLoopTimeout);
       this.gameLoopTimeout = null;
     }
+    this.running = false;
+    this.loaded = false;
 
     // Return true if room is now empty
-    return this.players.size === 0;
+    return !this.player1.connection && !this.player2.connection;
   }
 
   handlePlayerInput(connection, input) {
@@ -401,23 +422,6 @@ class GameRoom {
     };
   }
 
-  broadcastState() {
-    const state = this.getState();
-    const message = JSON.stringify({
-      type: "STATE_UPDATE",
-      state: state,
-      timestamp: Date.now(),
-    });
-
-    this.players.forEach((player) => {
-      try {
-        player.connection.send(message);
-      } catch (error) {
-        console.error("Error sending state to player:", error);
-      }
-    });
-  }
-
   broadcastEvent(event) {
     const message = JSON.stringify({
       type: "GAME_EVENT",
@@ -425,13 +429,21 @@ class GameRoom {
       timestamp: Date.now(),
     });
 
-    this.players.forEach((player) => {
+    if (this.player1.connection) {
       try {
-        player.connection.send(message);
+        this.player1.connection.send(message);
       } catch (error) {
-        console.error("Error sending event to player:", error);
+        console.error("Error sending event to player1:", error);
       }
-    });
+    }
+
+    if (this.player2.connection) {
+      try {
+        this.player2.connection.send(message);
+      } catch (error) {
+        console.error("Error sending event to player2:", error);
+      }
+    }
   }
 
   cleanup() {
@@ -449,9 +461,9 @@ class GameRoomManager {
   }
 
   findOrCreateRoom(connection, playerData) {
-    // Try to find a waiting room
+    // Try to find a waiting room (room with empty player slot)
     for (const [roomId, room] of this.rooms) {
-      if (room.players.size < room.maxPlayers) {
+      if (!room.player1.connection || !room.player2.connection) {
         const result = room.addPlayer(connection, playerData);
         if (result.success) {
           return { room, playerId: result.playerId };
@@ -470,7 +482,7 @@ class GameRoomManager {
 
   removePlayerFromRoom(connection) {
     for (const [roomId, room] of this.rooms) {
-      if (room.players.has(connection)) {
+      if (room.player1.connection === connection || room.player2.connection === connection) {
         const isEmpty = room.removePlayer(connection);
 
         if (isEmpty) {
@@ -489,7 +501,7 @@ class GameRoomManager {
 
   getRoomForConnection(connection) {
     for (const room of this.rooms.values()) {
-      if (room.players.has(connection)) {
+      if (room.player1.connection === connection || room.player2.connection === connection) {
         return room;
       }
     }

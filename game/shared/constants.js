@@ -67,12 +67,12 @@ const GAME_CONSTANTS = {
 };
 
 const spellTypes = {
-  ballAngleSwitch: { r: 0, g: 0, b: 1, a: 1, offensive: true }, // blue
-  ballShot: { r: 0, g: 1, b: 0, a: 1, offensive: true }, // green
-  ballPortal: { r: 1, g: 0, b: 0, a: 1, offensive: true }, // red
-  ballStop: { r: 0, g: 1, b: 1, a: 1, offensive: false }, // cyan
-  ballBack: { r: 1, g: 1, b: 0, a: 1, offensive: false }, // yellow
-  ballIman: { r: 1, g: 0, b: 1, a: 1, offensive: false }, // magenta
+  ballAngleSwitch: { offensive: true },
+  ballShot: { offensive: true },
+  ballPortal: { offensive: true },
+  ballStop: { offensive: false },
+  ballBack: { offensive: false },
+  ballIman: { offensive: false },
 };
 
 // Helper functions
