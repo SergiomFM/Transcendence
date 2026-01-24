@@ -41,71 +41,14 @@ function onlineGameLogic(pong: Pong, delta: number) {
 }
 
 function applyServerState(pong: Pong, serverState: any) {
-  if (serverState.ball) {
     pong.ball.x = serverState.ball.x;
-    pong.ball.y = serverState.ball.y;
+    pong.ball.z = -serverState.ball.z;
+    pong.ball.setAngle(serverState.ball.angle);
 
-    if (pong.playerId === 2) {
-      pong.ball.z = -serverState.ball.z;
-      pong.ball.setAngle(-serverState.ball.angle);
-    } else {
-      pong.ball.z = serverState.ball.z;
-      pong.ball.setAngle(serverState.ball.angle);
-    }
+    pong.player1.x = serverState.player1.x;  
+    pong.player2.x = serverState.player2.x;
 
-    pong.ball.speed = serverState.ball.speed;
-
-    if (serverState.ball.color && pong.online) {
-      const c = serverState.ball.color;
-      if (!pong._lastArenaColor)
-        pong._lastArenaColor = { r: 1, g: 1, b: 1, a: 1 };
-      const last = pong._lastArenaColor;
-      if (
-        c.r !== last.r ||
-        c.g !== last.g ||
-        c.b !== last.b ||
-        c.a !== last.a
-      ) {
-        updateArena(pong.scene, new Color4(c.r, c.g, c.b, c.a), pong.ball);
-        let light = pong.scene.getLightById("ball")!;
-        light.diffuse.set(c.r, c.g, c.b);
-        pong._lastArenaColor = { r: c.r, g: c.g, b: c.b, a: c.a };
-      }
-    }
-  }
-
-  if (pong.playerId === 2) {
-    if (serverState.player2) {
-      pong.player1.x = serverState.player2.x;
-      pong.player1.ready = serverState.player2.ready;
-      pong.player1.failed = serverState.player2.failed;
-    }
-
-    if (serverState.player1) {
-      pong.player2.x = serverState.player1.x;
-      pong.player2.ready = serverState.player1.ready;
-      pong.player2.failed = serverState.player1.failed;
-    }
-  } else {
-    if (serverState.player1) {
-      pong.player1.x = serverState.player1.x;
-      pong.player1.currSpeed = serverState.player1.currSpeed;
-      pong.player1.ready = serverState.player1.ready;
-      pong.player1.failed = serverState.player1.failed;
-    }
-
-    if (serverState.player2) {
-      pong.player2.x = serverState.player2.x;
-      pong.player2.currSpeed = serverState.player2.currSpeed;
-      pong.player2.ready = serverState.player2.ready;
-      pong.player2.failed = serverState.player2.failed;
-    }
-  }
-
-  // Update game running state
-  if (serverState.running !== undefined) {
     pong.running = serverState.running;
-  }
 }
 
 // Paddle collision check
@@ -220,16 +163,11 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
 // Player scoring
 function playerScore(pong: Pong, ball: Ball) {
   if (ball.z > 0) {
-    if (pong.online) pong.GUI.textFadeIn("YOU_LOST");
-    else pong.GUI.textFadeIn("PLAYER_2_WIN");
+    pong.GUI.textFadeIn("PLAYER_2_WIN");
     pong.GUI.toggleTextBlink(pong.scene, "START");
     ball.setAngle(Tools.ToRadians(90));
   } else {
-    if (pong.online) {
-      pong.GUI.textFadeIn("YOU_WON");
-    } else {
-      pong.GUI.textFadeIn("PLAYER_1_WIN");
-    }
+    pong.GUI.textFadeIn("PLAYER_1_WIN");
     pong.GUI.toggleTextBlink(pong.scene, "START");
     ball.setAngle(Tools.ToRadians(-90));
   }

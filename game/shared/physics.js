@@ -182,16 +182,16 @@ class Physics {
     // Update speed based on input
     if (direction) {
       paddle.currSpeed = paddle.maxSpeed;
-      paddle.direction = direction;
+      paddle.currDirection = direction;
     }
 
     // Move paddle
-    paddle.x += paddle.currSpeed * delta * paddle.direction;
-
+    paddle.x += paddle.currSpeed * delta * paddle.currDirection;
     // Apply drag
     paddle.currSpeed -= GAME_CONSTANTS.PADDLE_DRAG * delta;
     if (paddle.currSpeed < 0) {
       paddle.currSpeed = 0;
+      paddle.currDirection = 0;
     }
 
     // Boundary check

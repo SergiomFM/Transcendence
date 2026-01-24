@@ -1,16 +1,33 @@
 FRONTEND
     sends
         SWITCH_SPELL
-            offensive : true / false
+            offensive : boolean
         USE_SPELL
-            offensive : true / false
+            offensive : boolean
         PLAYER_DIRECTION
-            direction : -1 / 0 / 1
+            direction : -1 / 0 / 1 (*)
 
     handles
         SPELL_SWITCHED
-            enemy: true / false
-            offensive : true / false   
+            enemy: boolean
+            offensive : boolean 
+
         SPELL_USED
-            enemy: true / false
-            offensive : true / false
+            enemy: boolean
+            offensive : boolean
+
+        GAME_STATE
+            ball
+                x : number (*)
+                z : number (*)
+
+            player1
+                x : number (*)
+
+            player2
+                x : number (*)
+
+            running : boolean
+
+
+* -> Backend might want to invert depending on the connection ID

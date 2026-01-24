@@ -151,11 +151,6 @@ function handleGameStart(pong: Pong, message: any) {
   }
 }
 
-function handleGameState(pong: Pong, message: any) {
-  pong.serverGameState = message.state;
-  pong.serverGameStateApplied = false;
-}
-
 function handleGameEvent(pong: Pong, message: any) {
   const event = message.event;
 
@@ -257,6 +252,11 @@ export function disconnectFromServer(pong: Pong) {
 
 
 // REVISED FUNCTIONS BELOW
+
+function handleGameState(pong: Pong, message: any) {
+  pong.serverGameState = message.state;
+  pong.serverGameStateApplied = false;
+}
 
 function handleSpellUsed(pong: Pong, message: any) {
   console.log("Spell used:", message);

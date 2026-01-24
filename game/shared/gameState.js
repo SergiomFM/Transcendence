@@ -118,6 +118,7 @@ class GameRoom {
       x: 0,
       z: zPosition,
       currSpeed: 0,
+      currDirection: 0,
       maxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
       originalMaxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
       drag: GAME_CONSTANTS.PADDLE_DRAG,
