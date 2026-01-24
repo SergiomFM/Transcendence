@@ -4,7 +4,9 @@ class EventEmitter {
   }
 
   on(event, fn) {
-    if (!this.listeners[event]) this.listeners[event] = [];
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
     this.listeners[event].push(fn);
   }
 

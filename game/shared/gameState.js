@@ -1,5 +1,10 @@
 // Game state manager for Pong multiplayer
-const { GAME_CONSTANTS, degreesToRadians, spellTypes } = require("./constants");
+const {
+  GAME_CONSTANTS,
+  degreesToRadians,
+  spellTypes,
+  spellCycles,
+} = require("./constants");
 const Physics = require("./physics");
 const { EventEmitter } = require("./spells");
 
@@ -41,18 +46,37 @@ class GameRoom {
     };
   }
 
-  broadcastSpellActivated({ playerId, spellType, spellColor }) {
-    const message = JSON.stringify({
-      type: "SPELL_USED",
-      playerId,
-      spellType,
-      spellColor,
-    });
+  broadcastSpellUsed(playerId, spellType) {
+    const offensive = spellTypes[spellType].offensive;
+    // For each player, determine if the spell use was from enemy or self
     this.players.forEach((player) => {
+      const isEnemy = player.id !== playerId;
+      const message = JSON.stringify({
+        type: "SPELL_USED",
+        enemy: isEnemy,
+        offensive: offensive,
+      });
       try {
         player.connection.send(message);
       } catch (error) {
         console.error("Error sending SPELL_USED to player:", error);
+      }
+    });
+  }
+
+  broadcastSpellSwitched(playerId, offensive) {
+    this.players.forEach((player) => {
+      if (player.id !== playerId) {
+        const message = JSON.stringify({
+          type: "SPELL_SWITCHED",
+          enemy: true, // Send to the other player only, marking as enemy
+          offensive: offensive,
+        });
+        try {
+          player.connection.send(message);
+        } catch (error) {
+          console.error("Error sending SPELL_SWITCHED to player:", error);
+        }
       }
     });
   }
@@ -104,11 +128,7 @@ class GameRoom {
       }
 
       // Update all clients about the spell activation
-      this.broadcastSpellActivated({
-        playerId: gamePlayer.id,
-        spellType: spell,
-        spellColor: spellTypes[spell],
-      });
+      this.broadcastSpellUsed(gamePlayer.id, spell);
     });
   }
 
@@ -136,6 +156,10 @@ class GameRoom {
       dashElapsedCooldown: 0,
       dashDuration: GAME_CONSTANTS.DASH_DURATION,
       dashElapsedActive: 0,
+
+      // Current spells
+      currentOffensiveSpell: "ballAngleSwitch",
+      currentCounterSpell: "ballStop",
 
       spells: {
         counter: { active: false, cooldown: 0 },
@@ -197,47 +221,36 @@ class GameRoom {
     }
 
     // Handle spell activation
-    if (input.spell) {
-      this.events.emit("spell", input.spell, player);
+    if (input.useSpell !== undefined) {
+      const spellType = input.useSpell
+        ? player.currentOffensiveSpell
+        : player.currentCounterSpell;
+      this.events.emit("spell", spellType, player);
     }
   }
 
-  updatePlayerSpell(playerId, spellType) {
+  updatePlayerSpell(playerId, offensive) {
+    const player = playerId === 1 ? this.player1 : this.player2;
+    const cycle = offensive ? spellCycles.offensive : spellCycles.counter;
+    const currentSpell = offensive
+      ? player.currentOffensiveSpell
+      : player.currentCounterSpell;
 
-    if (playerId === this.player1.id) {
-      if (spellType.offensive) {
-       
-      } else {
-        
-      }
-    } else if (playerId === this.player2.id) {
-      if (spellType.offensive) {
-        
-      } else {
-       
-      }
+    // Find current spell index and move to next
+    const currentIndex = cycle.indexOf(currentSpell);
+    const nextIndex = (currentIndex + 1) % cycle.length;
+    const nextSpell = cycle[nextIndex];
+
+    // Update player's current spell
+    if (offensive) {
+      player.currentOffensiveSpell = nextSpell;
+    } else {
+      player.currentCounterSpell = nextSpell;
     }
 
-    // Broadcast the spell change to all players
-    this.broadcastSpellSwitched(playerId, spellType);
+    // Broadcast the spell change to the other player
+    this.broadcastSpellSwitched(playerId, offensive);
   }
-
-  updatePlayerSpell(playerId, spellKey) {
-    if (playerId === this.player1.id) {
-      if (spellKey.offensive) {
-        
-      } else {
-        
-      }
-    } else if (playerId === this.player2.id) {
-      if (spellKey.offensive) {
-        
-      } else {
-        
-      }
-    }
-  }
-
   startGameLoop() {
     if (this.gameLoopTimeout) return;
     let lastUpdate = performance.now();
@@ -402,18 +415,27 @@ class GameRoom {
   }
 
   broadcastState() {
-    const state = this.getState();
-    const message = JSON.stringify({
-      type: "STATE_UPDATE",
-      state: state,
-      timestamp: Date.now(),
-    });
-
     this.players.forEach((player) => {
+      // Invert positions for player 2
+      const invert = player.id === 2;
+      const ballX = invert ? -this.ball.x : this.ball.x;
+      const ballZ = invert ? -this.ball.z : this.ball.z;
+      const player1X = invert ? -this.player1.x : this.player1.x;
+      const player2X = invert ? -this.player2.x : this.player2.x;
+
+      const message = JSON.stringify({
+        type: "GAME_STATE",
+        ball: { x: ballX, z: ballZ },
+        player1: { x: player1X },
+        player2: { x: player2X },
+        running: this.running,
+        timestamp: Date.now(),
+      });
+
       try {
         player.connection.send(message);
       } catch (error) {
-        console.error("Error sending state to player:", error);
+        console.error("Error sending GAME_STATE to player:", error);
       }
     });
   }
