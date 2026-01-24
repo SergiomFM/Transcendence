@@ -78,7 +78,7 @@ module.exports = async function (fastify, opts) {
             // Handle spell activation
             if (currentRoom) {
               currentRoom.handlePlayerInput(connection, {
-                spell: data.spellType,
+                useSpell: data.offensive,
               });
             }
             break;
@@ -87,9 +87,19 @@ module.exports = async function (fastify, opts) {
             if (currentRoom) {
               currentRoom.updatePlayerSpell(
                 connection.playerId,
-                spellTypes[data.spellType],
+                data.offensive,
               );
             }
+            break;
+
+          case "PLAYER_DIRECTION":
+            // Handle player direction input
+            if (currentRoom) {
+              currentRoom.handlePlayerInput(connection, {
+                direction: data.direction,
+              });
+            }
+            break;
 
           default:
             console.log("Unknown message type:", data.type);

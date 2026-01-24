@@ -75,6 +75,11 @@ const spellTypes = {
   ballIman: { offensive: false },
 };
 
+const spellCycles = {
+  offensive: ["ballAngleSwitch", "ballShot", "ballPortal"],
+  counter: ["ballStop", "ballBack", "ballIman"],
+};
+
 // Helper functions
 const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
 const radiansToDegrees = (radians) => radians * (180 / Math.PI);
@@ -85,4 +90,5 @@ module.exports = {
   radiansToDegrees,
   loadConstantsFromGLB,
   spellTypes,
+  spellCycles,
 };
