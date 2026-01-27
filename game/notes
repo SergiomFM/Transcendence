@@ -1,26 +1,26 @@
 FRONTEND
     sends
-        SWITCH_SPELL
+        SWITCH_SPELL #TODO backend
             offensive : boolean
 
-        USE_SPELL
-            offensive : boolean
+        USE_SPELL #TODO backend
+            offensive : boolean 
 
-        USE_DASH (**)
+        USE_DASH (**) #TODO
 
-        PLAYER_READY (**) 
+        PLAYER_READY (**) #DONE
 
-        PLAYER_DIRECTION
+        PLAYER_DIRECTION #DONE
             direction : -1 / 0 / 1 (*)
 
     handles
-        GAME_JOINED
+        GAME_JOINED #DONE
             roomId: number
             alone: boolean
 
-        GAME_READY (**)
+        GAME_READY (**) #DONE
 
-        GAME_START (**)
+        GAME_START (**) #DONE
 
         GAME_DISCONNECTION (**)
 

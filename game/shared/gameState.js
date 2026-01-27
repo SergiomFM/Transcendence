@@ -19,7 +19,7 @@ class GameRoom {
 
     this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
     this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
-    
+
     // Player connection tracking
     this.player1.connection = null;
     this.player2.connection = null;
@@ -45,7 +45,7 @@ class GameRoom {
       angle: degreesToRadians(GAME_CONSTANTS.BALL_INITIAL_ANGLE_DEG),
       cos: 0,
       sin: 1,
-      radius: GAME_CONSTANTS.BALL_RADIUS
+      radius: GAME_CONSTANTS.BALL_RADIUS,
     };
   }
 
@@ -99,7 +99,9 @@ class GameRoom {
 
   createSpellUsedEvent() {
     this.events.on("spellUsed", (player, offensive) => {
-      const spellType = offensive ? player.currentOffensiveSpell : player.currentCounterSpell;
+      const spellType = offensive
+        ? player.currentOffensiveSpell
+        : player.currentCounterSpell;
 
       // Cast Spells in the backend
       switch (spellType) {
@@ -189,16 +191,16 @@ class GameRoom {
       connection.playerId = 1;
       return { success: true, playerId: 1 };
     }
-    
+
     // Then try player2 slot
     if (!this.player2.connection) {
       this.player2.connection = connection;
       connection.playerId = 2;
-      
+
       // Both players connected, start game loop
       this.loaded = true;
       this.startGameLoop();
-      
+
       return { success: true, playerId: 2 };
     }
 
@@ -226,32 +228,6 @@ class GameRoom {
 
     // Return true if room is now empty
     return !this.player1.connection && !this.player2.connection;
-  }
-
-  handlePlayerInput(connection, input) {
-    const player = connection.playerId === 1 ? this.player1 : this.player2;
-    if (!player) return;
-
-    // Update input direction
-    player.inputDirection = input.direction;
-
-    // Handle ready state
-    if (input.ready !== undefined) {
-      player.ready = input.ready;
-    }
-
-    // Handle dash activation
-    if (input.dash && player.dashReady) {
-      player.dashActive = true;
-    }
-
-    // Handle spell activation
-    if (input.useSpell !== undefined) {
-      const spellType = input.useSpell
-        ? player.currentOffensiveSpell
-        : player.currentCounterSpell;
-      this.events.emit("spellUsed", player);
-    }
   }
 
   updatePlayerSpell(playerId, offensive) {
@@ -441,20 +417,20 @@ class GameRoom {
 
   broadcastState() {
     const player1Message = JSON.stringify({
-        type: "GAME_STATE",
-        ball: { x: this.ball.x, z: this.ball.z },
-        player1: { x: this.player1.x },
-        player2: { x: this.player2.x },
-        running: this.running,
-      });
+      type: "GAME_STATE",
+      ball: { x: this.ball.x, z: this.ball.z },
+      player1: { x: this.player1.x },
+      player2: { x: this.player2.x },
+      running: this.running,
+    });
 
     const player2Message = JSON.stringify({
-        type: "GAME_STATE",
-        ball: { x: -this.ball.x, z: -this.ball.z },
-        player1: { x: -this.player1.x },
-        player2: { x: -this.player2.x },
-        running: this.running,
-      });
+      type: "GAME_STATE",
+      ball: { x: -this.ball.x, z: -this.ball.z },
+      player1: { x: -this.player1.x },
+      player2: { x: -this.player2.x },
+      running: this.running,
+    });
 
     // Send to both players
     if (this.player1.connection) {
@@ -477,7 +453,7 @@ class GameRoom {
   broadcastEvent(event) {
     const message = JSON.stringify({
       type: "GAME_EVENT",
-      event: event
+      event: event,
     });
 
     if (this.player1.connection) {
@@ -533,7 +509,10 @@ class GameRoomManager {
 
   removePlayerFromRoom(connection) {
     for (const [roomId, room] of this.rooms) {
-      if (room.player1.connection === connection || room.player2.connection === connection) {
+      if (
+        room.player1.connection === connection ||
+        room.player2.connection === connection
+      ) {
         const isEmpty = room.removePlayer(connection);
 
         if (isEmpty) {
@@ -552,7 +531,10 @@ class GameRoomManager {
 
   getRoomForConnection(connection) {
     for (const room of this.rooms.values()) {
-      if (room.player1.connection === connection || room.player2.connection === connection) {
+      if (
+        room.player1.connection === connection ||
+        room.player2.connection === connection
+      ) {
         return room;
       }
     }

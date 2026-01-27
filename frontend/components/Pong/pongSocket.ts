@@ -57,7 +57,7 @@ function handleServerMessage(pong: Pong, message: any) {
     case "GAME_STATE":
       handleGameState(pong, message);
       break;
-      
+
     case "GAME_JOINED":
       handleGameJoined(pong, message);
       break;
@@ -69,7 +69,7 @@ function handleServerMessage(pong: Pong, message: any) {
     case "GAME_START":
       handleGameStart(pong);
       break;
-    
+
     case "GAME_DISCONNECTION":
       handleGameDisconnection(pong);
       break;
@@ -85,7 +85,7 @@ function handleServerMessage(pong: Pong, message: any) {
     case "SPELL_SWITCHED":
       handleSpellSwitched(pong, message);
       break;
-    
+
     case "COLLISION":
       handleCollision(pong, message);
       break;
@@ -106,10 +106,12 @@ function handleSpellUsed(pong: Pong, message: any) {
   console.log("Spell used:", message);
 
   let player;
-  message.enemy ? player = pong.player2 : player = pong.player1;
+  message.enemy ? (player = pong.player2) : (player = pong.player1);
 
   let spellHand;
-  message.offensive ? spellHand = player.offensiveSpell : spellHand = player.counterSpell;
+  message.offensive
+    ? (spellHand = player.offensiveSpell)
+    : (spellHand = player.counterSpell);
 
   spellHand.activateSpell();
 }
@@ -118,12 +120,15 @@ function handleSpellSwitched(pong: Pong, message: any) {
   console.log("Spell switched:", message);
 
   let player;
-  message.enemy ? player = pong.player2 : player = pong.player1;
+  message.enemy ? (player = pong.player2) : (player = pong.player1);
 
   let spellHand;
-  message.offensive ? spellHand = player.offensiveSpell : spellHand = player.counterSpell;
+  message.offensive
+    ? (spellHand = player.offensiveSpell)
+    : (spellHand = player.counterSpell);
 
-  const SpellConstructor = GENERATE_SPELLS[message.spellType as keyof typeof GENERATE_SPELLS];
+  const SpellConstructor =
+    GENERATE_SPELLS[message.spellType as keyof typeof GENERATE_SPELLS];
   spellHand = new SpellConstructor(pong, player, spellHand.name);
 }
 
@@ -132,7 +137,7 @@ function handleGameReady(pong: Pong) {
 
   if (!pong.player2.connected) {
     pong.player2.connected = true;
-    
+
     if (pong.GUI) {
       pong.GUI.textFadeOut("WAITING");
       pong.GUI.toggleTextBlink(pong.scene, "WAITING");
@@ -145,7 +150,7 @@ function handleGameReady(pong: Pong) {
 function handleGameJoined(pong: Pong, message: any) {
   console.log("Joined game room:", message.roomId);
   pong.online = true;
-  
+
   // Reassigning the keys for online play
   Events.assignKeys(pong);
 
@@ -223,7 +228,7 @@ export function sendUseSpell(pong: Pong, offensive: boolean) {
     pong.socket.send(
       JSON.stringify({
         type: "USE_SPELL",
-        offensive: offensive
+        offensive: offensive,
       }),
     );
   }
@@ -234,7 +239,7 @@ export function sendSwitchSpell(pong: Pong, offensive: boolean) {
     pong.socket.send(
       JSON.stringify({
         type: "SWITCH_SPELL",
-        offensive: offensive
+        offensive: offensive,
       }),
     );
   }
@@ -265,7 +270,7 @@ export function sendPlayerReady(pong: Pong) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(
       JSON.stringify({
-        type: "READY",
+        type: "PLAYER_READY",
       }),
     );
   }

@@ -2,7 +2,13 @@ import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { PongCamera } from "./pongCamera";
 import { Ball, Player, Pong } from "./pong";
-import { sendPlayerReady, sendUseDash, sendSwitchSpell, sendUseSpell, sendPlayerDirection } from "./pongSocket";
+import {
+  sendPlayerReady,
+  sendUseDash,
+  sendSwitchSpell,
+  sendUseSpell,
+  sendPlayerDirection,
+} from "./pongSocket";
 
 enum PLAYER_KEYS {
   UP,
@@ -56,9 +62,15 @@ export namespace Events {
     [player2Keys[2]]: false,
     [player2Keys[3]]: false,
   };
+  const player1KeysSlice = Object.keys(keyStatus).slice(0, 4);
+  const player2KeysSlice = Object.keys(keyStatus).slice(4, 8);
 
   // Key press input
-  export function keyPressEvent( pong: Pong, camera: PongCamera, event: ActionEvent ) {
+  export function keyPressEvent(
+    pong: Pong,
+    camera: PongCamera,
+    event: ActionEvent,
+  ) {
     let key = event.sourceEvent.key;
     if (key !== "Shift") {
       key = key.toLowerCase();
@@ -108,52 +120,56 @@ export namespace Events {
       Events.keyStatus[player.keys[PLAYER_KEYS.LEFT]]
     )
       direction -= 1;
-  
+
     return direction;
   }
 
   function PlayerDirectionEvent(key: any, pong: Pong, isKeyDown: boolean) {
     keyStatus[key] = isKeyDown;
     console.log(keyStatus);
-  
-    const player1Keys = Object.keys(keyStatus).slice(0, 4);
-    const player2Keys = Object.keys(keyStatus).slice(4, 8);
-    
-    if (player1Keys.includes(key)) {
+
+    if (player1KeysSlice.includes(key)) {
       const direction = getPlayerDirection(pong.player1);
       pong.player1.direction = direction;
       if (pong.online) {
         sendPlayerDirection(pong, direction);
       }
     }
-    if (player2Keys.includes(key)) {
+    if (player2KeysSlice.includes(key)) {
       pong.player2.direction = getPlayerDirection(pong.player2);
     }
   }
 
   function playerSwitchSpellEvent(key: any, pong: Pong) {
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
-      pong.online ? sendSwitchSpell(pong, false) : pong.player1.counterSpell.switchSpell();
+      pong.online
+        ? sendSwitchSpell(pong, false)
+        : pong.player1.counterSpell.switchSpell();
     } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
-      pong.online ? sendSwitchSpell(pong, true) : pong.player1.offensiveSpell.switchSpell();
+      pong.online
+        ? sendSwitchSpell(pong, true)
+        : pong.player1.offensiveSpell.switchSpell();
     }
 
     // Dont check for player 2 inputs if the game is online
     if (!pong.online) {
       if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL]) {
-          pong.player2.counterSpell.switchSpell();
-      }
-      else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
-          pong.player2.offensiveSpell.switchSpell();
+        pong.player2.counterSpell.switchSpell();
+      } else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
+        pong.player2.offensiveSpell.switchSpell();
       }
     }
   }
 
   function playerUseSpellEvent(key: any, pong: Pong) {
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
-      pong.online ? sendUseSpell(pong, false) : pong.player1.counterSpell.useSpell();
+      pong.online
+        ? sendUseSpell(pong, false)
+        : pong.player1.counterSpell.useSpell();
     } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
-      pong.online ? sendUseSpell(pong, true) : pong.player1.offensiveSpell.useSpell();
+      pong.online
+        ? sendUseSpell(pong, true)
+        : pong.player1.offensiveSpell.useSpell();
     }
 
     if (!pong.online) {

@@ -33,7 +33,7 @@ function localGameLogic(pong: Pong, delta: number) {
   pong.player2.offensiveSpell.spellLoop(delta);
 }
 
-function onlineGameLogic(pong: Pong, delta: number) {
+function onlineGameLogic(pong: Pong) {
   if (pong.serverGameState && !pong.serverGameStateApplied) {
     applyServerState(pong, pong.serverGameState);
     pong.serverGameStateApplied = true;
@@ -41,14 +41,14 @@ function onlineGameLogic(pong: Pong, delta: number) {
 }
 
 function applyServerState(pong: Pong, serverState: any) {
-    pong.ball.x = serverState.ball.x;
-    pong.ball.z = -serverState.ball.z;
-    pong.ball.setAngle(serverState.ball.angle);
+  pong.ball.x = serverState.ball.x;
+  pong.ball.z = -serverState.ball.z;
+  pong.ball.setAngle(serverState.ball.angle);
 
-    pong.player1.x = serverState.player1.x;  
-    pong.player2.x = serverState.player2.x;
+  pong.player1.x = serverState.player1.x;
+  pong.player2.x = serverState.player2.x;
 
-    pong.running = serverState.running;
+  pong.running = serverState.running;
 }
 
 // Paddle collision check
@@ -82,11 +82,7 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
 }
 
 // Paddle movement function
-function movePadle(
-  pong: Pong,
-  delta: number,
-  player: Player,
-) {
+function movePadle(pong: Pong, delta: number, player: Player) {
   player.playerDashLogic(delta * 1000, player.direction);
 
   // Refreshing the paddle movement when there is input
