@@ -65,7 +65,7 @@ export abstract class Spell {
   private lastSizeUpdate: number = 0;
 
   abstract switchSpell(): any;
-  abstract useSpell(): any;
+  abstract useSpell(offensive: boolean): any;
   abstract loopAddon(elapsedTime: number): any;
 
   constructor(pong: Pong, player: Player, name: string, spellType: string) {
@@ -155,7 +155,7 @@ export abstract class Spell {
         this.castingVFX,
       );
     }, this.castingAnimation[3]);
-    
+
     this.changeArenaColor();
     this.resetSpell();
 
@@ -191,7 +191,7 @@ export abstract class Spell {
 
     const frameDuration = 1000 / FPS;
     const now = performance.now();
-    
+
     if (now - this.lastSizeUpdate < frameDuration) {
       return;
     }
@@ -242,11 +242,11 @@ export class BallAngleSwitch extends Spell {
     this.player.offensiveSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
     this.pong.ball.setAngle(Math.PI - this.pong.ball.angle);
@@ -279,11 +279,11 @@ class BallShot extends Spell {
     this.player.offensiveSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
     this.originalSpeed = this.pong.ball.speed;
@@ -322,11 +322,11 @@ class BallPortal extends Spell {
     this.player.offensiveSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
     this.lastXDir = Math.sign(this.pong.ball.cos);
@@ -375,11 +375,11 @@ export class BallStop extends Spell {
     this.player.counterSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
     this.originalPosition = this.pong.ball.clone();
@@ -414,11 +414,11 @@ class BallBack extends Spell {
     this.player.counterSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
     this.pong.ball.setAngle(this.pong.ball.angle + Math.PI);
@@ -450,11 +450,11 @@ class BallIman extends Spell {
     this.player.counterSpell = nextSpell;
   }
 
-  useSpell() {
+  useSpell(offensive: boolean) {
     if (!this.ready) return;
     this.activateSpell();
     if (this.pong.online) {
-      sendUseSpell(this.pong, this.spellType);
+      sendUseSpell(this.pong, offensive);
       return;
     }
   }

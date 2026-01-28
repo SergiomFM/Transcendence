@@ -165,18 +165,18 @@ export namespace Events {
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
       pong.online
         ? sendUseSpell(pong, false)
-        : pong.player1.counterSpell.useSpell();
+        : pong.player1.counterSpell.useSpell(false);
     } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
       pong.online
         ? sendUseSpell(pong, true)
-        : pong.player1.offensiveSpell.useSpell();
+        : pong.player1.offensiveSpell.useSpell(true);
     }
 
     if (!pong.online) {
       if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL])
-        pong.player2.counterSpell.useSpell();
+        pong.player2.counterSpell.useSpell(false);
       else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
-        pong.player2.offensiveSpell.useSpell();
+        pong.player2.offensiveSpell.useSpell(true);
     }
   }
 
