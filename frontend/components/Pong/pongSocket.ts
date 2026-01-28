@@ -70,7 +70,7 @@ function handleServerMessage(pong: Pong, message: any) {
       handleGameStart(pong);
       break;
 
-    case "GAME_DISCONNECTION":
+    case "PLAYER_DISCONNECTED":
       handleGameDisconnection(pong);
       break;
 

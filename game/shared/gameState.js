@@ -80,21 +80,35 @@ class GameRoom {
     }
   }
 
-  broadcastSpellSwitched(playerId, offensive) {
-    this.players.forEach((player) => {
-      if (player.id !== playerId) {
-        const message = JSON.stringify({
-          type: "SPELL_SWITCHED",
-          enemy: true, // Send to the other player only, marking as enemy
-          offensive: offensive,
-        });
-        try {
-          player.connection.send(message);
-        } catch (error) {
-          console.error("Error sending SPELL_SWITCHED to player:", error);
-        }
-      }
+  broadcastSpellSwitched(playerID, offensive) {
+    const player1Message = JSON.stringify({
+      type: "SPELL_SWITCHED",
+      enemy: playerID === 1 ? false : true,
+      offensive: offensive,
     });
+
+    const player2Message = JSON.stringify({
+      type: "SPELL_SWITCHED",
+      enemy: playerID === 2 ? false : true,
+      offensive: offensive,
+    });
+
+    // Send to both players
+    if (this.player1.connection) {
+      try {
+        this.player1.connection.send(player1Message);
+      } catch (error) {
+        console.error("Error sending SPELL_USED to player1:", error);
+      }
+    }
+
+    if (this.player2.connection) {
+      try {
+        this.player2.connection.send(player2Message);
+      } catch (error) {
+        console.error("Error sending SPELL_USED to player2:", error);
+      }
+    }
   }
 
   createSpellUsedEvent() {
@@ -230,27 +244,22 @@ class GameRoom {
     return !this.player1.connection && !this.player2.connection;
   }
 
-  updatePlayerSpell(playerId, offensive) {
-    const player = playerId === 1 ? this.player1 : this.player2;
-    const cycle = offensive ? spellCycles.offensive : spellCycles.counter;
-    const currentSpell = offensive
+  updatePlayerSpell(playerID, offensive) {
+    const player = playerID === 1 ? this.player1 : this.player2;
+    let currentSpell = offensive
       ? player.currentOffensiveSpell
       : player.currentCounterSpell;
 
-    // Find current spell index and move to next
+    // Cycle to the next spell
+    const cycle = offensive ? spellCycles.offensive : spellCycles.counter;
     const currentIndex = cycle.indexOf(currentSpell);
     const nextIndex = (currentIndex + 1) % cycle.length;
-    const nextSpell = cycle[nextIndex];
-
-    // Update player's current spell
-    if (offensive) {
-      player.currentOffensiveSpell = nextSpell;
-    } else {
-      player.currentCounterSpell = nextSpell;
-    }
+    offensive
+      ? (player.currentOffensiveSpell = cycle[nextIndex])
+      : (player.currentCounterSpell = cycle[nextIndex]);
 
     // Broadcast the spell change to the other player
-    this.broadcastSpellSwitched(playerId, offensive);
+    this.broadcastSpellSwitched(playerID, offensive);
   }
   startGameLoop() {
     if (this.gameLoopTimeout) return;
@@ -451,10 +460,7 @@ class GameRoom {
   }
 
   broadcastEvent(event) {
-    const message = JSON.stringify({
-      type: "GAME_EVENT",
-      event: event,
-    });
+    const message = JSON.stringify(event);
 
     if (this.player1.connection) {
       try {

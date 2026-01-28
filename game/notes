@@ -22,16 +22,16 @@ FRONTEND
 
         GAME_START (**) #DONE
 
-        GAME_DISCONNECTION (**)
+        PLAYER_DISCONNECTED (**) #DONE
 
         GAME_SCORE
             enemy: boolean
 
-        SPELL_SWITCHED
+        SPELL_SWITCHED #DONE
             enemy: boolean
             offensive : boolean 
 
-        SPELL_USED
+        SPELL_USED #DONE
             enemy: boolean
             offensive : boolean
 

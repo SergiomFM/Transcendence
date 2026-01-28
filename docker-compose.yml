@@ -55,7 +55,7 @@ services:
       - dev
 
   game-dev:
-    image: oven/bun:1
+    image: oven/bun:latest
     working_dir: /app
     command: sh -c "bun install && bun run dev"
     ports:

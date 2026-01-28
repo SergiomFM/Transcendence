@@ -16,8 +16,11 @@ module.exports = async function (fastify, opts) {
     connection.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
+        console.log("Received message:", data);
         const player =
-          connection.playerId === 1 ? currentRoom.player1 : currentRoom.player2;
+          connection.playerId === 1
+            ? currentRoom?.player1
+            : currentRoom?.player2;
         switch (data.type) {
           case "JOIN_GAME": {
             // Find or create a room for this player
@@ -126,15 +129,13 @@ module.exports = async function (fastify, opts) {
         }`,
       );
 
+      roomManager.removePlayerFromRoom(connection);
+
       if (currentRoom) {
         // Notify other player
         currentRoom.broadcastEvent({
           type: "PLAYER_DISCONNECTED",
-          message: "Opponent disconnected",
         });
-
-        // Remove player from room
-        roomManager.removePlayerFromRoom(connection);
       }
     });
 

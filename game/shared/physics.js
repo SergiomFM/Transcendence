@@ -35,12 +35,9 @@ class Physics {
 
       // Return collision event for client VFX
       return {
-        type: "WALL_COLLISION",
-        position: {
-          x: this.heightLimit * sign,
-          y: ball.y,
-          z: (newZ + oldZ) * 0.5,
-        },
+        type: "COLLISION",
+        x: this.heightLimit * sign,
+        z: (newZ + oldZ) * 0.5,
         speed: ball.speed,
         angle: ball.angle,
       };
