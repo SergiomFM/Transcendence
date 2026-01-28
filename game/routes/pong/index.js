@@ -16,7 +16,6 @@ module.exports = async function (fastify, opts) {
     connection.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log("Received message:", data);
         const player =
           connection.playerId === 1
             ? currentRoom?.player1

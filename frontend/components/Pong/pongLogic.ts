@@ -5,7 +5,7 @@ import { Ball, Player, Pong } from "./pong";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
-    onlineGameLogic(pong, delta);
+    onlineGameLogic(pong);
   } else {
     localGameLogic(pong, delta);
   }
@@ -42,7 +42,7 @@ function onlineGameLogic(pong: Pong) {
 
 function applyServerState(pong: Pong, serverState: any) {
   pong.ball.x = serverState.ball.x;
-  pong.ball.z = -serverState.ball.z;
+  pong.ball.z = serverState.ball.z;
   pong.ball.setAngle(serverState.ball.angle);
 
   pong.player1.x = serverState.player1.x;

@@ -98,7 +98,7 @@ function handleServerMessage(pong: Pong, message: any) {
 // Handlers for different message types
 
 function handleGameState(pong: Pong, message: any) {
-  pong.serverGameState = message.state;
+  pong.serverGameState = message;
   pong.serverGameStateApplied = false;
 }
 

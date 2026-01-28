@@ -95,9 +95,9 @@ class Physics {
       ball.speed += GAME_CONSTANTS.BALL_SPEED_INCREMENT;
 
       return {
-        type: "PADDLE_COLLISION",
-        playerId: paddle.id,
-        position: { x: ball.x, y: ball.y, z: paddle.z },
+        type: "COLLISION",
+        x: ball.x,
+        z: paddle.z,
         speed: ball.speed,
         angle: ball.angle,
       };
