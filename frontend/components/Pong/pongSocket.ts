@@ -214,7 +214,7 @@ function handleScore(pong: Pong, message: any) {
 function handleCollision(pong: Pong, message: any) {
   splashEffect(
     pong.scene,
-    new Vector3(message.x, pong.ball.y, message.y),
+    new Vector3(message.x, pong.ball.y, message.z),
     message.speed,
     message.angle,
     COLLISION_VFX,

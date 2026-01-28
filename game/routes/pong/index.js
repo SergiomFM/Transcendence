@@ -65,7 +65,8 @@ module.exports = async function (fastify, opts) {
           case "PLAYER_DIRECTION":
             // Handle player input
             if (currentRoom) {
-              player.inputDirection = data.direction;
+              player.inputDirection =
+                connection.playerId === 2 ? -data.direction : data.direction;
             }
             break;
 

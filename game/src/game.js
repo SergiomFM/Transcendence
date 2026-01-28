@@ -467,9 +467,11 @@ class GameRoom {
           JSON.stringify({
             type: "GAME_STATE",
             ball: { x: -this.ball.x, z: -this.ball.z },
-            player1: { x: -this.player1.x },
-            player2: { x: -this.player2.x },
+            player1: { x: -this.player2.x },
+            player2: { x: -this.player1.x },
             running: this.running,
+            offensiveTime: this.player2.spells.offensive.cooldown,
+            counterTime: this.player2.spells.counter.cooldown,
           }),
         );
       } catch (error) {
