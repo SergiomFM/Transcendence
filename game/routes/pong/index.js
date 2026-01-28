@@ -1,6 +1,5 @@
 // WebSocket route for Pong multiplayer game
-const { GameRoomManager } = require("../../shared/gameState");
-const { spellTypes } = require("../../shared/constants");
+const { GameRoomManager } = require("../../src/game");
 
 // Global room manager
 const roomManager = new GameRoomManager();
@@ -92,8 +91,8 @@ module.exports = async function (fastify, opts) {
 
           case "USE_SPELL":
             // Handle spell activation
-            if (currentRoom) {
-              this.events.emit("spellUsed", player, data.offensive);
+            if (currentRoom && player) {
+              currentRoom.useSpell(player, data.offensive);
             }
             break;
 

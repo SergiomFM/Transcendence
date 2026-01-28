@@ -8,7 +8,7 @@ const options = {};
 
 module.exports = async function (fastify, opts) {
   // Load game constants from GLB file at startup
-  const { loadConstantsFromGLB } = require("./shared/constants");
+  const { loadConstantsFromGLB } = require("./src/constants");
   await loadConstantsFromGLB();
 
   // Place here your custom code!

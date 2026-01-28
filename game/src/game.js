@@ -1,12 +1,12 @@
-// Game state manager for Pong multiplayer
 const {
   GAME_CONSTANTS,
   degreesToRadians,
   spellTypes,
   spellCycles,
+  SPELL_COOLDOWNS,
 } = require("./constants");
 const Physics = require("./physics");
-const { EventEmitter } = require("./spells");
+const { EventEmitter } = require("events");
 
 class GameRoom {
   constructor(roomId) {
@@ -49,23 +49,34 @@ class GameRoom {
     };
   }
 
+  useSpell(player, offensive) {
+    const spellType = offensive
+      ? player.currentOffensiveSpell
+      : player.currentCounterSpell;
+    const spellKey = offensive ? "offensive" : "counter";
+    const now = performance.now();
+    const cooldown = SPELL_COOLDOWNS[spellType];
+    if (player.spells[spellKey].cooldown > now) {
+      return;
+    } else {
+      player.spells[spellKey].cooldown = now + cooldown;
+      if (this.events) {
+        this.events.emit("spellUsed", player, offensive);
+      }
+    }
+  }
+
   broadcastSpellUsed(playerID, offensive) {
-    const player1Message = JSON.stringify({
-      type: "SPELL_USED",
-      enemy: playerID === 1 ? false : true,
-      offensive: offensive,
-    });
-
-    const player2Message = JSON.stringify({
-      type: "SPELL_USED",
-      enemy: playerID === 2 ? false : true,
-      offensive: offensive,
-    });
-
     // Send to both players
     if (this.player1.connection) {
       try {
-        this.player1.connection.send(player1Message);
+        this.player1.connection.send(
+          JSON.stringify({
+            type: "SPELL_USED",
+            enemy: playerID === 1 ? false : true,
+            offensive: offensive,
+          }),
+        );
       } catch (error) {
         console.error("Error sending SPELL_USED to player1:", error);
       }
@@ -73,7 +84,13 @@ class GameRoom {
 
     if (this.player2.connection) {
       try {
-        this.player2.connection.send(player2Message);
+        this.player2.connection.send(
+          JSON.stringify({
+            type: "SPELL_USED",
+            enemy: playerID === 2 ? false : true,
+            offensive: offensive,
+          }),
+        );
       } catch (error) {
         console.error("Error sending SPELL_USED to player2:", error);
       }
@@ -425,26 +442,20 @@ class GameRoom {
   }
 
   broadcastState() {
-    const player1Message = JSON.stringify({
-      type: "GAME_STATE",
-      ball: { x: this.ball.x, z: this.ball.z },
-      player1: { x: this.player1.x },
-      player2: { x: this.player2.x },
-      running: this.running,
-    });
-
-    const player2Message = JSON.stringify({
-      type: "GAME_STATE",
-      ball: { x: -this.ball.x, z: -this.ball.z },
-      player1: { x: -this.player1.x },
-      player2: { x: -this.player2.x },
-      running: this.running,
-    });
-
     // Send to both players
     if (this.player1.connection) {
       try {
-        this.player1.connection.send(player1Message);
+        this.player1.connection.send(
+          JSON.stringify({
+            type: "GAME_STATE",
+            ball: { x: this.ball.x, z: this.ball.z },
+            player1: { x: this.player1.x },
+            player2: { x: this.player2.x },
+            running: this.running,
+            offensiveTime: this.player1.spells.offensive.cooldown,
+            counterTime: this.player1.spells.counter.cooldown,
+          }),
+        );
       } catch (error) {
         console.error("Error sending GAME_STATE to player1:", error);
       }
@@ -452,7 +463,15 @@ class GameRoom {
 
     if (this.player2.connection) {
       try {
-        this.player2.connection.send(player2Message);
+        this.player2.connection.send(
+          JSON.stringify({
+            type: "GAME_STATE",
+            ball: { x: -this.ball.x, z: -this.ball.z },
+            player1: { x: -this.player1.x },
+            player2: { x: -this.player2.x },
+            running: this.running,
+          }),
+        );
       } catch (error) {
         console.error("Error sending GAME_STATE to player2:", error);
       }

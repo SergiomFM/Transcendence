@@ -1,9 +1,5 @@
 // Physics engine for server-side Pong game
-const {
-  GAME_CONSTANTS,
-  degreesToRadians,
-  radiansToDegrees,
-} = require("./constants");
+const { GAME_CONSTANTS, degreesToRadians } = require("./constants");
 
 class Physics {
   constructor(gameState) {
