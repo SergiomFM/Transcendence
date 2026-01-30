@@ -185,10 +185,6 @@ export abstract class Spell {
   }
 
   updateSpellSize() {
-    if (this.hemisphericEmitter.radius >= this.maxSize) {
-      return;
-    }
-
     const frameDuration = 1000 / FPS;
     const now = performance.now();
 
@@ -482,11 +478,27 @@ class BallIman extends Spell {
   }
 }
 
-export const GENERATE_SPELLS = {
-  ballAngleSwitch: BallAngleSwitch,
-  ballShot: BallShot,
-  ballPortal: BallPortal,
-  ballStop: BallStop,
-  ballBack: BallBack,
-  ballIman: BallIman,
-};
+export function getNewSpell(
+  pong: Pong,
+  player: Player,
+  spell: Spell,
+  newSpellName: String,
+): Spell {
+  spell.stopParticles();
+  switch (newSpellName) {
+    case "ballAngleSwitch":
+      return new BallAngleSwitch(pong, player, spell.name);
+    case "ballShot":
+      return new BallShot(pong, player, spell.name);
+    case "ballPortal":
+      return new BallPortal(pong, player, spell.name);
+    case "ballStop":
+      return new BallStop(pong, player, spell.name);
+    case "ballBack":
+      return new BallBack(pong, player, spell.name);
+    case "ballIman":
+      return new BallIman(pong, player, spell.name);
+    default:
+      throw new Error(`Unknown spell type: ${newSpellName}`);
+  }
+}

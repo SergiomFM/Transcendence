@@ -142,7 +142,6 @@ class Physics {
     ball.x = 0;
     ball.z = 0;
     ball.speed = GAME_CONSTANTS.BALL_INITIAL_SPEED;
-    ball.color = { r: 0, g: 0, b: 0, a: 0 };
 
     // Reset players
     p1.x = 0;

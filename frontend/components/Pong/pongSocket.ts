@@ -2,7 +2,7 @@ import { Player, Pong } from "./pong";
 import { splashEffect, COLLISION_VFX } from "./pongVFX";
 import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
-import { GENERATE_SPELLS } from "./pongSpells";
+import { getNewSpell } from "./pongSpells";
 import { platform } from "os";
 
 export function connectToGameServer(
@@ -108,12 +108,9 @@ function handleSpellUsed(pong: Pong, message: any) {
   let player;
   message.enemy ? (player = pong.player2) : (player = pong.player1);
 
-  let spellHand;
   message.offensive
-    ? (spellHand = player.offensiveSpell)
-    : (spellHand = player.counterSpell);
-
-  spellHand.activateSpell();
+    ? player.offensiveSpell.activateSpell()
+    : player.counterSpell.activateSpell();
 }
 
 function handleSpellSwitched(pong: Pong, message: any) {
@@ -122,14 +119,19 @@ function handleSpellSwitched(pong: Pong, message: any) {
   let player;
   message.enemy ? (player = pong.player2) : (player = pong.player1);
 
-  let spellHand;
   message.offensive
-    ? (spellHand = player.offensiveSpell)
-    : (spellHand = player.counterSpell);
-
-  const SpellConstructor =
-    GENERATE_SPELLS[message.spellType as keyof typeof GENERATE_SPELLS];
-  spellHand = new SpellConstructor(pong, player, spellHand.name);
+    ? (player.offensiveSpell = getNewSpell(
+        pong,
+        player,
+        player.offensiveSpell,
+        message.spellName,
+      ))
+    : (player.counterSpell = getNewSpell(
+        pong,
+        player,
+        player.counterSpell,
+        message.spellName,
+      ));
 }
 
 function handleGameReady(pong: Pong) {

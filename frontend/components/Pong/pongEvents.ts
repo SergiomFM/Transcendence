@@ -83,11 +83,10 @@ export namespace Events {
       switchPlayerHandsPosition(pong, camera.topView);
     } else if (pong.loaded && !pong.running) {
       waitingForStartEvents(key, pong);
+    } else if (pong.loaded && pong.running) {
+      playerUseSpellEvent(key, pong);
+      playerDashEvent(key, pong);
     }
-
-    playerUseSpellEvent(key, pong);
-    playerDashEvent(key, pong);
-
     console.log(key);
   }
 

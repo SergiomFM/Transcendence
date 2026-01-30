@@ -1,7 +1,13 @@
 import { Vector3, Tools, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
-import { splashEffect, COLLISION_VFX, updateArena } from "./pongVFX";
+import {
+  splashEffect,
+  COLLISION_VFX,
+  updateArena,
+  spellReadyVFX,
+} from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
+import { Spell } from "./pongSpells";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -40,13 +46,47 @@ function onlineGameLogic(pong: Pong) {
   }
 }
 
+function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any) {
+  spell.cooldownElapsed = serverSpellData.cooldownElapsed;
+  if (serverSpellData.spellReady && !spell.ready) {
+    spell.ready = true;
+    spellReadyVFX(scene, spell);
+  } else if (!serverSpellData.spellReady) {
+    spell.ready = false;
+  }
+}
+
+function updatePlayerFromServer(
+  player: Player,
+  serverPlayerData: any,
+  scene: any,
+) {
+  player.x = serverPlayerData.x;
+  updateSpellFromServer(
+    player.offensiveSpell,
+    {
+      cooldownElapsed: serverPlayerData.offensiveCooldownElapsed,
+      spellReady: serverPlayerData.offensiveSpellReady,
+    },
+    scene,
+  );
+  updateSpellFromServer(
+    player.counterSpell,
+    {
+      cooldownElapsed: serverPlayerData.counterCooldownElapsed,
+      spellReady: serverPlayerData.counterSpellReady,
+    },
+    scene,
+  );
+}
+
 function applyServerState(pong: Pong, serverState: any) {
   pong.ball.x = serverState.ball.x;
   pong.ball.z = serverState.ball.z;
   pong.ball.setAngle(serverState.ball.angle);
 
-  pong.player1.x = serverState.player1.x;
-  pong.player2.x = serverState.player2.x;
+  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
+  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
 
   pong.running = serverState.running;
 }

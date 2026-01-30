@@ -97,17 +97,19 @@ class GameRoom {
     }
   }
 
-  broadcastSpellSwitched(playerID, offensive) {
+  broadcastSpellSwitched(playerID, offensive, spellName) {
     const player1Message = JSON.stringify({
       type: "SPELL_SWITCHED",
       enemy: playerID === 1 ? false : true,
       offensive: offensive,
+      spellName: spellName,
     });
 
     const player2Message = JSON.stringify({
       type: "SPELL_SWITCHED",
       enemy: playerID === 2 ? false : true,
       offensive: offensive,
+      spellName: spellName,
     });
 
     // Send to both players
@@ -180,6 +182,7 @@ class GameRoom {
   }
 
   createPlayer(id, zPosition) {
+    const now = performance.now();
     return {
       id: id,
       x: 0,
@@ -209,8 +212,11 @@ class GameRoom {
       currentCounterSpell: "ballStop",
 
       spells: {
-        counter: { active: false, cooldown: 0 },
-        offensive: { active: false, cooldown: 0 },
+        counter: { active: false, cooldown: now + SPELL_COOLDOWNS["ballStop"] },
+        offensive: {
+          active: false,
+          cooldown: now + SPELL_COOLDOWNS["ballAngleSwitch"],
+        },
       },
     };
   }
@@ -276,7 +282,7 @@ class GameRoom {
       : (player.currentCounterSpell = cycle[nextIndex]);
 
     // Broadcast the spell change to the other player
-    this.broadcastSpellSwitched(playerID, offensive);
+    this.broadcastSpellSwitched(playerID, offensive, cycle[nextIndex]);
   }
   startGameLoop() {
     if (this.gameLoopTimeout) return;
@@ -297,37 +303,39 @@ class GameRoom {
   update(delta) {
     // Check if both players are ready
     if (!this.running) {
-      if (!this.loaded) return;
-      if (!this.player1.ready || !this.player2.ready) return;
+      if (!this.loaded) {
+        return;
+      }
+      if (!this.player1.ready || !this.player2.ready) {
+        return;
+      }
       this.running = true;
+      this.resetSpells();
     }
 
     // SPELL: BallAngleSwitch (reverse ball direction once)
     if (this._angleActive) {
-      this._angleDuration = (this._angleDuration || 0) + delta * 1000;
+      this._angleDuration += delta * 1000;
       if (this._angleDuration >= 500) {
         this._angleActive = false;
         this._angleDuration = 0;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
     // SPELL: BallShot (speed boost with duration)
     if (this._shotActive) {
-      this._shotDuration = (this._shotDuration || 0) + delta * 1000;
+      this._shotDuration += delta * 1000;
       if (this._shotDuration >= 500) {
         this._shotActive = false;
         this._shotDuration = 0;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
     // SPELL: BallBack (reverse ball direction once)
     if (this._backActive) {
-      this._backDuration = (this._backDuration || 0) + delta * 1000;
+      this._backDuration += delta * 1000;
       if (this._backDuration >= 500) {
         this._backActive = false;
         this._backDuration = 0;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -342,7 +350,6 @@ class GameRoom {
         // 2s duration
         this._stopActive = false;
         this._stopDuration = 0;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 }; // Reset color to transparent
       }
     }
 
@@ -367,7 +374,6 @@ class GameRoom {
         this._imanActive = false;
         this._imanDuration = 0;
         this._imanPlayer = null;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -388,7 +394,6 @@ class GameRoom {
         this._portalActive = false;
         this._portalDuration = 0;
         this._portalPlayer = null;
-        this.ball.color = { r: 0, g: 0, b: 0, a: 0 };
       }
     }
 
@@ -406,6 +411,7 @@ class GameRoom {
 
       if (collision.type === "GOAL") {
         this.running = false;
+        this.resetSpells();
         this.broadcastState();
       }
     }
@@ -421,7 +427,6 @@ class GameRoom {
         z: this.ball.z,
         speed: this.ball.speed,
         angle: this.ball.angle,
-        color: this.ball.color,
       },
       player1: {
         x: this.player1.x,
@@ -441,20 +446,50 @@ class GameRoom {
     };
   }
 
+  getStateForPlayer(isPlayer1) {
+    const now = performance.now();
+    const me = isPlayer1 ? this.player1 : this.player2;
+    const enemy = isPlayer1 ? this.player2 : this.player1;
+    const abs = isPlayer1 ? 1 : -1;
+
+    return {
+      type: "GAME_STATE",
+      ball: { x: this.ball.x * abs, z: this.ball.z * abs },
+      player1: {
+        x: me.x * abs,
+        offensiveCooldownElapsed:
+          SPELL_COOLDOWNS[me.currentOffensiveSpell] -
+          Math.max(0, me.spells.offensive.cooldown - now),
+        counterCooldownElapsed:
+          SPELL_COOLDOWNS[me.currentCounterSpell] -
+          Math.max(0, me.spells.counter.cooldown - now),
+        offensiveSpellReady:
+          Math.max(0, me.spells.offensive.cooldown - now) === 0,
+        counterSpellReady: Math.max(0, me.spells.counter.cooldown - now) === 0,
+      },
+      player2: {
+        x: enemy.x * abs,
+        offensiveCooldownElapsed:
+          SPELL_COOLDOWNS[enemy.currentOffensiveSpell] -
+          Math.max(0, enemy.spells.offensive.cooldown - now),
+        counterCooldownElapsed:
+          SPELL_COOLDOWNS[enemy.currentCounterSpell] -
+          Math.max(0, enemy.spells.counter.cooldown - now),
+        offensiveSpellReady:
+          Math.max(0, enemy.spells.offensive.cooldown - now) === 0,
+        counterSpellReady:
+          Math.max(0, enemy.spells.counter.cooldown - now) === 0,
+      },
+      running: this.running,
+    };
+  }
+
   broadcastState() {
     // Send to both players
     if (this.player1.connection) {
       try {
         this.player1.connection.send(
-          JSON.stringify({
-            type: "GAME_STATE",
-            ball: { x: this.ball.x, z: this.ball.z },
-            player1: { x: this.player1.x },
-            player2: { x: this.player2.x },
-            running: this.running,
-            offensiveTime: this.player1.spells.offensive.cooldown,
-            counterTime: this.player1.spells.counter.cooldown,
-          }),
+          JSON.stringify(this.getStateForPlayer(true)),
         );
       } catch (error) {
         console.error("Error sending GAME_STATE to player1:", error);
@@ -464,15 +499,7 @@ class GameRoom {
     if (this.player2.connection) {
       try {
         this.player2.connection.send(
-          JSON.stringify({
-            type: "GAME_STATE",
-            ball: { x: -this.ball.x, z: -this.ball.z },
-            player1: { x: -this.player2.x },
-            player2: { x: -this.player1.x },
-            running: this.running,
-            offensiveTime: this.player2.spells.offensive.cooldown,
-            counterTime: this.player2.spells.counter.cooldown,
-          }),
+          JSON.stringify(this.getStateForPlayer(false)),
         );
       } catch (error) {
         console.error("Error sending GAME_STATE to player2:", error);
@@ -505,6 +532,17 @@ class GameRoom {
       clearTimeout(this.gameLoopTimeout);
       this.gameLoopTimeout = null;
     }
+  }
+  resetSpells() {
+    const now = performance.now();
+    this.player1.spells.offensive.cooldown =
+      now + SPELL_COOLDOWNS[this.player1.currentOffensiveSpell];
+    this.player1.spells.counter.cooldown =
+      now + SPELL_COOLDOWNS[this.player1.currentCounterSpell];
+    this.player2.spells.offensive.cooldown =
+      now + SPELL_COOLDOWNS[this.player2.currentOffensiveSpell];
+    this.player2.spells.counter.cooldown =
+      now + SPELL_COOLDOWNS[this.player2.currentCounterSpell];
   }
 }
 
