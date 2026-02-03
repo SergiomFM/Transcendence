@@ -1,610 +1,625 @@
 const {
-  GAME_CONSTANTS,
-  degreesToRadians,
-  spellTypes,
-  spellCycles,
-  SPELL_COOLDOWNS,
+	GAME_CONSTANTS,
+	degreesToRadians,
+	spellTypes,
+	spellCycles,
+	SPELL_COOLDOWNS,
 } = require("./constants");
 const Physics = require("./physics");
 const { EventEmitter } = require("events");
 
 class GameRoom {
-  constructor(roomId) {
-    this.roomId = roomId;
-    this.createdAt = Date.now();
-    this.running = false;
-    this.loaded = false;
+	constructor(roomId) {
+		this.roomId = roomId;
+		this.createdAt = Date.now();
+		this.running = false;
+		this.loaded = false;
 
-    this.initializeBall();
+		this.initializeBall();
 
-    this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
-    this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
+		this.player1 = this.createPlayer(1, GAME_CONSTANTS.PLAYER1_Z);
+		this.player2 = this.createPlayer(2, GAME_CONSTANTS.PLAYER2_Z);
 
-    // Player connection tracking
-    this.player1.connection = null;
-    this.player2.connection = null;
+		// Player connection tracking
+		this.player1.connection = null;
+		this.player2.connection = null;
 
-    this.physics = new Physics(this);
-    this.events = new EventEmitter();
+		this.physics = new Physics(this);
+		this.events = new EventEmitter();
 
-    // Event to handle spell related player Inputs
-    this.createSpellUsedEvent();
+		// Event to handle spell related player Inputs
+		this.createSpellUsedEvent();
 
-    // Game loop variables
-    this.lastUpdate = Date.now();
-    this.lastStateUpdate = Date.now();
-    this.gameLoopTimeout = null;
-  }
+		// Game loop variables
+		this.lastUpdate = Date.now();
+		this.lastStateUpdate = Date.now();
+		this.gameLoopTimeout = null;
+	}
 
-  initializeBall() {
-    this.ball = {
-      x: 0,
-      y: GAME_CONSTANTS.BALL_Y,
-      z: 0,
-      speed: GAME_CONSTANTS.BALL_INITIAL_SPEED,
-      angle: degreesToRadians(GAME_CONSTANTS.BALL_INITIAL_ANGLE_DEG),
-      cos: 0,
-      sin: 1,
-      radius: GAME_CONSTANTS.BALL_RADIUS,
-    };
-  }
+	initializeBall() {
+		this.ball = {
+			x: 0,
+			y: GAME_CONSTANTS.BALL_Y,
+			z: 0,
+			speed: GAME_CONSTANTS.BALL_INITIAL_SPEED,
+			angle: degreesToRadians(GAME_CONSTANTS.BALL_INITIAL_ANGLE_DEG),
+			cos: 0,
+			sin: 1,
+			radius: GAME_CONSTANTS.BALL_RADIUS,
+		};
+	}
 
-  useSpell(player, offensive) {
-    const spellType = offensive
-      ? player.currentOffensiveSpell
-      : player.currentCounterSpell;
-    const spellKey = offensive ? "offensive" : "counter";
-    const now = performance.now();
-    const cooldown = SPELL_COOLDOWNS[spellType];
-    if (player.spells[spellKey].cooldown > now) {
-      return;
-    } else {
-      player.spells[spellKey].cooldown = now + cooldown;
-      if (this.events) {
-        this.events.emit("spellUsed", player, offensive);
-      }
-    }
-  }
+	useSpell(player, offensive) {
+		const spellType = offensive
+			? player.currentOffensiveSpell
+			: player.currentCounterSpell;
+		const spellKey = offensive ? "offensive" : "counter";
+		const now = performance.now();
+		const cooldown = SPELL_COOLDOWNS[spellType];
+		if (player.spells[spellKey].cooldown > now) {
+			return;
+		} else {
+			player.spells[spellKey].cooldown = now + cooldown;
+			if (this.events) {
+				this.events.emit("spellUsed", player, offensive);
+			}
+		}
+	}
 
-  broadcastSpellUsed(playerID, offensive) {
-    // Send to both players
-    if (this.player1.connection) {
-      try {
-        this.player1.connection.send(
-          JSON.stringify({
-            type: "SPELL_USED",
-            enemy: playerID === 1 ? false : true,
-            offensive: offensive,
-          }),
-        );
-      } catch (error) {
-        console.error("Error sending SPELL_USED to player1:", error);
-      }
-    }
+	broadcastSpellUsed(playerID, offensive) {
+		// Send to both players
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(
+					JSON.stringify({
+						type: "SPELL_USED",
+						enemy: playerID === 1 ? false : true,
+						offensive: offensive,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending SPELL_USED to player1:", error);
+			}
+		}
 
-    if (this.player2.connection) {
-      try {
-        this.player2.connection.send(
-          JSON.stringify({
-            type: "SPELL_USED",
-            enemy: playerID === 2 ? false : true,
-            offensive: offensive,
-          }),
-        );
-      } catch (error) {
-        console.error("Error sending SPELL_USED to player2:", error);
-      }
-    }
-  }
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(
+					JSON.stringify({
+						type: "SPELL_USED",
+						enemy: playerID === 2 ? false : true,
+						offensive: offensive,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending SPELL_USED to player2:", error);
+			}
+		}
+	}
 
-  broadcastSpellSwitched(playerID, offensive, spellName) {
-    const player1Message = JSON.stringify({
-      type: "SPELL_SWITCHED",
-      enemy: playerID === 1 ? false : true,
-      offensive: offensive,
-      spellName: spellName,
-    });
+	broadcastSpellSwitched(playerID, offensive, spellName) {
+		const player1Message = JSON.stringify({
+			type: "SPELL_SWITCHED",
+			enemy: playerID === 1 ? false : true,
+			offensive: offensive,
+			spellName: spellName,
+		});
 
-    const player2Message = JSON.stringify({
-      type: "SPELL_SWITCHED",
-      enemy: playerID === 2 ? false : true,
-      offensive: offensive,
-      spellName: spellName,
-    });
+		const player2Message = JSON.stringify({
+			type: "SPELL_SWITCHED",
+			enemy: playerID === 2 ? false : true,
+			offensive: offensive,
+			spellName: spellName,
+		});
 
-    // Send to both players
-    if (this.player1.connection) {
-      try {
-        this.player1.connection.send(player1Message);
-      } catch (error) {
-        console.error("Error sending SPELL_USED to player1:", error);
-      }
-    }
+		// Send to both players
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(player1Message);
+			} catch (error) {
+				console.error("Error sending SPELL_USED to player1:", error);
+			}
+		}
 
-    if (this.player2.connection) {
-      try {
-        this.player2.connection.send(player2Message);
-      } catch (error) {
-        console.error("Error sending SPELL_USED to player2:", error);
-      }
-    }
-  }
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(player2Message);
+			} catch (error) {
+				console.error("Error sending SPELL_USED to player2:", error);
+			}
+		}
+	}
 
-  createSpellUsedEvent() {
-    this.events.on("spellUsed", (player, offensive) => {
-      const spellType = offensive
-        ? player.currentOffensiveSpell
-        : player.currentCounterSpell;
+	createSpellUsedEvent() {
+		this.events.on("spellUsed", (player, offensive) => {
+			const spellType = offensive
+				? player.currentOffensiveSpell
+				: player.currentCounterSpell;
 
-      // Cast Spells in the backend
-      switch (spellType) {
-        case "ballAngleSwitch":
-          this._angleActive = true;
-          this.physics.setBallAngle(Math.PI - this.ball.angle);
-          break;
-        case "ballShot":
-          this._shotActive = true;
-          this.ball.speed *= 2;
-          if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
-            this.physics.setBallAngle(degreesToRadians(90));
-          } else {
-            this.physics.setBallAngle(degreesToRadians(270));
-          }
-          break;
-        case "ballPortal":
-          this._portalActive = true;
-          this._portalLastXDir = Math.sign(this.ball.cos);
-          this._portalLastZDir = Math.sign(this.ball.sin);
-          break;
-        case "ballStop":
-          this._stopActive = true;
-          this._stopOriginalPosition = {
-            x: this.ball.x,
-            y: this.ball.y,
-            z: this.ball.z,
-          };
-          break;
-        case "ballBack":
-          this._backActive = true;
-          this.physics.setBallAngle(this.ball.angle + Math.PI);
-          break;
-        case "ballIman":
-          this._imanActive = true;
-          this._imanPlayer = player;
-          break;
-        default:
-          break;
-      }
+			// Cast Spells in the backend
+			switch (spellType) {
+				case "ballAngleSwitch":
+					this._angleActive = true;
+					this.physics.setBallAngle(Math.PI - this.ball.angle);
+					break;
+				case "ballShot":
+					this._shotActive = true;
+					this.ball.speed *= 2;
+					if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
+						this.physics.setBallAngle(degreesToRadians(90));
+					} else {
+						this.physics.setBallAngle(degreesToRadians(270));
+					}
+					break;
+				case "ballPortal":
+					this._portalActive = true;
+					this._portalLastXDir = Math.sign(this.ball.cos);
+					this._portalLastZDir = Math.sign(this.ball.sin);
+					break;
+				case "ballStop":
+					this._stopActive = true;
+					this._stopOriginalPosition = {
+						x: this.ball.x,
+						y: this.ball.y,
+						z: this.ball.z,
+					};
+					break;
+				case "ballBack":
+					this._backActive = true;
+					this.physics.setBallAngle(this.ball.angle + Math.PI);
+					break;
+				case "ballIman":
+					this._imanActive = true;
+					this._imanPlayer = player;
+					break;
+				default:
+					break;
+			}
 
-      // Update all clients about the spell activation
-      this.broadcastSpellUsed(player.id, spellTypes[spellType].offensive);
-    });
-  }
+			// Update all clients about the spell activation
+			this.broadcastSpellUsed(player.id, spellTypes[spellType].offensive);
+		});
+	}
 
-  createPlayer(id, zPosition) {
-    const now = performance.now();
-    return {
-      id: id,
-      x: 0,
-      z: zPosition,
-      currSpeed: 0,
-      currDirection: 0,
-      maxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
-      originalMaxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
-      drag: GAME_CONSTANTS.PADDLE_DRAG,
-      direction: 0,
-      inputDirection: 0,
-      failed: false,
-      ready: false,
-      size: GAME_CONSTANTS.PADDLE_SIZE,
-      score: 0,
+	createPlayer(id, zPosition) {
+		const now = performance.now();
+		return {
+			id: id,
+			x: 0,
+			z: zPosition,
+			currSpeed: 0,
+			currDirection: 0,
+			maxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
+			originalMaxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
+			drag: GAME_CONSTANTS.PADDLE_DRAG,
+			direction: 0,
+			inputDirection: 0,
+			failed: false,
+			ready: false,
+			size: GAME_CONSTANTS.PADDLE_SIZE,
+			score: 0,
 
-      // Dash
-      dashActive: false,
-      dashReady: false,
-      dashCooldown: GAME_CONSTANTS.DASH_COOLDOWN,
-      dashElapsedCooldown: 0,
-      dashDuration: GAME_CONSTANTS.DASH_DURATION,
-      dashElapsedActive: 0,
+			// Dash
+			dashActive: false,
+			dashReady: false,
+			dashCooldown: GAME_CONSTANTS.DASH_COOLDOWN,
+			dashElapsedCooldown: 0,
+			dashDuration: GAME_CONSTANTS.DASH_DURATION,
+			dashElapsedActive: 0,
 
-      // Current spells
-      currentOffensiveSpell: "ballAngleSwitch",
-      currentCounterSpell: "ballStop",
+			// Current spells
+			currentOffensiveSpell: "ballAngleSwitch",
+			currentCounterSpell: "ballStop",
 
-      spells: {
-        counter: { active: false, cooldown: now + SPELL_COOLDOWNS["ballStop"] },
-        offensive: {
-          active: false,
-          cooldown: now + SPELL_COOLDOWNS["ballAngleSwitch"],
-        },
-      },
-    };
-  }
+			spells: {
+				counter: { active: false, cooldown: now + SPELL_COOLDOWNS["ballStop"] },
+				offensive: {
+					active: false,
+					cooldown: now + SPELL_COOLDOWNS["ballAngleSwitch"],
+				},
+			},
+		};
+	}
 
-  addPlayer(connection, playerData) {
-    // Try to add to player1 slot first
-    if (!this.player1.connection) {
-      this.player1.connection = connection;
-      connection.playerId = 1;
-      return { success: true, playerId: 1 };
-    }
+	addPlayer(connection, playerData) {
+		// Try to add to player1 slot first
+		if (!this.player1.connection) {
+			this.player1.connection = connection;
+			connection.playerId = 1;
+			return { success: true, playerId: 1 };
+		}
 
-    // Then try player2 slot
-    if (!this.player2.connection) {
-      this.player2.connection = connection;
-      connection.playerId = 2;
+		// Then try player2 slot
+		if (!this.player2.connection) {
+			this.player2.connection = connection;
+			connection.playerId = 2;
 
-      // Both players connected, start game loop
-      this.loaded = true;
-      this.startGameLoop();
+			// Both players connected, start game loop
+			this.loaded = true;
+			this.startGameLoop();
 
-      return { success: true, playerId: 2 };
-    }
+			return { success: true, playerId: 2 };
+		}
 
-    // Room is full
-    return { success: false, reason: "Room is full" };
-  }
+		// Room is full
+		return { success: false, reason: "Room is full" };
+	}
 
-  removePlayer(connection) {
-    // Remove from player slot
-    if (this.player1.connection === connection) {
-      this.player1.connection = null;
-      this.player1.ready = false;
-    } else if (this.player2.connection === connection) {
-      this.player2.connection = null;
-      this.player2.ready = false;
-    }
+	removePlayer(connection) {
+		// Remove from player slot
+		if (this.player1.connection === connection) {
+			this.player1.connection = null;
+			this.player1.ready = false;
+		} else if (this.player2.connection === connection) {
+			this.player2.connection = null;
+			this.player2.ready = false;
+		}
 
-    // Stop game if a player leaves
-    if (this.gameLoopTimeout) {
-      clearTimeout(this.gameLoopTimeout);
-      this.gameLoopTimeout = null;
-    }
-    this.running = false;
-    this.loaded = false;
+		// Stop game if a player leaves
+		if (this.gameLoopTimeout) {
+			clearTimeout(this.gameLoopTimeout);
+			this.gameLoopTimeout = null;
+		}
+		this.running = false;
+		this.loaded = false;
 
-    // Return true if room is now empty
-    return !this.player1.connection && !this.player2.connection;
-  }
+		// Return true if room is now empty
+		return !this.player1.connection && !this.player2.connection;
+	}
 
-  updatePlayerSpell(playerID, offensive) {
-    const player = playerID === 1 ? this.player1 : this.player2;
-    let currentSpell = offensive
-      ? player.currentOffensiveSpell
-      : player.currentCounterSpell;
+	updatePlayerSpell(playerID, offensive) {
+		const player = playerID === 1 ? this.player1 : this.player2;
+		let currentSpell = offensive
+			? player.currentOffensiveSpell
+			: player.currentCounterSpell;
 
-    // Cycle to the next spell
-    const cycle = offensive ? spellCycles.offensive : spellCycles.counter;
-    const currentIndex = cycle.indexOf(currentSpell);
-    const nextIndex = (currentIndex + 1) % cycle.length;
-    offensive
-      ? (player.currentOffensiveSpell = cycle[nextIndex])
-      : (player.currentCounterSpell = cycle[nextIndex]);
+		// Cycle to the next spell
+		const cycle = offensive ? spellCycles.offensive : spellCycles.counter;
+		const currentIndex = cycle.indexOf(currentSpell);
+		const nextIndex = (currentIndex + 1) % cycle.length;
+		offensive
+			? (player.currentOffensiveSpell = cycle[nextIndex])
+			: (player.currentCounterSpell = cycle[nextIndex]);
 
-    // Broadcast the spell change to the other player
-    this.broadcastSpellSwitched(playerID, offensive, cycle[nextIndex]);
-  }
-  startGameLoop() {
-    if (this.gameLoopTimeout) return;
-    let lastUpdate = performance.now();
+		// Broadcast the spell change to the other player
+		this.broadcastSpellSwitched(playerID, offensive, cycle[nextIndex]);
+	}
+	startGameLoop() {
+		if (this.gameLoopTimeout) return;
+		let lastUpdate = performance.now();
 
-    const loop = () => {
-      const now = performance.now();
-      const delta = now - lastUpdate;
-      if (delta >= GAME_CONSTANTS.TICK_RATE) {
-        this.update(delta / 1000); // Convert to seconds
-        lastUpdate = now - (delta % GAME_CONSTANTS.TICK_RATE);
-      }
-      this.gameLoopTimeout = setTimeout(loop, 1);
-    };
-    loop();
-  }
+		const loop = () => {
+			const now = performance.now();
+			const delta = now - lastUpdate;
+			if (delta >= GAME_CONSTANTS.TICK_RATE) {
+				this.update(delta / 1000); // Convert to seconds
+				lastUpdate = now - (delta % GAME_CONSTANTS.TICK_RATE);
+			}
+			this.gameLoopTimeout = setTimeout(loop, 1);
+		};
+		loop();
+	}
 
-  update(delta) {
-    // Check if both players are ready
-    if (!this.running) {
-      if (!this.loaded) {
-        return;
-      }
-      if (!this.player1.ready || !this.player2.ready) {
-        return;
-      }
-      this.running = true;
-      this.resetSpells();
-    }
+	update(delta) {
+		// Check if both players are ready
+		if (!this.running) {
+			if (!this.loaded) {
+				return;
+			}
+			if (!this.player1.ready || !this.player2.ready) {
+				return;
+			}
+			this.running = true;
+			this.resetSpells();
+		}
 
-    // SPELL: BallAngleSwitch (reverse ball direction once)
-    if (this._angleActive) {
-      this._angleDuration += delta * 1000;
-      if (this._angleDuration >= 500) {
-        this._angleActive = false;
-        this._angleDuration = 0;
-      }
-    }
-    // SPELL: BallShot (speed boost with duration)
-    if (this._shotActive) {
-      this._shotDuration += delta * 1000;
-      if (this._shotDuration >= 500) {
-        this._shotActive = false;
-        this._shotDuration = 0;
-      }
-    }
+		// SPELL: BallAngleSwitch (reverse ball direction once)
+		if (this._angleActive) {
+			this._angleDuration += delta * 1000;
+			if (this._angleDuration >= 500) {
+				this._angleActive = false;
+				this._angleDuration = 0;
+			}
+		}
+		// SPELL: BallShot (speed boost with duration)
+		if (this._shotActive) {
+			this._shotDuration += delta * 1000;
+			if (this._shotDuration >= 500) {
+				this._shotActive = false;
+				this._shotDuration = 0;
+			}
+		}
 
-    // SPELL: BallBack (reverse ball direction once)
-    if (this._backActive) {
-      this._backDuration += delta * 1000;
-      if (this._backDuration >= 500) {
-        this._backActive = false;
-        this._backDuration = 0;
-      }
-    }
+		// SPELL: BallBack (reverse ball direction once)
+		if (this._backActive) {
+			this._backDuration += delta * 1000;
+			if (this._backDuration >= 500) {
+				this._backActive = false;
+				this._backDuration = 0;
+			}
+		}
 
-    // SPELL: BallStop (stop ball for duration)
-    if (this._stopActive) {
-      // Keep ball at original position
-      this.ball.x = this._stopOriginalPosition.x;
-      this.ball.y = this._stopOriginalPosition.y;
-      this.ball.z = this._stopOriginalPosition.z;
-      this._stopDuration = (this._stopDuration || 0) + delta * 1000;
-      if (this._stopDuration >= 2000) {
-        // 2s duration
-        this._stopActive = false;
-        this._stopDuration = 0;
-      }
-    }
+		// SPELL: BallStop (stop ball for duration)
+		if (this._stopActive) {
+			// Keep ball at original position
+			this.ball.x = this._stopOriginalPosition.x;
+			this.ball.y = this._stopOriginalPosition.y;
+			this.ball.z = this._stopOriginalPosition.z;
+			this._stopDuration = (this._stopDuration || 0) + delta * 1000;
+			if (this._stopDuration >= 2000) {
+				// 2s duration
+				this._stopActive = false;
+				this._stopDuration = 0;
+			}
+		}
 
-    // SPELL: BallIman (attract ball angle to player)
-    if (this._imanActive && this._imanPlayer) {
-      let player = this._imanPlayer;
-      let ballToPaddleAngle = Math.atan2(
-        player.z - this.ball.z,
-        player.x - this.ball.x,
-      );
-      let direction = -1;
-      if (
-        this.ball.angle - ballToPaddleAngle <
-        ballToPaddleAngle - this.ball.angle
-      )
-        direction = 1;
-      let deviation = degreesToRadians(90) * delta * direction;
-      this.physics.setBallAngle(this.ball.angle + deviation);
-      this._imanDuration = (this._imanDuration || 0) + delta * 1000;
-      if (this._imanDuration >= 1000) {
-        // 1s duration
-        this._imanActive = false;
-        this._imanDuration = 0;
-        this._imanPlayer = null;
-      }
-    }
+		// SPELL: BallIman (attract ball angle to player)
+		if (this._imanActive && this._imanPlayer) {
+			let player = this._imanPlayer;
+			let ballToPaddleAngle = Math.atan2(
+				player.z - this.ball.z,
+				player.x - this.ball.x,
+			);
+			let direction = -1;
+			if (
+				this.ball.angle - ballToPaddleAngle <
+				ballToPaddleAngle - this.ball.angle
+			)
+				direction = 1;
+			let deviation = degreesToRadians(90) * delta * direction;
+			this.physics.setBallAngle(this.ball.angle + deviation);
+			this._imanDuration = (this._imanDuration || 0) + delta * 1000;
+			if (this._imanDuration >= 1000) {
+				// 1s duration
+				this._imanActive = false;
+				this._imanDuration = 0;
+				this._imanPlayer = null;
+			}
+		}
 
-    // SPELL: BallPortal (teleport ball to opposite wall)
-    if (this._portalActive) {
-      if (
-        this._portalLastZDir == Math.sign(this.ball.sin) &&
-        this._portalLastXDir != Math.sign(this.ball.cos)
-      ) {
-        this.ball.x *= -1;
-        this.physics.setBallAngle(Math.PI - this.ball.angle);
-        this._portalActive = false;
-      }
-      this._portalLastXDir = Math.sign(this.ball.cos);
-      this._portalLastZDir = Math.sign(this.ball.sin);
-      this._portalDuration = (this._portalDuration || 0) + delta * 1000;
-      if (this._portalDuration >= 500) {
-        this._portalActive = false;
-        this._portalDuration = 0;
-        this._portalPlayer = null;
-      }
-    }
+		// SPELL: BallPortal (teleport ball to opposite wall)
+		if (this._portalActive) {
+			if (
+				this._portalLastZDir == Math.sign(this.ball.sin) &&
+				this._portalLastXDir != Math.sign(this.ball.cos)
+			) {
+				this.ball.x *= -1;
+				this.physics.setBallAngle(Math.PI - this.ball.angle);
+				this._portalActive = false;
+			}
+			this._portalLastXDir = Math.sign(this.ball.cos);
+			this._portalLastZDir = Math.sign(this.ball.sin);
+			this._portalDuration = (this._portalDuration || 0) + delta * 1000;
+			if (this._portalDuration >= 500) {
+				this._portalActive = false;
+				this._portalDuration = 0;
+				this._portalPlayer = null;
+			}
+		}
 
-    // Update physics (skip ball update if stop spell is active)
-    this.physics.updatePaddle(this.player1, delta);
-    this.physics.updatePaddle(this.player2, delta);
-    let collision = null;
-    if (!this._stopActive) {
-      collision = this.physics.updateBall(delta);
-    }
+		// Update physics (skip ball update if stop spell is active)
+		this.physics.updatePaddle(this.player1, delta);
+		this.physics.updatePaddle(this.player2, delta);
+		let event = null;
+		if (!this._stopActive) {
+			event = this.physics.updateBall(delta);
+		}
 
-    // Send collision events immediately for VFX
-    if (collision) {
-      this.broadcastEvent(collision);
+		if (event) {
+			if (event.type === "GAME_SCORE") {
+				this.running = false;
+				this.resetSpells();
+				this.handleScoreEvent(event, true);
+			} else {
+				this.handleCollisionEvent(event, true);
+			}
+		}
 
-      if (collision.type === "GOAL") {
-        this.running = false;
-        this.resetSpells();
-        this.broadcastState();
-      }
-    }
+		this.broadcastState();
+	}
 
-    this.broadcastState();
-  }
+	handleCollisionEvent(collisionEvent, isPlayer1) {
+		let player = isPlayer1 ? this.player1 : this.player2;
+		let sign = isPlayer1 ? 1 : -1;
+		if (player.connection) {
+			try {
+				player.connection.send(
+					JSON.stringify({
+						type: "COLLISION",
+						x: collisionEvent.x * sign,
+						z: collisionEvent.z * sign,
+						speed: collisionEvent.speed * sign,
+						angle: -collisionEvent.angle,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending COLLISION to player1:", error);
+			}
+		}
+		if (!isPlayer1) return;
+		this.handleCollisionEvent(collisionEvent, false);
+	}
 
-  getState() {
-    return {
-      ball: {
-        x: this.ball.x,
-        y: this.ball.y,
-        z: this.ball.z,
-        speed: this.ball.speed,
-        angle: this.ball.angle,
-      },
-      player1: {
-        x: this.player1.x,
-        z: this.player1.z,
-        score: this.player1.score,
-        ready: this.player1.ready,
-        dashReady: this.player1.dashReady,
-      },
-      player2: {
-        x: this.player2.x,
-        z: this.player2.z,
-        score: this.player2.score,
-        ready: this.player2.ready,
-        dashReady: this.player2.dashReady,
-      },
-      running: this.running,
-    };
-  }
+	handleScoreEvent(scoreEvent, isPlayer1) {
+		let player = isPlayer1 ? this.player1 : this.player2;
 
-  getStateForPlayer(isPlayer1) {
-    const now = performance.now();
-    const me = isPlayer1 ? this.player1 : this.player2;
-    const enemy = isPlayer1 ? this.player2 : this.player1;
-    const abs = isPlayer1 ? 1 : -1;
+		if (player.connection) {
+			try {
+				player.connection.send(
+					JSON.stringify({
+						type: "GAME_SCORE",
+						enemy: isPlayer1 ? !scoreEvent.player1Wins : scoreEvent.player1Wins,
+						player1Score: isPlayer1 ? this.player1.score : this.player2.score,
+						player2Score: isPlayer1 ? this.player2.score : this.player1.score,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending GAME_SCORE to player:", error);
+			}
+		}
+		if (!isPlayer1) return;
+		this.handleScoreEvent(scoreEvent, false);
+	}
 
-    return {
-      type: "GAME_STATE",
-      ball: { x: this.ball.x * abs, z: this.ball.z * abs },
-      player1: {
-        x: me.x * abs,
-        offensiveCooldownElapsed:
-          SPELL_COOLDOWNS[me.currentOffensiveSpell] -
-          Math.max(0, me.spells.offensive.cooldown - now),
-        counterCooldownElapsed:
-          SPELL_COOLDOWNS[me.currentCounterSpell] -
-          Math.max(0, me.spells.counter.cooldown - now),
-        offensiveSpellReady:
-          Math.max(0, me.spells.offensive.cooldown - now) === 0,
-        counterSpellReady: Math.max(0, me.spells.counter.cooldown - now) === 0,
-      },
-      player2: {
-        x: enemy.x * abs,
-        offensiveCooldownElapsed:
-          SPELL_COOLDOWNS[enemy.currentOffensiveSpell] -
-          Math.max(0, enemy.spells.offensive.cooldown - now),
-        counterCooldownElapsed:
-          SPELL_COOLDOWNS[enemy.currentCounterSpell] -
-          Math.max(0, enemy.spells.counter.cooldown - now),
-        offensiveSpellReady:
-          Math.max(0, enemy.spells.offensive.cooldown - now) === 0,
-        counterSpellReady:
-          Math.max(0, enemy.spells.counter.cooldown - now) === 0,
-      },
-      running: this.running,
-    };
-  }
+	getStateForPlayer(isPlayer1) {
+		const now = performance.now();
+		const me = isPlayer1 ? this.player1 : this.player2;
+		const enemy = isPlayer1 ? this.player2 : this.player1;
+		const abs = isPlayer1 ? 1 : -1;
 
-  broadcastState() {
-    // Send to both players
-    if (this.player1.connection) {
-      try {
-        this.player1.connection.send(
-          JSON.stringify(this.getStateForPlayer(true)),
-        );
-      } catch (error) {
-        console.error("Error sending GAME_STATE to player1:", error);
-      }
-    }
+		return {
+			type: "GAME_STATE",
+			ball: { x: this.ball.x * abs, z: this.ball.z * abs },
+			player1: {
+				x: me.x * abs,
+				offensiveCooldownElapsed:
+					SPELL_COOLDOWNS[me.currentOffensiveSpell] -
+					Math.max(0, me.spells.offensive.cooldown - now),
+				counterCooldownElapsed:
+					SPELL_COOLDOWNS[me.currentCounterSpell] -
+					Math.max(0, me.spells.counter.cooldown - now),
+				offensiveSpellReady:
+					Math.max(0, me.spells.offensive.cooldown - now) === 0,
+				counterSpellReady: Math.max(0, me.spells.counter.cooldown - now) === 0,
+			},
+			player2: {
+				x: enemy.x * abs,
+				offensiveCooldownElapsed:
+					SPELL_COOLDOWNS[enemy.currentOffensiveSpell] -
+					Math.max(0, enemy.spells.offensive.cooldown - now),
+				counterCooldownElapsed:
+					SPELL_COOLDOWNS[enemy.currentCounterSpell] -
+					Math.max(0, enemy.spells.counter.cooldown - now),
+				offensiveSpellReady:
+					Math.max(0, enemy.spells.offensive.cooldown - now) === 0,
+				counterSpellReady:
+					Math.max(0, enemy.spells.counter.cooldown - now) === 0,
+			},
+			running: this.running,
+		};
+	}
 
-    if (this.player2.connection) {
-      try {
-        this.player2.connection.send(
-          JSON.stringify(this.getStateForPlayer(false)),
-        );
-      } catch (error) {
-        console.error("Error sending GAME_STATE to player2:", error);
-      }
-    }
-  }
+	broadcastState() {
+		// Send to both players
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(
+					JSON.stringify(this.getStateForPlayer(true)),
+				);
+			} catch (error) {
+				console.error("Error sending GAME_STATE to player1:", error);
+			}
+		}
 
-  broadcastEvent(event) {
-    const message = JSON.stringify(event);
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(
+					JSON.stringify(this.getStateForPlayer(false)),
+				);
+			} catch (error) {
+				console.error("Error sending GAME_STATE to player2:", error);
+			}
+		}
+	}
 
-    if (this.player1.connection) {
-      try {
-        this.player1.connection.send(message);
-      } catch (error) {
-        console.error("Error sending event to player1:", error);
-      }
-    }
+	broadcastEvent(event) {
+		const message = JSON.stringify(event);
 
-    if (this.player2.connection) {
-      try {
-        this.player2.connection.send(message);
-      } catch (error) {
-        console.error("Error sending event to player2:", error);
-      }
-    }
-  }
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(message);
+			} catch (error) {
+				console.error("Error sending event to player1:", error);
+			}
+		}
 
-  cleanup() {
-    if (this.gameLoopTimeout) {
-      clearTimeout(this.gameLoopTimeout);
-      this.gameLoopTimeout = null;
-    }
-  }
-  resetSpells() {
-    const now = performance.now();
-    this.player1.spells.offensive.cooldown =
-      now + SPELL_COOLDOWNS[this.player1.currentOffensiveSpell];
-    this.player1.spells.counter.cooldown =
-      now + SPELL_COOLDOWNS[this.player1.currentCounterSpell];
-    this.player2.spells.offensive.cooldown =
-      now + SPELL_COOLDOWNS[this.player2.currentOffensiveSpell];
-    this.player2.spells.counter.cooldown =
-      now + SPELL_COOLDOWNS[this.player2.currentCounterSpell];
-  }
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(message);
+			} catch (error) {
+				console.error("Error sending event to player2:", error);
+			}
+		}
+	}
+
+	cleanup() {
+		if (this.gameLoopTimeout) {
+			clearTimeout(this.gameLoopTimeout);
+			this.gameLoopTimeout = null;
+		}
+	}
+	resetSpells() {
+		const now = performance.now();
+		this.player1.spells.offensive.cooldown =
+			now + SPELL_COOLDOWNS[this.player1.currentOffensiveSpell];
+		this.player1.spells.counter.cooldown =
+			now + SPELL_COOLDOWNS[this.player1.currentCounterSpell];
+		this.player2.spells.offensive.cooldown =
+			now + SPELL_COOLDOWNS[this.player2.currentOffensiveSpell];
+		this.player2.spells.counter.cooldown =
+			now + SPELL_COOLDOWNS[this.player2.currentCounterSpell];
+	}
 }
 
 class GameRoomManager {
-  constructor() {
-    this.rooms = new Map();
-    this.waitingPlayers = [];
-  }
+	constructor() {
+		this.rooms = new Map();
+		this.waitingPlayers = [];
+	}
 
-  findOrCreateRoom(connection, playerData) {
-    // Try to find a waiting room (room with empty player slot)
-    for (const [roomId, room] of this.rooms) {
-      if (!room.player1.connection || !room.player2.connection) {
-        const result = room.addPlayer(connection, playerData);
-        if (result.success) {
-          return { room, playerId: result.playerId };
-        }
-      }
-    }
+	findOrCreateRoom(connection, playerData) {
+		// Try to find a waiting room (room with empty player slot)
+		for (const [roomId, room] of this.rooms) {
+			if (!room.player1.connection || !room.player2.connection) {
+				const result = room.addPlayer(connection, playerData);
+				if (result.success) {
+					return { room, playerId: result.playerId };
+				}
+			}
+		}
 
-    // Create a new room
-    const roomId = this.generateRoomId();
-    const room = new GameRoom(roomId);
-    this.rooms.set(roomId, room);
+		// Create a new room
+		const roomId = this.generateRoomId();
+		const room = new GameRoom(roomId);
+		this.rooms.set(roomId, room);
 
-    const result = room.addPlayer(connection, playerData);
-    return { room, playerId: result.playerId };
-  }
+		const result = room.addPlayer(connection, playerData);
+		return { room, playerId: result.playerId };
+	}
 
-  removePlayerFromRoom(connection) {
-    for (const [roomId, room] of this.rooms) {
-      if (
-        room.player1.connection === connection ||
-        room.player2.connection === connection
-      ) {
-        const isEmpty = room.removePlayer(connection);
+	removePlayerFromRoom(connection) {
+		for (const [roomId, room] of this.rooms) {
+			if (
+				room.player1.connection === connection ||
+				room.player2.connection === connection
+			) {
+				const isEmpty = room.removePlayer(connection);
 
-        if (isEmpty) {
-          room.cleanup();
-          this.rooms.delete(roomId);
-        }
+				if (isEmpty) {
+					room.cleanup();
+					this.rooms.delete(roomId);
+				}
 
-        return;
-      }
-    }
-  }
+				return;
+			}
+		}
+	}
 
-  generateRoomId() {
-    return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
+	generateRoomId() {
+		return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+	}
 
-  getRoomForConnection(connection) {
-    for (const room of this.rooms.values()) {
-      if (
-        room.player1.connection === connection ||
-        room.player2.connection === connection
-      ) {
-        return room;
-      }
-    }
-    return null;
-  }
+	getRoomForConnection(connection) {
+		for (const room of this.rooms.values()) {
+			if (
+				room.player1.connection === connection ||
+				room.player2.connection === connection
+			) {
+				return room;
+			}
+		}
+		return null;
+	}
 }
 
 module.exports = { GameRoom, GameRoomManager };

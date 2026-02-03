@@ -106,17 +106,17 @@ class Physics {
 
   handleGoal() {
     const ball = this.gameState.ball;
-    let winner;
+    let player1Wins;
 
     if (ball.z > 0) {
       // Player 2 scored
       this.gameState.player2.score++;
-      winner = 2;
+      player1Wins = false;
       this.setBallAngle(degreesToRadians(-90));
     } else {
       // Player 1 scored
       this.gameState.player1.score++;
-      winner = 1;
+      player1Wins = true;
       this.setBallAngle(degreesToRadians(90));
     }
 
@@ -124,12 +124,10 @@ class Physics {
     this.resetRound();
 
     return {
-      type: "GOAL",
-      winner: winner,
-      score: {
-        player1: this.gameState.player1.score,
-        player2: this.gameState.player2.score,
-      },
+      type: "GAME_SCORE",
+      player1Wins: player1Wins,
+      player1Score: this.gameState.player1.score,
+      player2Score: this.gameState.player2.score,
     };
   }
 

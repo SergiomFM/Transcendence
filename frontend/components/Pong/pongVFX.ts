@@ -10,6 +10,7 @@ import {
   HemisphericParticleEmitter,
 } from "@babylonjs/core";
 import { Spell } from "./pongSpells";
+import { Pong } from "./pong";
 
 export const COLOR_DIFFERENCE = 1;
 const PARTICLE_FPS = 24;
@@ -394,10 +395,6 @@ export function updateArena(scene: Scene, newColor: Color4, ballPos: Vector3) {
   diskExplosion(scene, ballPos);
 }
 
-function cooldownReadyVFX(scene: Scene, spell: Spell) {
-  //const particle = createBaseParticle(scene, VFX);
-}
-
 export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
   const particle = createBaseParticle(scene, VFX);
 
@@ -447,4 +444,13 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
 
   startParticle(scene, particle);
   return particle;
+}
+
+export function resetRoundColor(pong: Pong) {
+  const defaultColor = new Color4(0, 0, 0, 0);
+  let light = pong.scene.getLightById("ball");
+  if (light) {
+    light.diffuse.set(0, 0, 0);
+  }
+  updateArena(pong.scene, defaultColor, pong.ball);
 }

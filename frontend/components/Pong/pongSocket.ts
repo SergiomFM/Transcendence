@@ -1,5 +1,5 @@
 import { Player, Pong } from "./pong";
-import { splashEffect, COLLISION_VFX } from "./pongVFX";
+import { splashEffect, COLLISION_VFX, resetRoundColor } from "./pongVFX";
 import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
@@ -74,8 +74,8 @@ function handleServerMessage(pong: Pong, message: any) {
       handleGameDisconnection(pong);
       break;
 
-    case "SCORE":
-      handleScore(pong, message);
+    case "GAME_SCORE":
+      handleGameScore(pong, message);
       break;
 
     case "SPELL_USED":
@@ -200,7 +200,7 @@ function handleGameDisconnection(pong: Pong) {
   }
 }
 
-function handleScore(pong: Pong, message: any) {
+function handleGameScore(pong: Pong, message: any) {
   console.log("Score!", message);
 
   if (pong.GUI) {
@@ -211,6 +211,7 @@ function handleScore(pong: Pong, message: any) {
     }
     pong.GUI.toggleTextBlink(pong.scene, "START");
   }
+  resetRoundColor(pong);
 }
 
 function handleCollision(pong: Pong, message: any) {

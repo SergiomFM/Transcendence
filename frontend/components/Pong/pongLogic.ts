@@ -5,6 +5,7 @@ import {
   COLLISION_VFX,
   updateArena,
   spellReadyVFX,
+  resetRoundColor,
 } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
 import { Spell } from "./pongSpells";
@@ -230,12 +231,7 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.offensiveSpell.resetSpell();
 
   // Reset arena color to white
-  const defaultColor = new Color4(0, 0, 0, 0);
-  updateArena(pong.scene, defaultColor, ball);
-  let light = pong.scene.getLightById("ball")!;
-  if (light) {
-    light.diffuse.set(0, 0, 0);
-  }
+  resetRoundColor(pong);
 
   pong.running = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done

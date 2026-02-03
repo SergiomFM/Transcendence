@@ -26,6 +26,8 @@ FRONTEND
 
         GAME_SCORE
             enemy: boolean
+            player1Score: number
+            player2score: number 
 
         SPELL_SWITCHED #DONE
             enemy: boolean
