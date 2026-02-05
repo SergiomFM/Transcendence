@@ -29,6 +29,8 @@ import {
   COUNTER_CASTING,
   ANIMATION_FPS,
 } from "./pongAnimations";
+import { SPELL_CONSTANTS } from "@/shared/constants";
+
 
 export abstract class Spell {
   abstract color: Color4;
@@ -74,7 +76,7 @@ export abstract class Spell {
     this.active = false;
     this.pong = pong;
     this.player = player;
-    this.initialSize = 0.01;
+    this.initialSize = 0.01; // Size of the spell (only visual)
     this.name = name;
     this.spellType = spellType;
 
@@ -223,8 +225,8 @@ export abstract class Spell {
 
 // Mirrors the Ball angle
 export class BallAngleSwitch extends Spell {
-  readonly cooldown = 3000;
-  readonly duration = 500;
+  readonly cooldown = SPELL_CONSTANTS.ballAngleSwitch;
+  readonly duration = SPELL_CONSTANTS.ballAngleDuration;
   color = new Color4(0, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -258,9 +260,9 @@ export class BallAngleSwitch extends Spell {
 
 // Increases speed and changes the Ball angle to a straight shot
 class BallShot extends Spell {
-  readonly cooldown = 4000;
-  readonly duration = 500;
-  readonly speedBoost = 2;
+  readonly cooldown = SPELL_CONSTANTS.ballShot;
+  readonly duration = SPELL_CONSTANTS.ballShotDuration;
+  readonly speedBoost = SPELL_CONSTANTS.ballShotSpeedBoost;
   originalSpeed!: number;
   color = new Color4(0, 1, 0, 1);
 
@@ -300,8 +302,8 @@ class BallShot extends Spell {
 
 // Makes the Ball teleport to the opposite wall instead of colliding
 class BallPortal extends Spell {
-  readonly cooldown = 5000;
-  readonly duration = 500;
+  readonly cooldown = SPELL_CONSTANTS.ballPortal;
+  readonly duration = SPELL_CONSTANTS.ballPortalDuration;
   lastXDir!: number;
   lastZDir!: number;
 
@@ -354,8 +356,8 @@ class BallPortal extends Spell {
 
 // Makes the Ball stop for a set time
 export class BallStop extends Spell {
-  readonly cooldown = 5000;
-  readonly duration = 2000;
+  readonly cooldown = SPELL_CONSTANTS.ballStop;
+  readonly duration = SPELL_CONSTANTS.ballStopDuration;
   originalPosition!: Vector3;
 
   readonly color = new Color4(0, 1, 1, 1);
@@ -395,8 +397,7 @@ export class BallStop extends Spell {
 
 // Makes the Ball go backwards
 class BallBack extends Spell {
-  readonly cooldown = 4000;
-  readonly duration = 500;
+  readonly cooldown = SPELL_CONSTANTS.ballBack;
   readonly color = new Color4(1, 1, 0, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -421,18 +422,14 @@ class BallBack extends Spell {
   }
 
   loopAddon(elapsedTime: number) {
-    this.activeElapsed += elapsedTime;
-    if (this.activeElapsed >= this.duration) {
-      this.active = false;
-    }
   }
 }
 
 // Makes the ball angle go towards the player paddle
 class BallIman extends Spell {
-  readonly cooldown = 1000;
-  readonly duration = 1000;
-  readonly strenght = Tools.ToRadians(90); // Radians changet per second
+  readonly cooldown = SPELL_CONSTANTS.ballIman;
+  readonly duration = SPELL_CONSTANTS.ballImanDuration;
+  readonly strenght = Tools.ToRadians(90); // Radians changed per second
   readonly color = new Color4(1, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {

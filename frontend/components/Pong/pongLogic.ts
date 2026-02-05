@@ -108,8 +108,14 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
     ball.setAngle(Tools.ToRadians(bounceAngle) * signal);
 
     ball.z = paddle.z - (-ball.z + paddle.z);
-    ball.speed += ball.speedIncrement;
-
+    
+    if (ball.speed < ball.maxSpeed){
+      ball.speed += ball.speedIncrement;
+      if (ball.speed > ball.maxSpeed) {
+        ball.speed = ball.maxSpeed;
+      }
+    }
+  
     splashEffect(
       pong.scene,
       new Vector3(ball.x, ball.y, paddle.z),

@@ -5,20 +5,24 @@ import { Events } from "./pongEvents";
 import { Spell, BallAngleSwitch, BallStop } from "./pongSpells";
 import { GUI } from "./pongUI";
 import { ANIMATION_FPS } from "./pongAnimations";
+import { GAME_CONSTANTS } from "@/shared/constants";
 
 export const FPS = 60;
 
 const BALL_Y = 0.25;
 
 export class Ball extends Vector3 {
-  initalSpeed = 0.5;
-  speed = 0.5;
-  speedIncrement = 0.1;
-  angle = Tools.ToRadians(90);
+
+  readonly initalSpeed = GAME_CONSTANTS.BALL_INITIAL_SPEED;
+  readonly speedIncrement = GAME_CONSTANTS.BALL_SPEED_INCREMENT;
+  readonly maxSpeed = GAME_CONSTANTS.BALL_MAX_SPEED;
+
+  speed = GAME_CONSTANTS.BALL_INITIAL_SPEED;
+  angle = Tools.ToRadians(GAME_CONSTANTS.BALL_INITIAL_ANGLE_DEG);
   cos = 0;
   sin = 1;
-
-  readonly radius = 0.015;
+  
+  readonly radius = GAME_CONSTANTS.BALL_RADIUS;
 
   constructor(x: number, y: number, z: number) {
     super(x, y, z);
@@ -35,8 +39,8 @@ export class Player {
   public vector: Vector3;
   currSpeed = 0;
   currDirection = 0;
-  maxSpeed = 1;
-  drag = 7.5;
+  readonly maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
+  readonly drag = GAME_CONSTANTS.PADDLE_DRAG;
 
   leftHand!: Mesh;
   leftHandPos: Vector3;
@@ -55,17 +59,17 @@ export class Player {
   direction = 0;
   failed = false;
   ready = false;
-  readonly maxDeviationAngle = 60;
+  readonly maxDeviationAngle = GAME_CONSTANTS.PADDLE_MAX_DEVIATION_ANGLE;
   readonly size: number;
 
   dashActive = false;
   dashReady = false;
 
-  dashCooldown = 1000;
+  readonly dashCooldown = GAME_CONSTANTS.DASH_COOLDOWN;
+  readonly dashDuration = GAME_CONSTANTS.DASH_DURATION;
+  readonly dashPower = GAME_CONSTANTS.DASH_POWER;
   dashElapsedCooldown = 0;
-  dashDuration = 200;
   dashElapsedActive = 0;
-  dashPower = 2;
   originalMaxSpeed = this.maxSpeed;
 
   connected = false;

@@ -3,7 +3,7 @@ const {
 	degreesToRadians,
 	spellTypes,
 	spellCycles,
-	SPELL_COOLDOWNS,
+	SPELL_CONSTANTS,
 } = require("./constants");
 const Physics = require("./physics");
 const { EventEmitter } = require("events");
@@ -55,7 +55,7 @@ class GameRoom {
 			: player.currentCounterSpell;
 		const spellKey = offensive ? "offensive" : "counter";
 		const now = performance.now();
-		const cooldown = SPELL_COOLDOWNS[spellType];
+		const cooldown = SPELL_CONSTANTS[spellType];
 		if (player.spells[spellKey].cooldown > now) {
 			return;
 		} else {
@@ -144,7 +144,7 @@ class GameRoom {
 					break;
 				case "ballShot":
 					this._shotActive = true;
-					this.ball.speed *= 2;
+					this.ball.speed *= SPELL_CONSTANTS.ballShotSpeedBoost;
 					if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
 						this.physics.setBallAngle(degreesToRadians(90));
 					} else {
@@ -212,10 +212,10 @@ class GameRoom {
 			currentCounterSpell: "ballStop",
 
 			spells: {
-				counter: { active: false, cooldown: now + SPELL_COOLDOWNS["ballStop"] },
+				counter: { active: false, cooldown: now + SPELL_CONSTANTS["ballStop"] },
 				offensive: {
 					active: false,
-					cooldown: now + SPELL_COOLDOWNS["ballAngleSwitch"],
+					cooldown: now + SPELL_CONSTANTS["ballAngleSwitch"],
 				},
 			},
 		};
@@ -473,10 +473,10 @@ class GameRoom {
 			player1: {
 				x: me.x * abs,
 				offensiveCooldownElapsed:
-					SPELL_COOLDOWNS[me.currentOffensiveSpell] -
+					SPELL_CONSTANTS[me.currentOffensiveSpell] -
 					Math.max(0, me.spells.offensive.cooldown - now),
 				counterCooldownElapsed:
-					SPELL_COOLDOWNS[me.currentCounterSpell] -
+					SPELL_CONSTANTS[me.currentCounterSpell] -
 					Math.max(0, me.spells.counter.cooldown - now),
 				offensiveSpellReady:
 					Math.max(0, me.spells.offensive.cooldown - now) === 0,
@@ -485,10 +485,10 @@ class GameRoom {
 			player2: {
 				x: enemy.x * abs,
 				offensiveCooldownElapsed:
-					SPELL_COOLDOWNS[enemy.currentOffensiveSpell] -
+					SPELL_CONSTANTS[enemy.currentOffensiveSpell] -
 					Math.max(0, enemy.spells.offensive.cooldown - now),
 				counterCooldownElapsed:
-					SPELL_COOLDOWNS[enemy.currentCounterSpell] -
+					SPELL_CONSTANTS[enemy.currentCounterSpell] -
 					Math.max(0, enemy.spells.counter.cooldown - now),
 				offensiveSpellReady:
 					Math.max(0, enemy.spells.offensive.cooldown - now) === 0,
@@ -551,13 +551,13 @@ class GameRoom {
 	resetSpells() {
 		const now = performance.now();
 		this.player1.spells.offensive.cooldown =
-			now + SPELL_COOLDOWNS[this.player1.currentOffensiveSpell];
+			now + SPELL_CONSTANTS[this.player1.currentOffensiveSpell];
 		this.player1.spells.counter.cooldown =
-			now + SPELL_COOLDOWNS[this.player1.currentCounterSpell];
+			now + SPELL_CONSTANTS[this.player1.currentCounterSpell];
 		this.player2.spells.offensive.cooldown =
-			now + SPELL_COOLDOWNS[this.player2.currentOffensiveSpell];
+			now + SPELL_CONSTANTS[this.player2.currentOffensiveSpell];
 		this.player2.spells.counter.cooldown =
-			now + SPELL_COOLDOWNS[this.player2.currentCounterSpell];
+			now + SPELL_CONSTANTS[this.player2.currentCounterSpell];
 	}
 }
 
