@@ -93,16 +93,25 @@ function applyServerState(pong: Pong, serverState: any) {
 }
 
 // Paddle collision check
-function paddleCollision(pong: Pong, paddle: Player, signal: number) {
+function paddleCollision(
+  pong: Pong,
+  paddle: Player,
+  signal: number,
+) {
   let ball = pong.ball;
 
+  // Calculating the collision point using the ball angle
+  const deltaZ = ball.z - paddle.z;
+  const deltaX = deltaZ * (ball.cos / ball.sin);
+  const collisionX = ball.x - deltaX;
+
   if (
-    ball.x <= paddle.x + paddle.size &&
-    ball.x >= paddle.x - paddle.size &&
+    collisionX <= paddle.x + paddle.size &&
+    collisionX >= paddle.x - paddle.size &&
     !paddle.failed
   ) {
     const maxBounceAngle = paddle.maxDeviationAngle;
-    const hitOffset = (ball.x - paddle.x) / paddle.size;
+    const hitOffset = (collisionX - paddle.x) / paddle.size;
     const deviation = Math.max(-1, Math.min(1, hitOffset));
     const bounceAngle = 90 - deviation * maxBounceAngle;
     ball.setAngle(Tools.ToRadians(bounceAngle) * signal);
@@ -118,7 +127,7 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
   
     splashEffect(
       pong.scene,
-      new Vector3(ball.x, ball.y, paddle.z),
+      new Vector3(collisionX, ball.y, paddle.z),
       ball.speed,
       -ball.angle,
       COLLISION_VFX,
@@ -176,10 +185,14 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     // Determine which side collided
     const sign = newX > 0 ? 1 : -1;
 
+    // Calculate the actual collision point Z position
+    const t = (Xlimit * sign - oldX) / (newX - oldX); // fraction of movement when collision occurred
+    const collisionZ = oldZ + (newZ - oldZ) * t;
+
     // Bounce Effect
     splashEffect(
       pong.scene,
-      new Vector3(Xlimit * sign, ball.y, (newZ + oldZ) * 0.5),
+      new Vector3(Xlimit * sign, ball.y, collisionZ),
       ball.speed,
       Tools.ToRadians(0 + 180 * Number(newX > 0)),
       COLLISION_VFX,
@@ -188,6 +201,10 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     // Changing the ball angle and x value to the amount it should reflect
     ball.x = Xlimit * sign - (newX - Xlimit * sign);
     ball.setAngle(Math.PI - ball.angle);
+    
+    // Update oldX and newX for paddle collision check (ball bounced from wall)
+    oldX = Xlimit * sign;
+    newX = ball.x;
   }
 
   // Paddle collisions
