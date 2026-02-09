@@ -10,6 +10,7 @@ import {
   HemisphericParticleEmitter,
 } from "@babylonjs/core";
 import { Spell } from "./pongSpells";
+import { Pong } from "./pong";
 
 export const COLOR_DIFFERENCE = 1;
 const PARTICLE_FPS = 24;
@@ -244,7 +245,7 @@ export function createWallParticles(
   scene: Scene,
   begin: Vector3,
   end: Vector3,
-  wallNum: number
+  wallNum: number,
 ) {
   const particle = createBaseParticle(scene, WALL_VFX);
   particle.id += wallNum;
@@ -254,7 +255,7 @@ export function createWallParticles(
     new Vector3(0, 0, 0),
     new Vector3(0, WALL_VFX["HEIGHT"], 0),
     new Vector3(begin.x, 0.2, begin.z),
-    new Vector3(end.x, 0.2, end.z)
+    new Vector3(end.x, 0.2, end.z),
   );
 
   startParticle(scene, particle);
@@ -279,7 +280,7 @@ export function splashEffect(
   position: Vector3,
   splashPower: number,
   angle: number,
-  VFX: any
+  VFX: any,
 ) {
   const particle = createBaseParticle(scene, VFX);
 
@@ -293,12 +294,12 @@ export function splashEffect(
   cone.direction1 = new Vector3(
     Math.cos(spread),
     -Math.sin(spread),
-    -Math.sin(spread)
+    -Math.sin(spread),
   ).normalize();
   cone.direction2 = new Vector3(
     Math.cos(spread),
     Math.sin(spread),
-    Math.sin(spread)
+    Math.sin(spread),
   ).normalize();
 
   console.log(angle);
@@ -381,21 +382,17 @@ export function updateArena(scene: Scene, newColor: Color4, ballPos: Vector3) {
     newColor.r + COLOR_DIFFERENCE,
     newColor.g + COLOR_DIFFERENCE,
     newColor.b + COLOR_DIFFERENCE,
-    0.7
+    0.7,
   );
 
   // Updating the old particles and creating a visual effect
   const walls = ["wall1", "wall2", "wall3", "wall4"];
   walls.forEach((id) => {
-    updateOldParticles(scene, id, newColor), wallExplosion(scene, id);
+    (updateOldParticles(scene, id, newColor), wallExplosion(scene, id));
   });
 
   // Creating a visual effect for the Arena update
   diskExplosion(scene, ballPos);
-}
-
-function cooldownReadyVFX(scene: Scene, spell: Spell) {
-  //const particle = createBaseParticle(scene, VFX);
 }
 
 export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
@@ -405,7 +402,7 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
   let hemisphericEmitter = new HemisphericParticleEmitter(
     spell.initialSize,
     0,
-    1
+    1,
   );
 
   // Called for each particle to set its initial velocity
@@ -415,7 +412,7 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
     worldMatrix,
     position,
     particle,
-    isLocal
+    isLocal,
   ) {
     originalPositionFunction(worldMatrix, position, particle, true);
 
@@ -433,7 +430,7 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
     worldMatrix,
     direction,
     particle,
-    isLocal
+    isLocal,
   ) {
     originalDirectionFunction(worldMatrix, direction, particle, isLocal);
 
@@ -447,4 +444,13 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
 
   startParticle(scene, particle);
   return particle;
+}
+
+export function resetRoundColor(pong: Pong) {
+  const defaultColor = new Color4(0, 0, 0, 0);
+  let light = pong.scene.getLightById("ball");
+  if (light) {
+    light.diffuse.set(0, 0, 0);
+  }
+  updateArena(pong.scene, defaultColor, pong.ball);
 }

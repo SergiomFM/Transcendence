@@ -1,5 +1,5 @@
 // WebSocket route for Pong multiplayer game
-const { GameRoomManager } = require("../../shared/gameState");
+const { GameRoomManager } = require("../../src/game");
 
 // Global room manager
 const roomManager = new GameRoomManager();
@@ -15,13 +15,16 @@ module.exports = async function (fastify, opts) {
     connection.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
-
+        const player =
+          connection.playerId === 1
+            ? currentRoom?.player1
+            : currentRoom?.player2;
         switch (data.type) {
           case "JOIN_GAME": {
             // Find or create a room for this player
             const result = roomManager.findOrCreateRoom(
               connection,
-              data.playerData || {}
+              data.playerData || {},
             );
             currentRoom = result.room;
             playerId = result.playerId;
@@ -29,74 +32,77 @@ module.exports = async function (fastify, opts) {
               data.playerData && data.playerData.name
                 ? data.playerData.name
                 : `Player${playerId}`;
-
             console.log(
-              `Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`
+              `Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`,
             );
 
             // Send confirmation to client
             connection.send(
               JSON.stringify({
-                type: "JOINED_GAME",
-                playerId: playerId,
+                type: "GAME_JOINED",
                 roomId: currentRoom.roomId,
-                playerCount: currentRoom.players.size,
-                maxPlayers: currentRoom.maxPlayers,
-              })
+                alone:
+                  !currentRoom.player1.connection ||
+                  !currentRoom.player2.connection
+                    ? true
+                    : false,
+              }),
             );
 
             // Notify when room is full and game can start
-            if (currentRoom.players.size === currentRoom.maxPlayers) {
+            if (
+              currentRoom.player1.connection &&
+              currentRoom.player2.connection
+            ) {
               currentRoom.broadcastEvent({
                 type: "GAME_READY",
-                message: "Both players connected. Press SPACE to start!",
               });
-            } else {
-              connection.send(
-                JSON.stringify({
-                  type: "WAITING",
-                  message: "Waiting for opponent...",
-                })
-              );
             }
+
             break;
           }
 
-          case "INPUT":
+          case "PLAYER_DIRECTION":
             // Handle player input
             if (currentRoom) {
-              currentRoom.handlePlayerInput(connection, data.input);
+              player.inputDirection =
+                connection.playerId === 2 ? -data.direction : data.direction;
             }
             break;
 
-          case "READY":
+          case "PLAYER_READY":
             // Player is ready to start
             if (currentRoom) {
-              currentRoom.handlePlayerInput(connection, { ready: true });
-
+              player.ready = true;
               // Check if both players are ready
               if (currentRoom.player1.ready && currentRoom.player2.ready) {
                 currentRoom.broadcastEvent({
                   type: "GAME_START",
-                  message: "Game starting!",
                 });
               }
             }
             break;
 
-          case "DASH":
+          case "USE_DASH":
             // Handle dash activation
-            if (currentRoom) {
-              currentRoom.handlePlayerInput(connection, { dash: true });
+            if (currentRoom && player.dashReady) {
+              player.dashActive = true;
             }
             break;
 
-          case "SPELL":
+          case "USE_SPELL":
             // Handle spell activation
+            if (currentRoom && player) {
+              currentRoom.useSpell(player, data.offensive);
+            }
+            break;
+
+          case "SWITCH_SPELL":
             if (currentRoom) {
-              currentRoom.handlePlayerInput(connection, {
-                spell: data.spellType,
-              });
+              currentRoom.updatePlayerSpell(
+                connection.playerId,
+                data.offensive,
+              );
             }
             break;
 
@@ -109,36 +115,26 @@ module.exports = async function (fastify, opts) {
           JSON.stringify({
             type: "ERROR",
             message: "Invalid message format",
-          })
+          }),
         );
       }
     });
 
     // Handle connection close
     connection.on("close", () => {
-      // Try to get playerId and name from room if not set
-      if ((!playerId || !playerName) && currentRoom && currentRoom.players) {
-        const player = currentRoom.players.get(connection);
-        if (player) {
-          playerId = player.id;
-          playerName = player.name || `Player${playerId}`;
-        }
-      }
       console.log(
         `Disconnected: id=${playerId || "?"}, name=${playerName || "?"}, room=${
           currentRoom ? currentRoom.roomId : "?"
-        }`
+        }`,
       );
+
+      roomManager.removePlayerFromRoom(connection);
 
       if (currentRoom) {
         // Notify other player
         currentRoom.broadcastEvent({
           type: "PLAYER_DISCONNECTED",
-          message: "Opponent disconnected",
         });
-
-        // Remove player from room
-        roomManager.removePlayerFromRoom(connection);
       }
     });
 
@@ -153,12 +149,16 @@ module.exports = async function (fastify, opts) {
     return {
       activeRooms: roomManager.rooms.size,
       totalPlayers: Array.from(roomManager.rooms.values()).reduce(
-        (sum, room) => sum + room.players.size,
-        0
+        (sum, room) =>
+          sum +
+          (room.player1.connection ? 1 : 0) +
+          (room.player2.connection ? 1 : 0),
+        0,
       ),
       rooms: Array.from(roomManager.rooms.values()).map((room) => ({
         id: room.roomId,
-        players: room.players.size,
+        players:
+          (room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
         running: room.running,
         score: {
           player1: room.player1.score,

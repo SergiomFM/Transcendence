@@ -123,11 +123,11 @@ const WAITING = [
   "WAITING", // Name
   "Waiting for opponent...", // Text
   "white", // Color
-  "15%", // Size (vertical screen %)
+  "10%", // Size (vertical screen %)
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
-  "0%", // Vertical deviation from center (vertical screen %)
+  "15%", // Vertical deviation from center (vertical screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];

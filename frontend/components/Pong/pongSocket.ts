@@ -1,7 +1,9 @@
-import { Pong } from "./pong";
-import { splashEffect, COLLISION_VFX } from "./pongVFX";
-import { Vector3 } from "@babylonjs/core";
+import { Player, Pong } from "./pong";
+import { splashEffect, COLLISION_VFX, resetRoundColor } from "./pongVFX";
+import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
+import { getNewSpell } from "./pongSpells";
+import { platform } from "os";
 
 export function connectToGameServer(
   pong: Pong,
@@ -52,45 +54,40 @@ export function connectToGameServer(
 
 function handleServerMessage(pong: Pong, message: any) {
   switch (message.type) {
-    case "JOINED_GAME":
-      handleJoinedGame(pong, message);
-      break;
-
-    case "WAITING":
-      handleWaiting(pong, message);
-      break;
-
-    case "GAME_READY":
-      handleGameReady(pong, message);
-      break;
-
-    case "GAME_START":
-      handleGameStart(pong, message);
-      break;
-
-    case "STATE_UPDATE":
     case "GAME_STATE":
       handleGameState(pong, message);
       break;
 
-    case "GAME_EVENT":
-      handleGameEvent(pong, message);
+    case "GAME_JOINED":
+      handleGameJoined(pong, message);
+      break;
+
+    case "GAME_READY":
+      handleGameReady(pong);
+      break;
+
+    case "GAME_START":
+      handleGameStart(pong);
+      break;
+
+    case "PLAYER_DISCONNECTED":
+      handleGameDisconnection(pong);
+      break;
+
+    case "GAME_SCORE":
+      handleGameScore(pong, message);
+      break;
+
+    case "SPELL_USED":
+      handleSpellUsed(pong, message);
+      break;
+
+    case "SPELL_SWITCHED":
+      handleSpellSwitched(pong, message);
       break;
 
     case "COLLISION":
       handleCollision(pong, message);
-      break;
-
-    case "SCORE":
-      handleScore(pong, message);
-      break;
-
-    case "SPELL_ACTIVATED":
-      handleSpellActivation(pong, message);
-      break;
-
-    case "PLAYER_DISCONNECTED":
-      handlePlayerDisconnected(pong, message);
       break;
 
     default:
@@ -98,189 +95,185 @@ function handleServerMessage(pong: Pong, message: any) {
   }
 }
 
-function handleJoinedGame(pong: Pong, message: any) {
-  console.log("Joined game room:", message.roomId);
-  console.log("You are player:", message.playerId);
+// Handlers for different message types
 
-  pong.playerId = message.playerId;
+function handleGameState(pong: Pong, message: any) {
+  pong.serverGameState = message;
+  pong.serverGameStateApplied = false;
+}
+
+function handleSpellUsed(pong: Pong, message: any) {
+  console.log("Spell used:", message);
+
+  let player;
+  message.enemy ? (player = pong.player2) : (player = pong.player1);
+
+  message.offensive
+    ? player.offensiveSpell.activateSpell()
+    : player.counterSpell.activateSpell();
+}
+
+function handleSpellSwitched(pong: Pong, message: any) {
+  console.log("Spell switched:", message);
+
+  let player;
+  message.enemy ? (player = pong.player2) : (player = pong.player1);
+
+  message.offensive
+    ? (player.offensiveSpell = getNewSpell(
+        pong,
+        player,
+        player.offensiveSpell,
+        message.spellName,
+      ))
+    : (player.counterSpell = getNewSpell(
+        pong,
+        player,
+        player.counterSpell,
+        message.spellName,
+      ));
+}
+
+function handleGameReady(pong: Pong) {
+  console.log("Both Players connected to the game!");
+
+  if (!pong.player2.connected) {
+    pong.player2.connected = true;
+
+    if (pong.GUI) {
+      pong.GUI.textFadeOut("WAITING");
+      pong.GUI.toggleTextBlink(pong.scene, "WAITING");
+      pong.GUI.textFadeIn("START");
+      pong.GUI.toggleTextBlink(pong.scene, "START");
+    }
+  }
+}
+
+function handleGameJoined(pong: Pong, message: any) {
+  console.log("Joined game room:", message.roomId);
   pong.online = true;
 
+  // Reassigning the keys for online play
   Events.assignKeys(pong);
 
-  if (pong.GUI) {
-    const playerTextName = message.playerId === 1 ? "PLAYER_1" : "PLAYER_2";
-    pong.GUI.textFadeIn(playerTextName, 2000);
-  }
-}
+  if (message.alone) {
+    pong.player1.connected = true;
+    pong.player2.connected = false;
 
-function handleWaiting(pong: Pong, message: any) {
-  console.log(message.message);
-
-  if (pong.GUI) {
-    // Waiting message persists until other player joins
-    pong.GUI.textFadeIn("WAITING");
-  }
-}
-
-function handleGameReady(pong: Pong, message: any) {
-  console.log("Game ready:", message.message);
-
-  if (pong.GUI) {
-    pong.GUI.textFadeOut("WAITING");
-
-    if (pong.playerId === 1) {
-      pong.GUI.textFadeIn("PLAYER_2_CONNECTED", 2000);
+    if (pong.GUI) {
+      pong.GUI.textFadeIn("WELCOME WARLOCK", 2000);
+      pong.GUI.textFadeIn("WAITING");
+      pong.GUI.toggleTextBlink(pong.scene, "WAITING");
     }
+  } else {
+    pong.player1.connected = true;
+    pong.player2.connected = true;
 
-    pong.GUI.textFadeIn("START");
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    if (pong.GUI) {
+      pong.GUI.textFadeIn("WELCOME WARLOCK", 2000);
+      pong.GUI.textFadeIn("START");
+      pong.GUI.toggleTextBlink(pong.scene, "START");
+    }
   }
 }
 
-function handleGameStart(pong: Pong, message: any) {
+function handleGameStart(pong: Pong) {
   console.log("Game starting!");
   pong.running = true;
 
   if (pong.GUI) {
+    pong.GUI.textFadeOut("START");
     pong.GUI.toggleTextBlink(pong.scene, "START");
   }
 }
 
-function handleGameState(pong: Pong, message: any) {
-  pong.serverGameState = message.state;
-  pong.serverGameStateApplied = false;
+function handleGameDisconnection(pong: Pong) {
+  console.log("Opponent disconnected");
+
+  pong.running = false;
+  pong.player2.connected = false;
+
+  if (pong.GUI) {
+    pong.GUI.textFadeIn("OPPONENT_LEFT");
+    pong.GUI.textFadeIn("WAITING");
+    pong.GUI.toggleTextBlink(pong.scene, "WAITING");
+  }
 }
 
-function handleGameEvent(pong: Pong, message: any) {
-  const event = message.event;
+function handleGameScore(pong: Pong, message: any) {
+  console.log("Score!", message);
 
-  if (!event) return;
-
-  switch (event.type) {
-    case "GAME_READY":
-      handleGameReady(pong, event);
-      break;
-    case "GAME_START":
-      handleGameStart(pong, event);
-      break;
-    case "WALL_COLLISION":
-    case "PADDLE_COLLISION":
-      handleCollision(pong, { collision: event });
-      break;
-    case "GOAL":
-      handleScore(pong, event);
-      break;
-    default:
-      console.log("Unknown game event:", event.type);
+  if (pong.GUI) {
+    if (message.enemy) {
+      pong.GUI.textFadeIn("YOU_LOST", 2000);
+    } else {
+      pong.GUI.textFadeIn("YOU_WON", 2000);
+    }
+    pong.GUI.toggleTextBlink(pong.scene, "START");
   }
+  resetRoundColor(pong);
 }
 
 function handleCollision(pong: Pong, message: any) {
-  if (!message.collision) return;
-
-  const { position, speed, angle, type } = message.collision;
-
-  let splashZ = position.z;
-  let splashAngle = angle;
-
-  if (pong.playerId === 2) {
-    splashZ = -position.z;
-    splashAngle = -angle;
-  }
-
   splashEffect(
     pong.scene,
-    new Vector3(position.x, position.y, splashZ),
-    speed,
-    splashAngle,
+    new Vector3(message.x, pong.ball.y, message.z),
+    message.speed,
+    message.angle,
     COLLISION_VFX,
   );
 }
 
-function handleScore(pong: Pong, message: any) {
-  console.log("Score!", message);
+// Functions to send messages to the server
 
-  const { winner, score } = message;
-
-  if (pong.GUI) {
-    if (winner === pong.playerId) {
-      pong.GUI.textFadeIn("YOU_WON");
-    } else {
-      pong.GUI.textFadeIn("YOU_LOST");
-    }
-    pong.GUI.toggleTextBlink(pong.scene, "START");
-  }
-}
-
-function handleSpellActivation(pong: Pong, message: any) {
-  console.log("Spell activated:", message);
-
-  let player;
-  if (message.playerId === pong.playerId) {
-    player = pong.player1; // me
-  } else {
-    player = pong.player2; // opponent
-  }
-
-  // Map spellType to the correct spell instance
-  // Offensive spells (right hand)
-  if (["angleSwitch", "shot", "portal"].includes(message.spellType)) {
-    if (
-      player.offensiveSpell &&
-      typeof player.offensiveSpell.activateSpell === "function"
-    ) {
-      player.offensiveSpell.activateSpell();
-    }
-  }
-  // Counter spells (left hand)
-  else if (["stop", "back", "iman"].includes(message.spellType)) {
-    if (
-      player.counterSpell &&
-      typeof player.counterSpell.activateSpell === "function"
-    ) {
-      player.counterSpell.activateSpell();
-    }
-  } else {
-    console.warn("Unknown spellType in SPELL_ACTIVATED", message.spellType);
-  }
-}
-
-function handlePlayerDisconnected(pong: Pong, message: any) {
-  console.log("Player disconnected:", message.message);
-
-  pong.running = false;
-
-  if (pong.GUI) {
-    pong.GUI.textFadeIn("OPPONENT_LEFT");
-  }
-}
-
-export function sendReady(pong: Pong) {
+export function sendUseSpell(pong: Pong, offensive: boolean) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(
       JSON.stringify({
-        type: "READY",
+        type: "USE_SPELL",
+        offensive: offensive,
       }),
     );
   }
 }
 
-export function sendDash(pong: Pong) {
+export function sendSwitchSpell(pong: Pong, offensive: boolean) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(
       JSON.stringify({
-        type: "DASH",
+        type: "SWITCH_SPELL",
+        offensive: offensive,
       }),
     );
   }
 }
 
-export function sendSpell(pong: Pong, spellType: string) {
+export function sendPlayerDirection(pong: Pong, direction: number) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(
       JSON.stringify({
-        type: "SPELL",
-        spellType: spellType,
+        type: "PLAYER_DIRECTION",
+        direction: direction,
+      }),
+    );
+  }
+}
+
+export function sendUseDash(pong: Pong) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "USE_DASH",
+      }),
+    );
+  }
+}
+
+export function sendPlayerReady(pong: Pong) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "PLAYER_READY",
       }),
     );
   }
