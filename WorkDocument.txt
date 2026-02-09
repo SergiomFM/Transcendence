@@ -24,42 +24,51 @@ Remote Authentication - Google OAuth 2.0 / Maybe 42 (2) - Lourenco
 | GAME |
 Web Based Game - Pong (2) - Tiago / Paulo
 3D Graphics - BabylonJS (2) - Tiago
-Realtime features - Sockets for the Game / Basic chat (2) - Paulo  
+Realtime features - Sockets for the Game / Basic chat (2) - Paulo
 Remote Play - Lan / Online (2) - Paulo
 Progressive Web App - Offline play / Installability (1) - Paulo / Afonso
-Gamification - XP / Achievements (1) - Afonso
 Game Customization - Settings / PowerUps (1) - Tiago
------------------------
-Spectator - Top view of the game / Game Chat (1)
-Real time user collab - Online drawing (1)
-Multiplayer - more than 2 players (2)
-Second Game - Rock Paper Scissors (2)
+Spectator - Top view of the game / Game Chat (1) - Paulo
 
 | SOCIAL |
-Profile Management - Profile Information / Avatar (Minio) / Friends (2) - Sergio
-File Upload - Profile Pictures (Minio) (1) - Sergio
-Users interaction - Chat / Profile / Friends (2) - Lourenco
-Game Stats - Match History / Progression / Leaderboard (1) - Afonso
-Search Functionalities - Filter / Sorting by xp or alphabet (1) - Sergio
-Notification System - Creation / Update / Deletion -> E-mail (1) - Afonso
-Organization System - Clans (2) - Sergio / Afonso
-User activity analytics - Screen Time (1) - Tiago / Paulo / Sergio 
+Profile Management - Profile Information / Avatar (Default Pictures) / Friends (2) - Sergio
+Users interaction - Chat / Profile / Friends (2) - Lourenço / Sergio
 
 | ACCESSIBILITY |
 Aditional Browsers - Edge / Firefox / Chrome (1) - N/A
+-----------------------
 Languages - Portuguese / English / Cape Verde Creoule (1) - Lourenco
 
 | AI |
 LLM - Support Bot (2) - Afonso
-Content Moderation "AI" - Leiria doesn't exist (0)
------------------------
-AI Opponent - Machine Learning (2)
 
 | DEV OPS |
-Microservices - Docker (2) - Sergio
+Microservices - Docker (2) - Sergio / Paulo
 
-ROLES
+| ROLES |
+
 Product Owner - Lourenco
 Project Manager - Tiago
 Technical Lead / Architect - Afonso
 Developers - Todos
+
+| POINTS |
+
+26!
+
+| WORK |
+
+Paulo:
+Organizar os containers, makefile, etc. Coisas de backend (?) e Spectators
+
+Lourenço:
+Vibe coding, Integrar com o frontend, auth e coisas.
+
+Sergio:
+Websockets do chat, frontend do chat, configurar prisma nos users
+
+Afonso:
+Limar arestas do frontend (fullscreen, window resizing), refactoring da integração de endpoints, chatbot
+
+Tiago:
+Polir o frontend (Jogo), dar fix do UI / refactoir para comportar pontuação, balance do jogo e forçar camera de topo no offline.
