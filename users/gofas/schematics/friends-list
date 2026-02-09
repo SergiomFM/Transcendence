@@ -1,0 +1,61 @@
+Cannot friend yourself
+
+Cannot send request if:
+
+already friends
+
+request already exists (either direction)
+
+blocked (future layer)
+
+Only receiver can accept/reject
+
+Either party can remove friendship
+
+
+friends
+────────────────────────────────
+user_id         TEXT NOT NULL
+
+friend_id       TEXT NOT NULL
+
+created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+
+UNIQUE(user_id, friend_id)
+
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE 
+
+CASCADE
+
+
+friend_requests
+────────────────────────────────
+id              TEXT PRIMARY KEY
+sender_id       TEXT NOT NULL
+receiver_id     TEXT NOT NULL
+
+status          TEXT DEFAULT 'pending'
+created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+
+UNIQUE(sender_id, receiver_id)
+FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+
+
+blocks
+────────────────────────────────
+blocker_id      TEXT NOT NULL
+
+blocked_id      TEXT NOT NULL
+
+created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+
+UNIQUE(blocker_id, blocked_id)
+
+FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE
+
+FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE
+CASCADE

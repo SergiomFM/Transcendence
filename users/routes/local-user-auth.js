@@ -46,8 +46,19 @@ export default async function localAuthRoutes(fastify) {
 			alias,
 			passwordHash
 		)
-
+		
 		const user = fastify.users.findById.get(id)
+		
+		//TEST, CREATE USER PROFILE AFTER REGISTRATION
+		const existence = fastify.profiles.findByUserId.get(user.id)
+		
+		if (!existence) {
+			fastify.profiles.createProfile.run(
+				profileId,
+				user.id,
+				user.alias
+			)
+		}
 
 		await request.login(user)
 
@@ -60,6 +71,8 @@ export default async function localAuthRoutes(fastify) {
 				role: user.role
 			}
 		})
+
+
 	})
 
 	fastify.post('/auth/login', async (request, reply) => {

@@ -112,37 +112,112 @@ async function dbPlugin(fastify){
 				UPDATE users SET alias = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 			`),
 
+			
 			//RECOVERY CODES
-
-			recovery: {
-				insert: db.prepare(`
-					INSERT INTO recovery_codes (user_id, code_hash)
-					VALUES (?, ?)
+			
+		recovery: {
+			insert: db.prepare(`
+				INSERT INTO recovery_codes (user_id, code_hash)
+				VALUES (?, ?)
 				`),
 
-				findByUser: db.prepare(`
-					SELECT * FROM recovery_codes WHERE user_id = ?
+			findByUser: db.prepare(`
+				SELECT * FROM recovery_codes WHERE user_id = ?
 				`),
 
-				markUsed: db.prepare(`
-					UPDATE recovery_codes SET used = 1 WHERE id = ?
+			markUsed: db.prepare(`
+				UPDATE recovery_codes SET used = 1 WHERE id = ?
 				`),
 
-				deleteByUser: db.prepare(`
-					DELETE FROM recovery_codes WHERE user_id = ?
+			deleteByUser: db.prepare(`
+				DELETE FROM recovery_codes WHERE user_id = ?
 				`)
 			}
-		})
-		
+			})
+
+			//PLAYER_PROFILE
+		fastify.decorate('profiles', {
+			findByUserId: db.prepare(`
+				SELECT * FROM player_profiles WHERE user_id = ?
+				`),
+
+			createProfile: db.prepare(`
+				INSERT INTO player_profiles (id, user_id, display_name)
+				VALUES (?, ?, ?)
+				`),
+
+			updateDisplayName: db.prepare(`
+				UPDATE player_profiles
+				SET display_name = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE user_id = ?
+				`),
+
+			updateBio: db.prepare(`
+				UPDATE player_profiles
+				SET bio = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE user_id = ?
+				`),
+
+			updateAvatar: db.prepare(`
+				UPDATE player_profiles
+				SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE user_id = ?
+				`)
+			})
+
+			//FRIENDS AND FRIENDS LIST
+		fastify.decorate('friends', {
+			sendRequest: db.prepare(`
+				INSERT INTO friend_requests (id, sender_id, receiver_id)
+				VALUES (?, ?, ?)
+				`),
+
+			getRequest: db.prepare(`
+				SELECT * FROM friend_requests
+				WHERE sender_id = ? AND receiver_id = ?
+				`),
+
+			getIncomingRequests: db.prepare(`
+				SELECT r.*, p.display_name, p.avatar_url
+				FROM friend_requests r
+				JOIN player_profiles p ON p.user_id = r.sender_id
+				WHERE r.receiver_id = ? AND r.status = 'pending'
+				`),
+
+			updateRequestStatus: db.prepare(`
+				UPDATE friend_requests SET status = ?, updated_at = CURRENT_TIMESTAMP
+				WHERE id = ?
+				`),
+
+			deleteRequest: db.prepare(`
+				DELETE FROM friend_requests WHERE id = ?
+				`),
+
+			addFriend: db.prepare(`
+				INSERT INTO friends (user_id, friend_id) VALUES (?, ?)
+				`),
+
+			removeFriend: db.prepare(`
+				DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+				`),
+
+			listFriends: db.prepare(`
+				SELECT p.* 
+				FROM friends f
+				JOIN player_profiles p ON p.user_id = f.friend_id
+				WHERE f.user_id = ?
+				`)
+			})
+				
 		//shutdown if necessary, avoiding file corruption(unsure how important this is but a clean shutdown avoids issues...)
-		
+				
 		fastify.addHook('onClose', (instance, done) => {
-			
+					
 			fastify.log.info('Database shutting down...')
 			db.close()
 			done()
-		})
-}
+			})
+		}
 
 //wrap up plugin for fastify, export as well
 

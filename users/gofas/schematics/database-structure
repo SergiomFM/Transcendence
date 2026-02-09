@@ -44,28 +44,6 @@ FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 
 ────────────────────────────────────────
 
----------------------------------------------------------
-
-player_profiles
-────────────────────────────────────────
-user_id 				TEXT PRIMARY KEY
-display_name 			TEXT //maybe link this with user->alias?
-
-bio 					TEXT
-
-avatar_url 				TEXT
-status 					TEXT DEFAULT 'offline'
-
-last_seen 				DATETIME
-created_at 				DATETIME DEFAULT CURRENT_TIMESTAMP
-updated_at 				DATETIME DEFAULT CURRENT_TIMESTAMP
-
-FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-
-────────────────────────────────────────
-
----------------------------------------------------------
-
 
 CHAT SYSTEM
 

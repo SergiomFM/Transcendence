@@ -64,7 +64,14 @@ async function authPlugin(fastify){
 							const id = crypto.randomUUID()
 							fastify.users.createGoogleUser.run(id, email, alias, googleId)
 							user = fastify.users.findById.get(id)
+
+							fastify.profiles.createProfile.run(
+								crypto.randomUUID(),
+								user.id,
+								alias
+							)
 						}
+
 					}
 					if (user && !user.is_active) {
 						return done(null, false, { message: "Account disabled" })
