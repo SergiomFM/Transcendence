@@ -4,10 +4,11 @@ import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
 import { platform } from "os";
+import { GAME_WS_URL } from "@/lib/backend/config";
 
 export function connectToGameServer(
   pong: Pong,
-  serverUrl: string = "ws://localhost:3002/pong",
+  serverUrl: string = GAME_WS_URL,
 ) {
   console.log("Connecting to game server:", serverUrl);
 

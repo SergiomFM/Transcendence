@@ -2,6 +2,7 @@
 
 import { useState, Suspense, lazy } from "react";
 import { Button } from "@/components/ui/button";
+import { GAME_WS_URL, GAME_HTTP_URL } from "@/lib/backend/config";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -60,8 +61,8 @@ const PongPage = () => {
             <Pong
               className="size-full"
               online={gameMode === "online"}
-              serverUrl="ws://localhost:3002/pong"
-              gameServerUrl="http://localhost:3002"
+              serverUrl={GAME_WS_URL}
+              gameServerUrl={GAME_HTTP_URL}
             />
           </Suspense>
         </div>
