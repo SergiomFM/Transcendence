@@ -185,6 +185,7 @@ export class Pong {
   running = false;
   loaded = false;
   online = false;
+  startingRound = false;
 
   // Multiplayer properties
   socket?: WebSocket;
@@ -230,7 +231,7 @@ export class Pong {
     this.scene = await createScene(this);
 
     // Instantiating a Camera
-    this.camera = new PongCamera(this.scene);
+    this.camera = new PongCamera(this.scene, this.online);
 
     // Instantiating the game Paddles
     this.player1 = new Player(this.scene, this, "paddle1");
@@ -253,11 +254,12 @@ export class Pong {
 
     // Creating the Game UI elements
     this.GUI = new GUI();
-    this.GUI.setUpTextBlocks(this.scene, this.online);
+    this.GUI.pressReadyUI();
+    this.GUI.textFadeIn("WELCOME");
 
     // Registering Key inputs
-    Events.registerEvents(this);
     Events.assignKeys(this);
+    Events.registerEvents(this);
 
     // Bind and store resize handler for cleanup
     // The game is ready to be started

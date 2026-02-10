@@ -53,18 +53,22 @@ export const OFFENSIVE_CASTING = [0.05, 0.1, 0.2, 250, 500];
 export const COUNTER_CASTING = [0.1, 0.25, 0.1, 250, 500];
 
 // Animates an attribute from an object to a target in a given time in miliseconds
+// Returns a cancel function to stop the animation
 export function animateAttribute(
   object: any,
   target: number,
   attribute: string,
   time: number,
   frameRate: number
-) {
+): () => void {
   const from = object[attribute];
   const start = performance.now();
   const frameInterval = 1000 / frameRate;
+  let cancelled = false;
 
   function animate() {
+    if (cancelled) return;
+    
     const now = performance.now();
     const elapsed = now - start;
 
@@ -80,6 +84,11 @@ export function animateAttribute(
     }
   }
   requestAnimationFrame(animate);
+
+  // Return cancel function
+  return () => {
+    cancelled = true;
+  };
 }
 
 export function animateMeshes(scene: Scene) {

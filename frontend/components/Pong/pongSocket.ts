@@ -45,11 +45,6 @@ export function connectToGameServer(
   pong.socket.onclose = (event) => {
     console.log("❌ Disconnected from game server");
     pong.online = false;
-
-    // Show disconnect message to player
-    if (pong.GUI) {
-      pong.GUI.textFadeIn("DISCONNECTED");
-    }
   };
 }
 
@@ -142,10 +137,7 @@ function handleGameReady(pong: Pong) {
     pong.player2.connected = true;
 
     if (pong.GUI) {
-      pong.GUI.textFadeOut("WAITING");
-      pong.GUI.toggleTextBlink(pong.scene, "WAITING");
-      pong.GUI.textFadeIn("START");
-      pong.GUI.toggleTextBlink(pong.scene, "START");
+      pong.GUI.pressReadyUI();
     }
   }
 }
@@ -162,18 +154,16 @@ function handleGameJoined(pong: Pong, message: any) {
     pong.player2.connected = false;
 
     if (pong.GUI) {
-      pong.GUI.textFadeIn("WELCOME WARLOCK", 2000);
-      pong.GUI.textFadeIn("WAITING");
-      pong.GUI.toggleTextBlink(pong.scene, "WAITING");
+      pong.GUI.waitingForPlayersUI();
+      pong.GUI.textFadeIn("WELCOME");
     }
   } else {
     pong.player1.connected = true;
     pong.player2.connected = true;
 
     if (pong.GUI) {
-      pong.GUI.textFadeIn("WELCOME WARLOCK", 2000);
-      pong.GUI.textFadeIn("START");
-      pong.GUI.toggleTextBlink(pong.scene, "START");
+      pong.GUI.pressReadyUI();
+      pong.GUI.textFadeIn("WELCOME");
     }
   }
 }
@@ -183,8 +173,7 @@ function handleGameStart(pong: Pong) {
   pong.running = true;
 
   if (pong.GUI) {
-    pong.GUI.textFadeOut("START");
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    pong.GUI.startRoundUI();
   }
 }
 
@@ -195,9 +184,7 @@ function handleGameDisconnection(pong: Pong) {
   pong.player2.connected = false;
 
   if (pong.GUI) {
-    pong.GUI.textFadeIn("OPPONENT_LEFT");
-    pong.GUI.textFadeIn("WAITING");
-    pong.GUI.toggleTextBlink(pong.scene, "WAITING");
+    pong.GUI.opponentLeftUI();
   }
 }
 
@@ -206,11 +193,10 @@ function handleGameScore(pong: Pong, message: any) {
 
   if (pong.GUI) {
     if (message.enemy) {
-      pong.GUI.textFadeIn("YOU_LOST", 2000);
+      pong.GUI.roundLostUI(true);
     } else {
-      pong.GUI.textFadeIn("YOU_WON", 2000);
+      pong.GUI.roundWonUI(true);
     }
-    pong.GUI.toggleTextBlink(pong.scene, "START");
   }
   resetRoundColor(pong);
 }
@@ -226,7 +212,6 @@ function handleCollision(pong: Pong, message: any) {
 }
 
 // Functions to send messages to the server
-
 export function sendUseSpell(pong: Pong, offensive: boolean) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(

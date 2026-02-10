@@ -22,6 +22,7 @@
  * @property {number|null} WIDTH_LIMIT - Width boundary (loaded from GLB)
  * @property {number|null} PADDLE_SIZE - Paddle half-width (loaded from GLB)
  * @property {number} MAX_ROUNDS - Maximum rounds per match
+ * @property {number} ROUND_START_DELAY - Delay before round starts in ms
  */
 
 /** @type {GameConstants} */
@@ -58,6 +59,7 @@ const GAME_CONSTANTS = {
 
 	// Match settings
 	MAX_ROUNDS: 5,
+	ROUND_START_DELAY: 2000, // ms
 };
 
 const spellTypes = {

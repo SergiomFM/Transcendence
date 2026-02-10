@@ -14,6 +14,7 @@ class GameRoom {
 		this.createdAt = Date.now();
 		this.running = false;
 		this.loaded = false;
+		this.startingRound = false;
 
 		this.initializeBall();
 
@@ -308,9 +309,15 @@ class GameRoom {
 			}
 			if (!this.player1.ready || !this.player2.ready) {
 				return;
+			} else if (!this.startingRound) {
+				this.startingRound = true;
+				setTimeout(() => {
+					this.running = true;
+					this.startingRound = false;
+					this.resetSpells();
+				}, GAME_CONSTANTS.ROUND_START_DELAY);
 			}
-			this.running = true;
-			this.resetSpells();
+			return;
 		}
 
 		// SPELL: BallAngleSwitch (reverse ball direction once)

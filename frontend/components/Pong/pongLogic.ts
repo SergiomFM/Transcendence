@@ -9,6 +9,7 @@ import {
 } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
 import { Spell } from "./pongSpells";
+import { GAME_CONSTANTS } from "@/shared/constants";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -25,9 +26,15 @@ function localGameLogic(pong: Pong, delta: number) {
     }
     if (!pong.player1.ready && !pong.player2.ready) {
       return;
-    } else {
-      pong.running = true;
+    } else if (!pong.startingRound) {
+      pong.startingRound = true;
+      pong.GUI.startRoundUI();
+      setTimeout(() => {
+        pong.running = true;
+        pong.startingRound = false;
+      }, GAME_CONSTANTS.ROUND_START_DELAY);
     }
+    return;
   }
 
   movePadle(pong, delta, pong.player2);
@@ -223,12 +230,10 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
 // Player scoring
 function playerScore(pong: Pong, ball: Ball) {
   if (ball.z > 0) {
-    pong.GUI.textFadeIn("PLAYER_2_WIN");
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    pong.GUI.roundLostUI(false);
     ball.setAngle(Tools.ToRadians(90));
   } else {
-    pong.GUI.textFadeIn("PLAYER_1_WIN");
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    pong.GUI.roundWonUI(false);
     ball.setAngle(Tools.ToRadians(-90));
   }
 
@@ -257,5 +262,6 @@ function playerScore(pong: Pong, ball: Ball) {
   resetRoundColor(pong);
 
   pong.running = false;
+  pong.startingRound = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
 }
