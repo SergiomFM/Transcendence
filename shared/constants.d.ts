@@ -21,6 +21,7 @@ export interface GameConstants {
   WIDTH_LIMIT: number | null;
   PADDLE_SIZE: number | null;
   MAX_ROUNDS: number;
+  ROUND_START_DELAY: number;
 }
 
 export interface SpellTypes {

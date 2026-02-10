@@ -97,9 +97,7 @@ export namespace Events {
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
-        pong.GUI.toggleTextBlink(pong.scene, "START");
-        pong.GUI.textFadeOut("PLAYER_1_WIN");
-        pong.GUI.textFadeOut("PLAYER_2_WIN");
+        pong.GUI.startRoundUI();
       }
     } else {
       playerSwitchSpellEvent(key, pong);
