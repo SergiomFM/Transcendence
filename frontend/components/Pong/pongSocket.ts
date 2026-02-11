@@ -193,9 +193,9 @@ function handleGameScore(pong: Pong, message: any) {
 
   if (pong.GUI) {
     if (message.enemy) {
-      pong.GUI.roundLostUI(true);
+      pong.GUI.roundLostUI(true, message.player1Score, message.player2Score);
     } else {
-      pong.GUI.roundWonUI(true);
+      pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
     }
   }
   resetRoundColor(pong);

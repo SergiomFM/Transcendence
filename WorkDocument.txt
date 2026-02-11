@@ -71,4 +71,4 @@ Afonso:
 Limar arestas do frontend (fullscreen, window resizing), refactoring da integração de endpoints, chatbot
 
 Tiago:
-Polir o frontend (Jogo), dar fix do UI (feito!) e refactor para comportar pontuação, balance do jogo e forçar camera de topo no offline (feito!).
+Polir o frontend do jogo, dar fix do UI (feito!) e refactor para comportar pontuação (feito!), balance do jogo e forçar camera de topo no offline (feito!).

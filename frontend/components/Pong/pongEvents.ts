@@ -80,7 +80,7 @@ export namespace Events {
     } else if (key == menuKeys[MENU_KEY.SWITCH_VIEW]) {
       // Changes the camera perspective and moves scene elements
       camera.switchCameraPOV();
-      switchPlayerHandsPosition(pong, camera.topView);
+      switchPlayerHandsPosition(pong, camera.topView, false);
     } else if (pong.loaded && !pong.running) {
       waitingForStartEvents(key, pong);
     } else if (pong.loaded && pong.running) {

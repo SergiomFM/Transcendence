@@ -59,6 +59,7 @@ export class Player {
   direction = 0;
   failed = false;
   ready = false;
+  score = 0;
   readonly maxDeviationAngle = GAME_CONSTANTS.PADDLE_MAX_DEVIATION_ANGLE;
   readonly size: number;
 
@@ -231,7 +232,7 @@ export class Pong {
     this.scene = await createScene(this);
 
     // Instantiating a Camera
-    this.camera = new PongCamera(this.scene, this.online);
+    this.camera = new PongCamera(this.scene);
 
     // Instantiating the game Paddles
     this.player1 = new Player(this.scene, this, "paddle1");
