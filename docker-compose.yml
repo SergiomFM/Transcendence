@@ -1,27 +1,62 @@
 services:
   frontend:
     build:
-      context: frontend
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+    volumes:
+      - ./shared:/app/shared
     profiles:
       - prod
 
   users:
-    build:
-      context: users
+    image: node:22.18.0
+    working_dir: /app
+    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && npm run start"
     ports:
-      - "3001:3001"
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./data/dev.db
+    env_file:
+      - users/.env
+    volumes:
+      - ./users:/app
+      - users_db:/app/data
+    profiles:
+      - prod
+
+  chat:
+    image: oven/bun:latest
+    working_dir: /app
+    command: sh -c "bun install && bun run prisma generate && bun run prisma db push && bun run index.ts"
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./data/dev.db
+    volumes:
+      - ./chat:/app
+      - chat_db:/app/data
     profiles:
       - prod
 
   game:
-    build:
-      context: game
+    image: oven/bun:latest
+    working_dir: /app
+    command: sh -c "bun install && fastify start -l warn -a 0.0.0.0 app.js"
     ports:
-      - "3002:3002"
+      - "3002:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./game:/app
+      - ./shared:/app/shared
+      - ./frontend/public/models:/app/public/models
     profiles:
       - prod
 
@@ -42,16 +77,36 @@ services:
       - dev
 
   users-dev:
-    image: oven/bun:latest
+    image: node:22.18.0
     working_dir: /app
-    command: sh -c "bun install && bun run dev"
+    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && npm run dev"
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=development
+      - DATABASE_URL=file:./data/dev.db
+    env_file:
+      - users/.env
     volumes:
       - ./users:/app:cached
       - users_node_modules:/app/node_modules
+      - users_db:/app/data
+    profiles:
+      - dev
+
+  chat-dev:
+    image: oven/bun:latest
+    working_dir: /app
+    command: sh -c "bun install && bun run prisma generate && bun run prisma db push && bun run index.ts"
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=file:./data/dev.db
+    volumes:
+      - ./chat:/app:cached
+      - chat_node_modules:/app/node_modules
+      - chat_db:/app/data
     profiles:
       - dev
 
@@ -75,3 +130,6 @@ volumes:
   frontend_node_modules:
   users_node_modules:
   game_node_modules:
+  chat_node_modules:
+  users_db:
+  chat_db:
