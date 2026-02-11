@@ -39,7 +39,7 @@ export class Player {
   public vector: Vector3;
   currSpeed = 0;
   currDirection = 0;
-  readonly maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
+  maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
   readonly drag = GAME_CONSTANTS.PADDLE_DRAG;
 
   leftHand!: Mesh;
