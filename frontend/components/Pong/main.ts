@@ -27,6 +27,7 @@ export const startPong = async (
   if (options?.online) {
     pong.online = true;
     connectToGameServer(pong, options.serverUrl);
+    pong.camera.instantSwitchCameraPOV();
   }
 
   let lastFrameTime = 0;

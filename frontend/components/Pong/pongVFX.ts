@@ -194,7 +194,6 @@ function startParticle(scene: Scene, particle: ParticleSystem) {
 
       // Deleting the observer and the particle in case it stops
       if (!particle.isAlive() && particle.getActiveCount() === 0) {
-        console.log("DELETEI");
         scene.onBeforeRenderObservable.remove(particleObserver);
         particle.stop();
         particle.dispose(false);

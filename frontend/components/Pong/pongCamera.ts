@@ -34,29 +34,43 @@ export class PongCamera extends ArcRotateCamera {
   topView = false;
 
   // Camera constructor
-  constructor(scene: Scene, online: boolean = false) {
-    // Default to top view for offline, side view for online
-    const initialAlpha = online ? sideAlpha : topAlpha;
-    const initialBeta = online ? sideBeta : topBeta;
-    const initialDistance = online ? sideDistance : topDistance;
-    const initialFOV = online ? sideFOV : topFOV;
-    
+  constructor(scene: Scene, online: boolean = false) {   
     // Instantiating "ArcRotateCamera"
-    super("camera", initialAlpha, initialBeta, initialDistance, cameraPivot, scene);
+    super("camera", topAlpha, topBeta, topDistance, cameraPivot, scene);
 
     // Changing the FOV and camera collision to none
-    this.fov = initialFOV;
+    this.fov = topFOV;
     this.minZ = 0;
-    this.topView = !online;
+    this.topView = true;
   }
 
+  public instantSwitchCameraPOV() {
+    this.topView = !this.topView;
+
+    let target: number[];
+    if (this.topView) {
+      target = this.topTarget;
+    } 
+    else {
+      target = this.sideTarget;
+    }
+
+    this.alpha = target[ALPHA];
+    this.beta = target[BETA];
+    this.fov = target[FOV];
+    this.radius = target[RADIUS];
+  }
   // Switches the camera POV
   public switchCameraPOV() {
     this.topView = !this.topView;
 
     let target: number[];
-    if (this.topView) target = this.topTarget;
-    else target = this.sideTarget;
+    if (this.topView) {
+      target = this.topTarget;
+    } 
+    else {
+      target = this.sideTarget;
+    }
 
     // Animating all the needed camera attributes
     animateAttribute(
