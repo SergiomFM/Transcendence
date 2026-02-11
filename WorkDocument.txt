@@ -59,7 +59,7 @@ Developers - Todos
 | WORK |
 
 Paulo:
-Organizar os containers(feito), makefile(feito) etc. Coisas de backend (?) e Spectators
+Organizar os containers(feito), makefile(feito) etc. Coisas de backend (?) e Spectators, dar handle em player disconnect(aguardar new player)
 
 Lourenço:
 Vibe coding, Integrar com o frontend, auth e coisas.
