@@ -97,7 +97,6 @@ export namespace Events {
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
-        pong.GUI.startRoundUI();
       }
     } else {
       playerSwitchSpellEvent(key, pong);
