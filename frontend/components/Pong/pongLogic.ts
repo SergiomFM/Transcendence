@@ -230,10 +230,14 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
 // Player scoring
 function playerScore(pong: Pong, ball: Ball) {
   if (ball.z > 0) {
-    pong.GUI.roundLostUI(false);
+    // Player 2 scored
+    pong.player2.score++;
+    pong.GUI.roundLostUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(90));
   } else {
-    pong.GUI.roundWonUI(false);
+    // Player 1 scored
+    pong.player1.score++;
+    pong.GUI.roundWonUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(-90));
   }
 

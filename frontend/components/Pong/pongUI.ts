@@ -3,6 +3,7 @@ import { Scene } from "@babylonjs/core";
 import { animateAttribute } from "./pongAnimations";
 import { FPS } from "./pong";
 import { GAME_CONSTANTS } from "@/shared/constants";
+import { text } from "stream/consumers";
 
 const BLINKING_TIME = 750;
 const FADING_TIME = 500;
@@ -17,6 +18,7 @@ const WELCOME = [
   2, // Outline
   "black", // Outline Color
   "-40%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -31,6 +33,7 @@ const PRESS_READY = [
   2, // Outline
   "black", // Outline Color
   "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -45,6 +48,7 @@ const YOU_WON = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -59,6 +63,7 @@ const PLAYER_1_WIN = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -73,6 +78,7 @@ const YOU_LOST = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -87,34 +93,7 @@ const PLAYER_2_WIN = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Player 1 label
-const PLAYER_1 = [
-  "PLAYER_1", // Name
-  "Player 1", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Player 2 label
-const PLAYER_2 = [
-  "PLAYER_2", // Name
-  "Player 2", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -129,6 +108,7 @@ const WAITING = [
   2, // Outline
   "black", // Outline Color
   "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -143,6 +123,7 @@ const GET_READY = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -157,6 +138,7 @@ const FIGHT = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -171,6 +153,7 @@ const OPPONENT_LEFT = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -185,6 +168,7 @@ const DISCONNECTED = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -199,6 +183,37 @@ const PLAYER_2_CONNECTED = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Player 1 Score
+const PLAYER_1_SCORE = [
+  "PLAYER_1_SCORE", // Name
+  "0", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "0%", // Vertical deviation from center (vertical screen %)
+  "-20%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Player 2 Score
+const PLAYER_2_SCORE = [
+  "PLAYER_2_SCORE", // Name
+  "0", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "0%", // Vertical deviation from center (vertical screen %)
+  "20%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -261,8 +276,6 @@ export class GUI {
     this.createNewText(YOU_LOST);
     this.createNewText(PLAYER_1_WIN);
     this.createNewText(PLAYER_2_WIN);
-    this.createNewText(PLAYER_1);
-    this.createNewText(PLAYER_2);
     this.createNewText(WAITING);
     this.createNewText(GET_READY);
     this.createNewText(PRESS_READY);
@@ -270,6 +283,8 @@ export class GUI {
     this.createNewText(OPPONENT_LEFT);
     this.createNewText(DISCONNECTED);
     this.createNewText(PLAYER_2_CONNECTED);
+    this.createNewText(PLAYER_1_SCORE);
+    this.createNewText(PLAYER_2_SCORE);
   }
 
   createNewText(attributes: any) {
@@ -282,8 +297,9 @@ export class GUI {
     textBlock.outlineWidth = attributes[5];
     textBlock.outlineColor = attributes[6];
     textBlock.top = attributes[7];
-    textBlock.textHorizontalAlignment = attributes[8];
-    textBlock.textVerticalAlignment = attributes[9];
+    textBlock.left = attributes[8];
+    textBlock.textHorizontalAlignment = attributes[9];
+    textBlock.textVerticalAlignment = attributes[10];
     textBlock.isVisible = false;
     textBlock.alpha = 0;
 
@@ -349,8 +365,9 @@ export class GUI {
   }
 
   // Displays a Winning Screen for player 1
-  roundWonUI(online: boolean) {
+  roundWonUI(online: boolean, score1: number, score2: number) {
     this.resetTexts(this.GUI.getScene()!);
+    this.showScores(online, score1, score2);
     if (online) {
       this.textFadeIn("YOU_WON");
     } else {
@@ -361,8 +378,9 @@ export class GUI {
   }
 
   // Displays a Winning Screen for player 2
-  roundLostUI(online: boolean) {
+  roundLostUI(online: boolean, score1: number, score2: number) {
     this.resetTexts(this.GUI.getScene()!);
+    this.showScores(online, score1, score2);
     if (online) {
       this.textFadeIn("YOU_LOST");
     } else {
@@ -400,5 +418,13 @@ export class GUI {
     this.textFadeIn("OPPONENT_LEFT", 2000);
     this.textFadeIn("WAITING");
     this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
+  }
+
+  showScores(online: boolean, score1: number, score2: number) {
+    const extraText = online ? " (YOU)" : "";
+    this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString() + extraText;
+    this.textBlocks.get("PLAYER_2_SCORE")!.text = score2.toString();
+    this.textFadeIn("PLAYER_1_SCORE");
+    this.textFadeIn("PLAYER_2_SCORE");
   }
 }  

@@ -1,4 +1,5 @@
 import { Pong, FPS } from "./pong";
+import { switchPlayerHandsPosition } from "./pongAnimations";
 import { gameLogic } from "./pongLogic";
 import { connectToGameServer, disconnectFromServer } from "./pongSocket";
 
@@ -29,6 +30,7 @@ export const startPong = async (
     connectToGameServer(pong, options.serverUrl);
     pong.camera.instantSwitchCameraPOV();
   }
+  switchPlayerHandsPosition(pong, pong.camera.topView, true);
 
   let lastFrameTime = 0;
   let elapsedTime = 0;

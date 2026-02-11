@@ -34,7 +34,7 @@ export class PongCamera extends ArcRotateCamera {
   topView = false;
 
   // Camera constructor
-  constructor(scene: Scene, online: boolean = false) {   
+  constructor(scene: Scene) {   
     // Instantiating "ArcRotateCamera"
     super("camera", topAlpha, topBeta, topDistance, cameraPivot, scene);
 
@@ -48,12 +48,7 @@ export class PongCamera extends ArcRotateCamera {
     this.topView = !this.topView;
 
     let target: number[];
-    if (this.topView) {
-      target = this.topTarget;
-    } 
-    else {
-      target = this.sideTarget;
-    }
+    this.topView ? target = this.topTarget : target = this.sideTarget;
 
     this.alpha = target[ALPHA];
     this.beta = target[BETA];
@@ -65,12 +60,7 @@ export class PongCamera extends ArcRotateCamera {
     this.topView = !this.topView;
 
     let target: number[];
-    if (this.topView) {
-      target = this.topTarget;
-    } 
-    else {
-      target = this.sideTarget;
-    }
+    this.topView ? target = this.topTarget : target = this.sideTarget;
 
     // Animating all the needed camera attributes
     animateAttribute(
