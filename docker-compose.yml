@@ -21,7 +21,7 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:./data/dev.db
+      - DATABASE_URL=file:./database/app.db
     env_file:
       - users/.env
     volumes:

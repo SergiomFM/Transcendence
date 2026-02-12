@@ -107,7 +107,7 @@ export default async function twoFARoutes(fastify){
 		}
 
 		delete req.session.pending2FA;
-		await req.logIn(user);
+		await req.login(user);
 
 		reply.send({ message: "2FA verification successful!"});
 	})

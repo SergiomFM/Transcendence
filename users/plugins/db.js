@@ -49,6 +49,33 @@ async function dbPlugin(fastify){
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
 
+	db.prepare(`CREATE TABLE IF NOT EXISTS player_profiles (
+		id TEXT PRIMARY KEY,
+		user_id TEXT NOT NULL UNIQUE,
+		display_name TEXT NOT NULL,
+		bio TEXT,
+		avatar_url TEXT,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
+
+	db.prepare(`CREATE TABLE IF NOT EXISTS friend_requests (
+		id TEXT PRIMARY KEY,
+		sender_id TEXT NOT NULL,
+		receiver_id TEXT NOT NULL,
+		status TEXT DEFAULT 'pending',
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
+
+	db.prepare(`CREATE TABLE IF NOT EXISTS friends (
+		user_id TEXT NOT NULL,
+		friend_id TEXT NOT NULL,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		PRIMARY KEY (user_id, friend_id),
+		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
 
 		fastify.log.info('Ensured Database schema...')
 		

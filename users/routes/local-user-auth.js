@@ -38,7 +38,6 @@ export default async function localAuthRoutes(fastify) {
 
 		const passwordHash = await hashPassword(password)
 		const id = crypto.randomUUID()
-
 		fastify.users.createLocalUser.run(
 			id,
 			username,
@@ -53,6 +52,7 @@ export default async function localAuthRoutes(fastify) {
 		const existence = fastify.profiles.findByUserId.get(user.id)
 		
 		if (!existence) {
+			const profileId = crypto.randomUUID()
 			fastify.profiles.createProfile.run(
 				profileId,
 				user.id,

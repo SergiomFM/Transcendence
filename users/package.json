@@ -10,13 +10,14 @@
     "test": "node --test test/**/*.test.js",
     "start": "fastify start -l info app.js",
     "dev": "fastify start -w -l info -P app.js",
-	"resetDB": "rm -f database/app.db"
+    "resetDB": "rm -f database/app.db"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@fastify/autoload": "^6.0.0",
+    "@fastify/cors": "^11.2.0",
     "@fastify/passport": "^3.0.2",
     "@fastify/secure-session": "^8.3.0",
     "@fastify/sensible": "^6.0.0",
