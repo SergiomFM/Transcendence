@@ -32,7 +32,7 @@ const PRESS_READY = [
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
-  "15%", // Vertical deviation from center (vertical screen %)
+  "35%", // Vertical deviation from center (vertical screen %)
   "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
@@ -203,6 +203,22 @@ const PLAYER_1_SCORE = [
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
+// Player 1 Score description
+const PLAYER_1_SCORE_DESCRIPTION = [
+  "PLAYER_1_SCORE_DESCRIPTION", // Name
+  "(YOU)", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "10%", // Vertical deviation from center (vertical screen %)
+  "-20%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+
 // Player 2 Score
 const PLAYER_2_SCORE = [
   "PLAYER_2_SCORE", // Name
@@ -218,6 +234,20 @@ const PLAYER_2_SCORE = [
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
+// Player 2 Score description
+const PLAYER_2_SCORE_DESCRIPTION = [
+  "PLAYER_2_SCORE_DESCRIPTION", // Name
+  "(HIM)", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "10%", // Vertical deviation from center (vertical screen %)
+  "20%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
 class UIElement extends TextBlock {
   blinking = false;
   private lastUpdate = 0;
@@ -284,7 +314,9 @@ export class GUI {
     this.createNewText(DISCONNECTED);
     this.createNewText(PLAYER_2_CONNECTED);
     this.createNewText(PLAYER_1_SCORE);
+    this.createNewText(PLAYER_1_SCORE_DESCRIPTION);
     this.createNewText(PLAYER_2_SCORE);
+    this.createNewText(PLAYER_2_SCORE_DESCRIPTION);
   }
 
   createNewText(attributes: any) {
@@ -421,10 +453,13 @@ export class GUI {
   }
 
   showScores(online: boolean, score1: number, score2: number) {
-    const extraText = online ? " (YOU)" : "";
-    this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString() + extraText;
+    this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString();
     this.textBlocks.get("PLAYER_2_SCORE")!.text = score2.toString();
     this.textFadeIn("PLAYER_1_SCORE");
     this.textFadeIn("PLAYER_2_SCORE");
+    if (online) {
+      this.textFadeIn("PLAYER_1_SCORE_DESCRIPTION");
+      this.textFadeIn("PLAYER_2_SCORE_DESCRIPTION");
+    }
   }
 }  
