@@ -1,6 +1,0 @@
-conversation
-	|
-	|	-> participants
-
-	|
-	|	-> messages
