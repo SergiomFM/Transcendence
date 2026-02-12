@@ -1,18 +1,19 @@
 import { Vector3, Tools, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
-import { splashEffect, COLLISION_VFX, updateArena } from "./pongVFX";
+import {
+  splashEffect,
+  COLLISION_VFX,
+  updateArena,
+  spellReadyVFX,
+  resetRoundColor,
+} from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
-
-enum key {
-  UP,
-  LEFT,
-  DOWN,
-  RIGHT,
-}
+import { Spell } from "./pongSpells";
+import { GAME_CONSTANTS } from "@/shared/constants";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
-    onlineGameLogic(pong, delta);
+    onlineGameLogic(pong);
   } else {
     localGameLogic(pong, delta);
   }
@@ -25,13 +26,19 @@ function localGameLogic(pong: Pong, delta: number) {
     }
     if (!pong.player1.ready && !pong.player2.ready) {
       return;
-    } else {
-      pong.running = true;
+    } else if (!pong.startingRound) {
+      pong.startingRound = true;
+      pong.GUI.startRoundUI();
+      setTimeout(() => {
+        pong.running = true;
+        pong.startingRound = false;
+      }, GAME_CONSTANTS.ROUND_START_DELAY);
     }
+    return;
   }
 
-  movePadle(pong, delta, getPlayerDirection(pong.player2), pong.player2);
-  movePadle(pong, delta, getPlayerDirection(pong.player1), pong.player1);
+  movePadle(pong, delta, pong.player2);
+  movePadle(pong, delta, pong.player1);
   moveBall(pong, delta, pong.ball);
 
   pong.player1.counterSpell.spellLoop(delta);
@@ -40,139 +47,94 @@ function localGameLogic(pong: Pong, delta: number) {
   pong.player2.offensiveSpell.spellLoop(delta);
 }
 
-function onlineGameLogic(pong: Pong, delta: number) {
-  const localPlayer = pong.playerId === 1 ? pong.player1 : pong.player2;
-  const playerDirection = getPlayerDirection(localPlayer);
-
-  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
-    pong.socket.send(
-      JSON.stringify({
-        type: "INPUT",
-        input: {
-          direction: playerDirection,
-        },
-      }),
-    );
-  }
-
+function onlineGameLogic(pong: Pong) {
   if (pong.serverGameState && !pong.serverGameStateApplied) {
     applyServerState(pong, pong.serverGameState);
     pong.serverGameStateApplied = true;
   }
+}
 
-  pong.player1.counterSpell.spellLoop(delta);
-  pong.player2.counterSpell.spellLoop(delta);
-  pong.player1.offensiveSpell.spellLoop(delta);
-  pong.player2.offensiveSpell.spellLoop(delta);
+function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any) {
+  spell.cooldownElapsed = serverSpellData.cooldownElapsed;
+  if (serverSpellData.spellReady && !spell.ready) {
+    spell.ready = true;
+    spellReadyVFX(scene, spell);
+  } else if (!serverSpellData.spellReady) {
+    spell.ready = false;
+  }
+}
+
+function updatePlayerFromServer(
+  player: Player,
+  serverPlayerData: any,
+  scene: any,
+) {
+  player.x = serverPlayerData.x;
+  updateSpellFromServer(
+    player.offensiveSpell,
+    {
+      cooldownElapsed: serverPlayerData.offensiveCooldownElapsed,
+      spellReady: serverPlayerData.offensiveSpellReady,
+    },
+    scene,
+  );
+  updateSpellFromServer(
+    player.counterSpell,
+    {
+      cooldownElapsed: serverPlayerData.counterCooldownElapsed,
+      spellReady: serverPlayerData.counterSpellReady,
+    },
+    scene,
+  );
 }
 
 function applyServerState(pong: Pong, serverState: any) {
-  if (serverState.ball) {
-    pong.ball.x = serverState.ball.x;
-    pong.ball.y = serverState.ball.y;
+  pong.ball.x = serverState.ball.x;
+  pong.ball.z = serverState.ball.z;
+  pong.ball.setAngle(serverState.ball.angle);
 
-    if (pong.playerId === 2) {
-      pong.ball.z = -serverState.ball.z;
-      pong.ball.setAngle(-serverState.ball.angle);
-    } else {
-      pong.ball.z = serverState.ball.z;
-      pong.ball.setAngle(serverState.ball.angle);
-    }
+  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
+  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
 
-    pong.ball.speed = serverState.ball.speed;
-
-    if (serverState.ball.color && pong.online) {
-      const c = serverState.ball.color;
-      if (!pong._lastArenaColor)
-        pong._lastArenaColor = { r: 1, g: 1, b: 1, a: 1 };
-      const last = pong._lastArenaColor;
-      if (
-        c.r !== last.r ||
-        c.g !== last.g ||
-        c.b !== last.b ||
-        c.a !== last.a
-      ) {
-        updateArena(pong.scene, new Color4(c.r, c.g, c.b, c.a), pong.ball);
-        let light = pong.scene.getLightById("ball")!;
-        light.diffuse.set(c.r, c.g, c.b);
-        pong._lastArenaColor = { r: c.r, g: c.g, b: c.b, a: c.a };
-      }
-    }
-  }
-
-  if (pong.playerId === 2) {
-    if (serverState.player2) {
-      pong.player1.x = serverState.player2.x;
-      pong.player1.currSpeed = serverState.player2.currSpeed;
-      pong.player1.ready = serverState.player2.ready;
-      pong.player1.failed = serverState.player2.failed;
-    }
-
-    if (serverState.player1) {
-      pong.player2.x = serverState.player1.x;
-      pong.player2.currSpeed = serverState.player1.currSpeed;
-      pong.player2.ready = serverState.player1.ready;
-      pong.player2.failed = serverState.player1.failed;
-    }
-  } else {
-    if (serverState.player1) {
-      pong.player1.x = serverState.player1.x;
-      pong.player1.currSpeed = serverState.player1.currSpeed;
-      pong.player1.ready = serverState.player1.ready;
-      pong.player1.failed = serverState.player1.failed;
-    }
-
-    if (serverState.player2) {
-      pong.player2.x = serverState.player2.x;
-      pong.player2.currSpeed = serverState.player2.currSpeed;
-      pong.player2.ready = serverState.player2.ready;
-      pong.player2.failed = serverState.player2.failed;
-    }
-  }
-
-  // Update game running state
-  if (serverState.running !== undefined) {
-    pong.running = serverState.running;
-  }
-}
-
-// Detecting the player inputs
-function getPlayerDirection(player: Player) {
-  if (
-    Events.keyStatus[player.keys[key.DOWN]] ||
-    Events.keyStatus[player.keys[key.RIGHT]]
-  )
-    return 1;
-  if (
-    Events.keyStatus[player.keys[key.UP]] ||
-    Events.keyStatus[player.keys[key.LEFT]]
-  )
-    return -1;
-
-  return 0;
+  pong.running = serverState.running;
 }
 
 // Paddle collision check
-function paddleCollision(pong: Pong, paddle: Player, signal: number) {
+function paddleCollision(
+  pong: Pong,
+  paddle: Player,
+  signal: number,
+) {
   let ball = pong.ball;
 
+  // Calculating the collision point using the ball angle
+  const deltaZ = ball.z - paddle.z;
+  const deltaX = deltaZ * (ball.cos / ball.sin);
+  const collisionX = ball.x - deltaX;
+
   if (
-    ball.x <= paddle.x + paddle.size &&
-    ball.x >= paddle.x - paddle.size &&
+    collisionX <= paddle.x + paddle.size &&
+    collisionX >= paddle.x - paddle.size &&
     !paddle.failed
   ) {
     const maxBounceAngle = paddle.maxDeviationAngle;
-    const hitOffset = (ball.x - paddle.x) / paddle.size;
+    const hitOffset = (collisionX - paddle.x) / paddle.size;
     const deviation = Math.max(-1, Math.min(1, hitOffset));
     const bounceAngle = 90 - deviation * maxBounceAngle;
     ball.setAngle(Tools.ToRadians(bounceAngle) * signal);
 
     ball.z = paddle.z - (-ball.z + paddle.z);
-    ball.speed += ball.speedIncrement;
-
+    
+    if (ball.speed < ball.maxSpeed){
+      ball.speed += ball.speedIncrement;
+      if (ball.speed > ball.maxSpeed) {
+        ball.speed = ball.maxSpeed;
+      }
+    }
+  
     splashEffect(
       pong.scene,
-      new Vector3(ball.x, ball.y, paddle.z),
+      new Vector3(collisionX, ball.y, paddle.z),
       ball.speed,
       -ball.angle,
       COLLISION_VFX,
@@ -183,27 +145,23 @@ function paddleCollision(pong: Pong, paddle: Player, signal: number) {
 }
 
 // Paddle movement function
-function movePadle(
-  pong: Pong,
-  delta: number,
-  direction: number,
-  player: Player,
-) {
-  player.playerDashLogic(delta * 1000, direction);
+function movePadle(pong: Pong, delta: number, player: Player) {
+  player.playerDashLogic(delta * 1000, player.direction);
 
   // Refreshing the paddle movement when there is input
-  if (direction) {
+  if (player.direction) {
     player.currSpeed = player.maxSpeed;
-    player.direction = direction;
+    player.currDirection = player.direction;
   }
 
   // Moving the paddle if it wants to move
-  player.x += player.currSpeed * delta * player.direction;
+  player.x += player.currSpeed * delta * player.currDirection;
 
   // Smoothly stop the paddle
   player.currSpeed -= player.drag * delta;
   if (player.currSpeed < 0) {
     player.currSpeed = 0;
+    player.currDirection = 0;
   }
 
   // Checking if the paddle has hit the wall
@@ -234,10 +192,14 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     // Determine which side collided
     const sign = newX > 0 ? 1 : -1;
 
+    // Calculate the actual collision point Z position
+    const t = (Xlimit * sign - oldX) / (newX - oldX); // fraction of movement when collision occurred
+    const collisionZ = oldZ + (newZ - oldZ) * t;
+
     // Bounce Effect
     splashEffect(
       pong.scene,
-      new Vector3(Xlimit * sign, ball.y, (newZ + oldZ) * 0.5),
+      new Vector3(Xlimit * sign, ball.y, collisionZ),
       ball.speed,
       Tools.ToRadians(0 + 180 * Number(newX > 0)),
       COLLISION_VFX,
@@ -246,6 +208,10 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     // Changing the ball angle and x value to the amount it should reflect
     ball.x = Xlimit * sign - (newX - Xlimit * sign);
     ball.setAngle(Math.PI - ball.angle);
+    
+    // Update oldX and newX for paddle collision check (ball bounced from wall)
+    oldX = Xlimit * sign;
+    newX = ball.x;
   }
 
   // Paddle collisions
@@ -264,17 +230,14 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
 // Player scoring
 function playerScore(pong: Pong, ball: Ball) {
   if (ball.z > 0) {
-    if (pong.online) pong.GUI.textFadeIn("YOU_LOST");
-    else pong.GUI.textFadeIn("PLAYER_2_WIN");
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    // Player 2 scored
+    pong.player2.score++;
+    pong.GUI.roundLostUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(90));
   } else {
-    if (pong.online) {
-      pong.GUI.textFadeIn("YOU_WON");
-    } else {
-      pong.GUI.textFadeIn("PLAYER_1_WIN");
-    }
-    pong.GUI.toggleTextBlink(pong.scene, "START");
+    // Player 1 scored
+    pong.player1.score++;
+    pong.GUI.roundWonUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(-90));
   }
 
@@ -300,13 +263,9 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.offensiveSpell.resetSpell();
 
   // Reset arena color to white
-  const defaultColor = new Color4(1, 1, 1, 1);
-  updateArena(pong.scene, defaultColor, ball);
-  let light = pong.scene.getLightById("ball")!;
-  if (light) {
-    light.diffuse.set(1, 1, 1);
-  }
+  resetRoundColor(pong);
 
   pong.running = false;
+  pong.startingRound = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
 }

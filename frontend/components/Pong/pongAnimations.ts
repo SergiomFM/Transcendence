@@ -53,18 +53,22 @@ export const OFFENSIVE_CASTING = [0.05, 0.1, 0.2, 250, 500];
 export const COUNTER_CASTING = [0.1, 0.25, 0.1, 250, 500];
 
 // Animates an attribute from an object to a target in a given time in miliseconds
+// Returns a cancel function to stop the animation
 export function animateAttribute(
   object: any,
   target: number,
   attribute: string,
   time: number,
   frameRate: number
-) {
+): () => void {
   const from = object[attribute];
   const start = performance.now();
   const frameInterval = 1000 / frameRate;
+  let cancelled = false;
 
   function animate() {
+    if (cancelled) return;
+    
     const now = performance.now();
     const elapsed = now - start;
 
@@ -80,6 +84,11 @@ export function animateAttribute(
     }
   }
   requestAnimationFrame(animate);
+
+  // Return cancel function
+  return () => {
+    cancelled = true;
+  };
 }
 
 export function animateMeshes(scene: Scene) {
@@ -165,12 +174,10 @@ export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: any) {
   });
 }
 
-export function switchPlayerHandsPosition(pong: Pong, topView: boolean) {
+export function switchPlayerHandsPosition(pong: Pong, topView: boolean, instant: boolean) {
   let player = pong.player1;
   let target = player;
-  if (topView) {
-    target = pong.player2;
-  }
+  topView ? target = pong.player2 : target = pong.player1;
 
   let leftX =
     Math.abs(player.initialLeftHandPos.x) -
@@ -192,8 +199,25 @@ export function switchPlayerHandsPosition(pong: Pong, topView: boolean) {
     Math.abs(target.initialRightHandPos.z) -
     Math.abs(player.initialRightHandPos.z);
 
-  // Animating X, Y, Z in both hands (in order)
+  if (instant) {
+    player.leftHandPos.x = leftX;
+    player.leftHandPos.y = leftY;
+    player.leftHandPos.z = leftZ;
+    player.leftHand.position.x = leftX;
+    player.leftHand.position.y = leftY;
+    player.leftHand.position.z = leftZ;
 
+    player.rightHandPos.x = rightX;
+    player.rightHandPos.y = rightY;
+    player.rightHandPos.z = rightZ;
+    player.rightHand.position.x = rightX;
+    player.rightHand.position.y = rightY;
+    player.rightHand.position.z = rightZ;
+
+    return;
+  }
+
+  // Animating X, Y, Z in both hands (in order)
   // Left
   animateAttribute(
     player.leftHandPos,

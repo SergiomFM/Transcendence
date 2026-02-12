@@ -2,9 +2,11 @@ import { Control, AdvancedDynamicTexture, TextBlock } from "@babylonjs/gui";
 import { Scene } from "@babylonjs/core";
 import { animateAttribute } from "./pongAnimations";
 import { FPS } from "./pong";
+import { GAME_CONSTANTS } from "@/shared/constants";
+import { text } from "stream/consumers";
 
 const BLINKING_TIME = 750;
-const FADING_TIME = 1000;
+const FADING_TIME = 500;
 
 // Welcoming Game message
 const WELCOME = [
@@ -16,13 +18,14 @@ const WELCOME = [
   2, // Outline
   "black", // Outline Color
   "-40%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
 // Game start prompt
-const START = [
-  "START", // Name
+const PRESS_READY = [
+  "PRESS_READY", // Name
   "(Press space when ready)", // Text
   "white", // Color
   "10%", // Size (vertical screen %)
@@ -30,6 +33,7 @@ const START = [
   2, // Outline
   "black", // Outline Color
   "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -44,6 +48,7 @@ const YOU_WON = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -58,6 +63,7 @@ const PLAYER_1_WIN = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -72,6 +78,7 @@ const YOU_LOST = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -86,34 +93,7 @@ const PLAYER_2_WIN = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Player 1 label
-const PLAYER_1 = [
-  "PLAYER_1", // Name
-  "Player 1", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Player 2 label
-const PLAYER_2 = [
-  "PLAYER_2", // Name
-  "Player 2", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -123,25 +103,27 @@ const WAITING = [
   "WAITING", // Name
   "Waiting for opponent...", // Text
   "white", // Color
-  "15%", // Size (vertical screen %)
+  "10%", // Size (vertical screen %)
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
-  "0%", // Vertical deviation from center (vertical screen %)
+  "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
 // Multiplayer: Game ready
-const READY = [
-  "READY", // Name
-  "Get Ready!", // Text
+const GET_READY = [
+  "GET_READY", // Name
+  "Get Ready...", // Text
   "white", // Color
   "20%", // Size (vertical screen %)
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -156,6 +138,7 @@ const FIGHT = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -170,6 +153,7 @@ const OPPONENT_LEFT = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -184,6 +168,7 @@ const DISCONNECTED = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -198,6 +183,37 @@ const PLAYER_2_CONNECTED = [
   2, // Outline
   "black", // Outline Color
   "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Player 1 Score
+const PLAYER_1_SCORE = [
+  "PLAYER_1_SCORE", // Name
+  "0", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "0%", // Vertical deviation from center (vertical screen %)
+  "-20%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Player 2 Score
+const PLAYER_2_SCORE = [
+  "PLAYER_2_SCORE", // Name
+  "0", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "0%", // Vertical deviation from center (vertical screen %)
+  "20%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
@@ -206,6 +222,7 @@ class UIElement extends TextBlock {
   blinking = false;
   private lastUpdate = 0;
   private fadeOutTimer?: NodeJS.Timeout;
+  cancelAnimation?: () => void;
 
   constructor() {
     super();
@@ -228,11 +245,19 @@ class UIElement extends TextBlock {
     }
   }
 
+  // Cancel any ongoing animation
+  cancelOngoingAnimation() {
+    if (this.cancelAnimation) {
+      this.cancelAnimation();
+      this.cancelAnimation = undefined;
+    }
+  }
+
   // Schedule automatic fade-out after duration
   scheduleAutoFadeOut(duration: number) {
     this.clearFadeOutTimer();
     this.fadeOutTimer = setTimeout(() => {
-      animateAttribute(this, 0, "alpha", FADING_TIME, FPS);
+      this.cancelAnimation = animateAttribute(this, 0, "alpha", FADING_TIME, FPS);
     }, duration);
   }
 }
@@ -240,26 +265,26 @@ class UIElement extends TextBlock {
 export class GUI {
   GUI: AdvancedDynamicTexture;
   textBlocks: Map<string, UIElement>; // Text Blocks Map
-  online: boolean = false;
 
   constructor() {
     this.GUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.textBlocks = new Map();
 
     this.createNewText(WELCOME);
-    this.createNewText(START);
+    this.createNewText(PRESS_READY);
     this.createNewText(YOU_WON);
     this.createNewText(YOU_LOST);
     this.createNewText(PLAYER_1_WIN);
     this.createNewText(PLAYER_2_WIN);
-    this.createNewText(PLAYER_1);
-    this.createNewText(PLAYER_2);
     this.createNewText(WAITING);
-    this.createNewText(READY);
+    this.createNewText(GET_READY);
+    this.createNewText(PRESS_READY);
     this.createNewText(FIGHT);
     this.createNewText(OPPONENT_LEFT);
     this.createNewText(DISCONNECTED);
     this.createNewText(PLAYER_2_CONNECTED);
+    this.createNewText(PLAYER_1_SCORE);
+    this.createNewText(PLAYER_2_SCORE);
   }
 
   createNewText(attributes: any) {
@@ -272,8 +297,9 @@ export class GUI {
     textBlock.outlineWidth = attributes[5];
     textBlock.outlineColor = attributes[6];
     textBlock.top = attributes[7];
-    textBlock.textHorizontalAlignment = attributes[8];
-    textBlock.textVerticalAlignment = attributes[9];
+    textBlock.left = attributes[8];
+    textBlock.textHorizontalAlignment = attributes[9];
+    textBlock.textVerticalAlignment = attributes[10];
     textBlock.isVisible = false;
     textBlock.alpha = 0;
 
@@ -282,48 +308,30 @@ export class GUI {
     this.textBlocks.set(attributes[0], textBlock);
   }
 
-  // Resets all texts to an hidden state
-  resetTexts() {
+  // Resets all texts to an hidden state and deactivates all UI effects
+  resetTexts(scene: Scene) {
     this.textBlocks.forEach((text) => {
-      text.isVisible = false;
-      text.blinking = false;
-      text.alpha = 0;
+      if (text.blinking) {
+        text.blinking = false;
+        scene.unregisterBeforeRender(text.onBeforeRender);
+      }
       text.clearFadeOutTimer();
+      text.cancelOngoingAnimation();
+      text.isVisible = false;
+      text.alpha = 0;
     });
-  }
-
-  // Displays a Winning Screen
-  roudWon(online: boolean) {
-    if (online) {
-    } else {
-    }
-  }
-
-  // Initial Texts Configuration
-  setUpTextBlocks(scene: Scene, online: boolean = false) {
-    this.textBlocks.get("START")!.alpha = 1;
-    this.online = online;
-    if (!online) {
-      this.toggleTextBlink(scene, "START");
-    }
-    this.textFadeIn("WELCOME", 2000);
   }
 
   textFadeIn(name: string, duration?: number) {
     let text = this.textBlocks.get(name);
-    if (!text) return;
-
-    text.clearFadeOutTimer();
-
-    if (text.alpha >= 1) {
-      if (duration) {
-        text.scheduleAutoFadeOut(duration);
-      }
+    if (!text) {
       return;
     }
 
+    text.clearFadeOutTimer();
+    text.cancelOngoingAnimation();
     text.isVisible = true;
-    animateAttribute(text, 1, "alpha", FADING_TIME, FPS);
+    text.cancelAnimation = animateAttribute(text, 1, "alpha", FADING_TIME, FPS);
 
     if (duration) {
       text.scheduleAutoFadeOut(duration + FADING_TIME);
@@ -332,30 +340,91 @@ export class GUI {
 
   textFadeOut(name: string) {
     let text = this.textBlocks.get(name);
-    if (!text) return;
+    if (!text) {
+      return;
+    }
 
     text.clearFadeOutTimer();
-    if (text.alpha <= 0) return;
-
-    animateAttribute(text, 0, "alpha", FADING_TIME, FPS);
-    if (name === "READY") {
-      text.isVisible = false;
-      text.alpha = 0;
-    }
+    text.cancelOngoingAnimation();
+    text.cancelAnimation = animateAttribute(text, 0, "alpha", FADING_TIME, FPS);
   }
 
   // Blink a Text Block
   toggleTextBlink(scene: Scene, name: string) {
     let text = this.textBlocks.get(name);
-    if (!text) return;
+    if (!text) {
+      return;
+    }
 
     text.blinking = !text.blinking;
     if (text.blinking) {
       scene.registerBeforeRender(text.onBeforeRender);
     } else {
-      text.isVisible = false;
-      text.alpha = 0;
       scene.unregisterBeforeRender(text.onBeforeRender);
     }
   }
-}
+
+  // Displays a Winning Screen for player 1
+  roundWonUI(online: boolean, score1: number, score2: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.showScores(online, score1, score2);
+    if (online) {
+      this.textFadeIn("YOU_WON");
+    } else {
+      this.textFadeIn("PLAYER_1_WIN");
+    }
+    this.textFadeIn("PRESS_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
+  }
+
+  // Displays a Winning Screen for player 2
+  roundLostUI(online: boolean, score1: number, score2: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.showScores(online, score1, score2);
+    if (online) {
+      this.textFadeIn("YOU_LOST");
+    } else {
+      this.textFadeIn("PLAYER_2_WIN");
+    }
+    this.textFadeIn("PRESS_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
+  }
+
+  // Initial Texts Configuration
+  waitingForPlayersUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("WAITING");
+    this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
+  }
+
+  pressReadyUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("PRESS_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
+  }
+
+  startRoundUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("GET_READY", GAME_CONSTANTS.ROUND_START_DELAY / 2);
+    setTimeout(() => {
+      this.textBlocks.get("FIGHT")!.alpha = 1;
+      this.textBlocks.get("FIGHT")!.isVisible = true;
+      this.textFadeOut("FIGHT");
+    }, GAME_CONSTANTS.ROUND_START_DELAY);
+  }
+
+  opponentLeftUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("OPPONENT_LEFT", 2000);
+    this.textFadeIn("WAITING");
+    this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
+  }
+
+  showScores(online: boolean, score1: number, score2: number) {
+    const extraText = online ? " (YOU)" : "";
+    this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString() + extraText;
+    this.textBlocks.get("PLAYER_2_SCORE")!.text = score2.toString();
+    this.textFadeIn("PLAYER_1_SCORE");
+    this.textFadeIn("PLAYER_2_SCORE");
+  }
+}  

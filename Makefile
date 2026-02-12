@@ -1,24 +1,12 @@
 all: prod
 
-# Multiplayer dev test
+# Multiplayer dev test  (Tiago e Paulo)
 pong-dev:
 	docker compose --profile dev up frontend-dev game-dev
 
-pong-down:
-	docker compose --profile dev stop frontend-dev game-dev
-
-pong-logs:
-	docker compose --profile dev logs -f frontend-dev game-dev
-
-pong-restart:
-	docker compose --profile dev restart frontend-dev game-dev
-
-
-# Dev
-dev: dev-up
-
-dev-up:
-	docker compose --profile dev up
+# ALL SERVICES DEV
+dev:
+	docker compose --profile dev up -d
 
 dev-down:
 	docker compose --profile dev down
@@ -32,20 +20,36 @@ dev-start:
 dev-restart:
 	docker compose --profile dev restart
 
+# SINGLE SERVICE DEV
+dev-frontend:
+	docker compose --profile dev up frontend-dev
+
+dev-users:
+	docker compose --profile dev up users-dev
+
+dev-chat:
+	docker compose --profile dev up chat-dev
+
+dev-game:
+	docker compose --profile dev up game-dev
+
+# LOGS FOR INDIVIDUAL DEV SERVICES
 dev-logs:
 	docker compose --profile dev logs -f
 
-# Single dev
-frontend-dev:
-	docker compose --profile dev up frontend-dev
+dev-logs-frontend:
+	docker compose --profile dev logs -f frontend-dev
 
-users-dev:
-	docker compose --profile dev up users-dev
+dev-logs-users:
+	docker compose --profile dev logs -f users-dev
 
-game-dev:
-	docker compose --profile dev up game-dev
+dev-logs-chat:
+	docker compose --profile dev logs -f chat-dev
 
-# Prod
+dev-logs-game:
+	docker compose --profile dev logs -f game-dev
+
+# ALL SERVICES PROD
 prod: prod-build prod-up
 
 prod-build:
@@ -66,33 +70,36 @@ prod-start:
 prod-restart:
 	docker compose --profile prod restart
 
+# SINGLE SERVICE PROD
+prod-frontend:
+	docker compose --profile prod up -d --build frontend
+
+prod-users:
+	docker compose --profile prod up -d users
+
+prod-chat:
+	docker compose --profile prod up -d chat
+
+prod-game:
+	docker compose --profile prod up -d game
+
+# LOGS INDIVIDUAL PROD SERVICES
 prod-logs:
 	docker compose --profile prod logs -f
 
-# Single prod
-frontend-prod:
-	docker compose --profile prod up -d --build frontend
+prod-logs-frontend:
+	docker compose --profile prod logs -f frontend
 
-users-prod:
-	docker compose --profile prod up -d --build users
+prod-logs-users:
+	docker compose --profile prod logs -f users
 
-game-prod:
-	docker compose --profile prod up -d --build game
+prod-logs-chat:
+	docker compose --profile prod logs -f chat
 
-# Logs for individual services
-logs-frontend:
-	docker compose logs -f frontend-dev frontend
+prod-logs-game:
+	docker compose --profile prod logs -f game
 
-logs-users:
-	docker compose logs -f users-dev users
-
-logs-game:
-	docker compose logs -f game-dev game
-
-logs-minio:
-	docker compose logs -f minio
-
-# Status
+# STATUS
 status:
 	docker compose ps -a
 

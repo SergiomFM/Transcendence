@@ -1,0 +1,34 @@
+{
+  "common": {
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "username": "Username",
+    "submit": "Submit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "loginTitle": "Welcome Back",
+    "loginSubtitle": "Sign in to your account",
+    "signupTitle": "Create Account",
+    "signupSubtitle": "Sign up for a new account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "invalidCredentials": "Invalid email or password",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "usernameRequired": "Username is required",
+    "passwordMismatch": "Passwords do not match",
+    "signupSuccess": "Account created successfully",
+    "loginSuccess": "Logged in successfully"
+  },
+  "navbar": {
+    "home": "Home",
+    "play": "Play"
+  }
+}
