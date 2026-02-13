@@ -227,6 +227,10 @@ class GameRoom {
 		if (!this.player1.connection) {
 			this.player1.connection = connection;
 			connection.playerId = 1;
+			if (this.player2.connection) {
+				this.loaded = true;
+				this.startGameLoop();
+			}
 			return { success: true, playerId: 1 };
 		}
 
@@ -234,11 +238,10 @@ class GameRoom {
 		if (!this.player2.connection) {
 			this.player2.connection = connection;
 			connection.playerId = 2;
-
-			// Both players connected, start game loop
-			this.loaded = true;
-			this.startGameLoop();
-
+			if (this.player1.connection) {
+				this.loaded = true;
+				this.startGameLoop();
+			}
 			return { success: true, playerId: 2 };
 		}
 
@@ -263,9 +266,56 @@ class GameRoom {
 		}
 		this.running = false;
 		this.loaded = false;
+		this.startingRound = false;
+		this.resetGameState();
 
 		// Return true if room is now empty
 		return !this.player1.connection && !this.player2.connection;
+	}
+
+	resetGameState() {
+		this.initializeBall();
+		this.resetPlayerState(this.player1, GAME_CONSTANTS.PLAYER1_Z);
+		this.resetPlayerState(this.player2, GAME_CONSTANTS.PLAYER2_Z);
+
+		this.running = false;
+		this.loaded = false;
+		this.startingRound = false;
+
+		this.resetSpellState();
+		this.resetSpells();
+
+		this.broadcastState();
+	}
+
+	resetPlayerState(player, zPosition) {
+		player.x = 0;
+		player.z = zPosition;
+		player.currSpeed = 0;
+		player.currDirection = 0;
+		player.maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
+		player.originalMaxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
+		player.drag = GAME_CONSTANTS.PADDLE_DRAG;
+		player.direction = 0;
+		player.inputDirection = 0;
+		player.failed = false;
+		player.ready = false;
+		player.size = GAME_CONSTANTS.PADDLE_SIZE;
+		player.score = 0;
+
+		player.dashActive = false;
+		player.dashReady = false;
+		player.dashElapsedCooldown = 0;
+		player.dashElapsedActive = 0;
+		player.dashCooldown = GAME_CONSTANTS.DASH_COOLDOWN;
+		player.dashDuration = GAME_CONSTANTS.DASH_DURATION;
+
+		player.currentOffensiveSpell = "ballAngleSwitch";
+		player.currentCounterSpell = "ballStop";
+		player.spells = {
+			counter: { active: false, cooldown: 0 },
+			offensive: { active: false, cooldown: 0 },
+		};
 	}
 
 	updatePlayerSpell(playerID, offensive) {
@@ -565,6 +615,28 @@ class GameRoom {
 			now + SPELL_CONSTANTS[this.player2.currentOffensiveSpell];
 		this.player2.spells.counter.cooldown =
 			now + SPELL_CONSTANTS[this.player2.currentCounterSpell];
+	}
+
+	resetSpellState() {
+		this._angleActive = false;
+		this._shotActive = false;
+		this._backActive = false;
+		this._stopActive = false;
+		this._imanActive = false;
+		this._portalActive = false;
+
+		this._angleDuration = 0;
+		this._shotDuration = 0;
+		this._backDuration = 0;
+		this._stopDuration = 0;
+		this._imanDuration = 0;
+		this._portalDuration = 0;
+
+		this._imanPlayer = null;
+		this._portalPlayer = null;
+		this._portalLastXDir = 0;
+		this._portalLastZDir = 0;
+		this._stopOriginalPosition = null;
 	}
 }
 
