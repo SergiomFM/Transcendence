@@ -24,6 +24,7 @@ class GameRoom {
 		// Player connection tracking
 		this.player1.connection = null;
 		this.player2.connection = null;
+		this.spectators = new Set();
 
 		this.physics = new Physics(this);
 		this.events = new EventEmitter();
@@ -227,6 +228,7 @@ class GameRoom {
 		if (!this.player1.connection) {
 			this.player1.connection = connection;
 			connection.playerId = 1;
+			connection.role = "player";
 			if (this.player2.connection) {
 				this.loaded = true;
 				this.startGameLoop();
@@ -238,6 +240,7 @@ class GameRoom {
 		if (!this.player2.connection) {
 			this.player2.connection = connection;
 			connection.playerId = 2;
+			connection.role = "player";
 			if (this.player1.connection) {
 				this.loaded = true;
 				this.startGameLoop();
@@ -249,14 +252,51 @@ class GameRoom {
 		return { success: false, reason: "Room is full" };
 	}
 
+	addSpectator(connection) {
+		this.spectators.add(connection);
+		connection.playerId = null;
+		connection.role = "spectator";
+		return { success: true };
+	}
+
+	hasOpenPlayerSlot() {
+		return !this.player1.connection || !this.player2.connection;
+	}
+
+	isSpectator(connection) {
+		return this.spectators.has(connection);
+	}
+
+	promoteSpectator(connection) {
+		if (!this.hasOpenPlayerSlot() || !this.isSpectator(connection)) {
+			return { success: false, reason: "No open slot" };
+		}
+		this.spectators.delete(connection);
+		return this.addPlayer(connection);
+	}
+
+	demotePlayerToSpectator(connection) {
+		const wasPlayer =
+			this.player1.connection === connection ||
+			this.player2.connection === connection;
+		if (!wasPlayer) {
+			return { success: false, reason: "Not a player" };
+		}
+		this.removePlayer(connection);
+		this.addSpectator(connection);
+		return { success: true };
+	}
+
 	removePlayer(connection) {
 		// Remove from player slot
 		if (this.player1.connection === connection) {
 			this.player1.connection = null;
 			this.player1.ready = false;
+			connection.playerId = null;
 		} else if (this.player2.connection === connection) {
 			this.player2.connection = null;
 			this.player2.ready = false;
+			connection.playerId = null;
 		}
 
 		// Stop game if a player leaves
@@ -271,6 +311,21 @@ class GameRoom {
 
 		// Return true if room is now empty
 		return !this.player1.connection && !this.player2.connection;
+	}
+
+	removeSpectator(connection) {
+		this.spectators.delete(connection);
+		if (connection.role === "spectator") {
+			connection.playerId = null;
+		}
+	}
+
+	isEmpty() {
+		return (
+			!this.player1.connection &&
+			!this.player2.connection &&
+			this.spectators.size === 0
+		);
 	}
 
 	resetGameState() {
@@ -556,6 +611,29 @@ class GameRoom {
 		};
 	}
 
+	getStateForSpectator() {
+		return this.getStateForPlayer(true);
+	}
+
+	sendStateToConnection(connection) {
+		let state = null;
+		if (this.player1.connection === connection) {
+			state = this.getStateForPlayer(true);
+		} else if (this.player2.connection === connection) {
+			state = this.getStateForPlayer(false);
+		} else if (this.isSpectator(connection)) {
+			state = this.getStateForSpectator();
+		}
+
+		if (!state) return;
+
+		try {
+			connection.send(JSON.stringify(state));
+		} catch (error) {
+			console.error("Error sending GAME_STATE to connection:", error);
+		}
+	}
+
 	broadcastState() {
 		// Send to both players
 		if (this.player1.connection) {
@@ -577,6 +655,14 @@ class GameRoom {
 				console.error("Error sending GAME_STATE to player2:", error);
 			}
 		}
+
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(JSON.stringify(this.getStateForSpectator()));
+			} catch (error) {
+				console.error("Error sending GAME_STATE to spectator:", error);
+			}
+		}
 	}
 
 	broadcastEvent(event) {
@@ -595,6 +681,14 @@ class GameRoom {
 				this.player2.connection.send(message);
 			} catch (error) {
 				console.error("Error sending event to player2:", error);
+			}
+		}
+
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(message);
+			} catch (error) {
+				console.error("Error sending event to spectator:", error);
 			}
 		}
 	}
@@ -652,8 +746,16 @@ class GameRoomManager {
 			if (!room.player1.connection || !room.player2.connection) {
 				const result = room.addPlayer(connection, playerData);
 				if (result.success) {
-					return { room, playerId: result.playerId };
+					return { room, playerId: result.playerId, role: "player" };
 				}
+			}
+		}
+
+		// If no player slots available, add as spectator to an existing room
+		for (const [roomId, room] of this.rooms) {
+			const result = room.addSpectator(connection);
+			if (result.success) {
+				return { room, playerId: null, role: "spectator" };
 			}
 		}
 
@@ -663,22 +765,30 @@ class GameRoomManager {
 		this.rooms.set(roomId, room);
 
 		const result = room.addPlayer(connection, playerData);
-		return { room, playerId: result.playerId };
+		return { room, playerId: result.playerId, role: "player" };
 	}
 
-	removePlayerFromRoom(connection) {
+	removeConnectionFromRoom(connection) {
 		for (const [roomId, room] of this.rooms) {
 			if (
 				room.player1.connection === connection ||
 				room.player2.connection === connection
 			) {
-				const isEmpty = room.removePlayer(connection);
-
-				if (isEmpty) {
+				room.removePlayer(connection);
+				if (room.isEmpty()) {
 					room.cleanup();
 					this.rooms.delete(roomId);
 				}
 
+				return;
+			}
+
+			if (room.isSpectator(connection)) {
+				room.removeSpectator(connection);
+				if (room.isEmpty()) {
+					room.cleanup();
+					this.rooms.delete(roomId);
+				}
 				return;
 			}
 		}
@@ -694,6 +804,9 @@ class GameRoomManager {
 				room.player1.connection === connection ||
 				room.player2.connection === connection
 			) {
+				return room;
+			}
+			if (room.isSpectator(connection)) {
 				return room;
 			}
 		}

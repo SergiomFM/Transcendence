@@ -18,7 +18,9 @@ module.exports = async function (fastify, opts) {
         const player =
           connection.playerId === 1
             ? currentRoom?.player1
-            : currentRoom?.player2;
+            : connection.playerId === 2
+              ? currentRoom?.player2
+              : null;
         switch (data.type) {
           case "JOIN_GAME": {
             // Find or create a room for this player
@@ -41,6 +43,11 @@ module.exports = async function (fastify, opts) {
               JSON.stringify({
                 type: "GAME_JOINED",
                 roomId: currentRoom.roomId,
+                role: result.role,
+                playerId: result.playerId,
+                seatsAvailable:
+                  (currentRoom.player1.connection ? 0 : 1) +
+                  (currentRoom.player2.connection ? 0 : 1),
                 alone:
                   !currentRoom.player1.connection ||
                   !currentRoom.player2.connection
@@ -48,6 +55,8 @@ module.exports = async function (fastify, opts) {
                     : false,
               }),
             );
+
+            currentRoom.sendStateToConnection(connection);
 
             // Notify when room is full and game can start
             if (
@@ -57,6 +66,13 @@ module.exports = async function (fastify, opts) {
               currentRoom.broadcastEvent({
                 type: "GAME_READY",
               });
+            } else {
+              currentRoom.broadcastEvent({
+                type: "PLAYER_SEAT_AVAILABLE",
+                seatsAvailable:
+                  (currentRoom.player1.connection ? 0 : 1) +
+                  (currentRoom.player2.connection ? 0 : 1),
+              });
             }
 
             break;
@@ -64,28 +80,73 @@ module.exports = async function (fastify, opts) {
 
           case "PLAYER_DIRECTION":
             // Handle player input
-            if (currentRoom) {
+            if (currentRoom && player) {
               player.inputDirection =
                 connection.playerId === 2 ? -data.direction : data.direction;
             }
             break;
 
           case "PLAYER_READY":
-            // Player is ready to start
+            // Player is ready to start or spectator requests seat
             if (currentRoom) {
-              player.ready = true;
-              // Check if both players are ready
-              if (currentRoom.player1.ready && currentRoom.player2.ready) {
-                currentRoom.broadcastEvent({
-                  type: "GAME_START",
-                });
+              if (!player && connection.role === "spectator") {
+                const promotion = currentRoom.promoteSpectator(connection);
+                if (promotion.success) {
+                  playerId = promotion.playerId;
+                  const promotedPlayer =
+                    promotion.playerId === 1
+                      ? currentRoom.player1
+                      : currentRoom.player2;
+                  promotedPlayer.ready = true;
+                  connection.send(
+                    JSON.stringify({
+                      type: "PLAYER_PROMOTED",
+                      playerId: promotion.playerId,
+                      roomId: currentRoom.roomId,
+                    }),
+                  );
+                  currentRoom.sendStateToConnection(connection);
+                  currentRoom.broadcastEvent({
+                    type: "PLAYER_SEAT_AVAILABLE",
+                    seatsAvailable:
+                      (currentRoom.player1.connection ? 0 : 1) +
+                      (currentRoom.player2.connection ? 0 : 1),
+                  });
+                  if (
+                    currentRoom.player1.connection &&
+                    currentRoom.player2.connection
+                  ) {
+                    currentRoom.broadcastEvent({
+                      type: "GAME_READY",
+                    });
+                    if (currentRoom.player1.ready && currentRoom.player2.ready) {
+                      currentRoom.broadcastEvent({
+                        type: "GAME_START",
+                      });
+                    }
+                  }
+                } else {
+                  connection.send(
+                    JSON.stringify({
+                      type: "PLAYER_SEAT_UNAVAILABLE",
+                    }),
+                  );
+                }
+              } else if (player) {
+                player.ready = true;
+                // Check if both players are ready
+                if (currentRoom.player1.ready && currentRoom.player2.ready) {
+                  currentRoom.broadcastEvent({
+                    type: "GAME_START",
+                  });
+                }
               }
             }
             break;
 
           case "USE_DASH":
             // Handle dash activation
-            if (currentRoom && player.dashReady) {
+            if (currentRoom && player && player.dashReady) {
               player.dashActive = true;
             }
             break;
@@ -98,11 +159,26 @@ module.exports = async function (fastify, opts) {
             break;
 
           case "SWITCH_SPELL":
-            if (currentRoom) {
+            if (currentRoom && player) {
               currentRoom.updatePlayerSpell(
                 connection.playerId,
                 data.offensive,
               );
+            }
+            break;
+
+          case "BECOME_SPECTATOR":
+            if (currentRoom && connection.role === "player") {
+              currentRoom.demotePlayerToSpectator(connection);
+              currentRoom.broadcastEvent({
+                type: "PLAYER_SEAT_AVAILABLE",
+                seatsAvailable:
+                  (currentRoom.player1.connection ? 0 : 1) +
+                  (currentRoom.player2.connection ? 0 : 1),
+              });
+              currentRoom.broadcastEvent({
+                type: "PLAYER_DISCONNECTED",
+              });
             }
             break;
 
@@ -128,12 +204,19 @@ module.exports = async function (fastify, opts) {
         }`,
       );
 
-      roomManager.removePlayerFromRoom(connection);
+      const wasPlayer = connection.role === "player";
+      roomManager.removeConnectionFromRoom(connection);
 
-      if (currentRoom) {
-        // Notify other player
+      if (currentRoom && wasPlayer) {
+        // Notify other player/spectators
         currentRoom.broadcastEvent({
           type: "PLAYER_DISCONNECTED",
+        });
+        currentRoom.broadcastEvent({
+          type: "PLAYER_SEAT_AVAILABLE",
+          seatsAvailable:
+            (currentRoom.player1.connection ? 0 : 1) +
+            (currentRoom.player2.connection ? 0 : 1),
         });
       }
     });
@@ -159,6 +242,7 @@ module.exports = async function (fastify, opts) {
         id: room.roomId,
         players:
           (room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
+        spectators: room.spectators.size,
         running: room.running,
         score: {
           player1: room.player1.score,
