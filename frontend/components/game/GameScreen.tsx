@@ -82,9 +82,16 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-auto max-w-[80vw] max-h-[70vh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-auto max-w-[95vw] max-h-[80vh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
           )}
-          style={{ aspectRatio: "854/480" }}
+          style={{
+            aspectRatio: "854/480",
+            ...(isFullscreen
+              ? {}
+              : {
+                  width: "min(95vw, calc(80vh * 854 / 480))",
+                })
+          }}
         >
           <Suspense
             fallback={
