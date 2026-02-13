@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { startPong } from "./main";
 
 interface PongProps {
@@ -21,9 +22,14 @@ const Pong = ({
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    const canvas = canvasRef.current;
+
+    canvas.width = 854;
+    canvas.height = 480;
+
     let cleanup: (() => void) | undefined;
 
-    startPong(canvasRef.current, {
+    startPong(canvas, {
       online,
       serverUrl,
       gameServerUrl,
@@ -39,7 +45,7 @@ const Pong = ({
   return (
     <canvas
       ref={canvasRef}
-      className={`image-rendering-pixelated ${className || ""}`}
+      className={cn("w-full h-full", className)}
     />
   );
 };
