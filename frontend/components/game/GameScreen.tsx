@@ -59,7 +59,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     <div
       ref={gameContainerRef}
       className={cn(
-        "w-full h-screen flex flex-col overflow-hidden bg-black",
+        "w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
         isFullscreen && "relative"
       )}
     >
@@ -82,7 +82,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-auto max-w-[95vw] max-h-[80vh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-auto max-w-[65vw] max-h-[70vh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
           )}
           style={{
             aspectRatio: "854/480",
