@@ -9,7 +9,7 @@ interface GameMenuProps {
 
 export function GameMenu({ onSelectMode }: GameMenuProps) {
   return (
-    <div className="w-full h-screen flex flex-col overflow-hidden">
+    <div className="w-full h-[80dvh] flex flex-col overflow-hidden">
       <div className="flex-1 flex flex-col items-center justify-center gap-8 p-10">
         <h1 className="text-4xl font-bold mb-8">Select Game Mode</h1>
 
