@@ -66,11 +66,7 @@ export namespace Events {
   const player2KeysSlice = Object.keys(keyStatus).slice(4, 8);
 
   // Key press input
-  export function keyPressEvent(
-    pong: Pong,
-    camera: PongCamera,
-    event: ActionEvent,
-  ) {
+  export function keyPressEvent(pong: Pong, camera: PongCamera, event: ActionEvent) {
     let key = event.sourceEvent.key;
     if (key !== "Shift") {
       key = key.toLowerCase();
@@ -93,13 +89,18 @@ export namespace Events {
   function waitingForStartEvents(key: any, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online) {
+        // If spectator, pressing space requests promotion
+        // If player, pressing space signals ready
         sendPlayerReady(pong);
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
       }
     } else {
-      playerSwitchSpellEvent(key, pong);
+      // Only allow spell switching for players
+      if (!pong.spectating) {
+        playerSwitchSpellEvent(key, pong);
+      }
     }
   }
 
@@ -121,6 +122,11 @@ export namespace Events {
   }
 
   function PlayerDirectionEvent(key: any, pong: Pong, isKeyDown: boolean) {
+    // Gate input for spectators
+    if (pong.spectating) {
+      return;
+    }
+    
     keyStatus[key] = isKeyDown;
     console.log(keyStatus);
 
@@ -158,6 +164,11 @@ export namespace Events {
   }
 
   function playerUseSpellEvent(key: any, pong: Pong) {
+    // Gate input for spectators
+    if (pong.spectating) {
+      return;
+    }
+    
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
       pong.online
         ? sendUseSpell(pong, false)
@@ -177,6 +188,11 @@ export namespace Events {
   }
 
   function playerDashEvent(key: any, pong: Pong) {
+    // Gate input for spectators
+    if (pong.spectating) {
+      return;
+    }
+    
     if (key == player1Keys[PLAYER_KEYS.DASH]) {
       if (pong.player1.dashReady) {
         pong.player1.dashActive = true;
@@ -192,6 +208,10 @@ export namespace Events {
 
   // Key release input
   export function keyReleaseEvent(pong: Pong, event: ActionEvent) {
+    // Gate input for spectators
+    if (pong.spectating) {
+      return;
+    }
     let key = event.sourceEvent.key;
     if (key !== "Shift") {
       key = key.toLowerCase();

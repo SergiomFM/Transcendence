@@ -248,6 +248,51 @@ const PLAYER_2_SCORE_DESCRIPTION = [
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
+
+// Spectator: Watching the game
+const SPECTATOR_WATCHING = [
+  "SPECTATOR_WATCHING", // Name
+  "Spectating", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "-20%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Spectator: No seats available
+const SPECTATOR_NO_SEATS = [
+  "SPECTATOR_NO_SEATS", // Name
+  "No player slots available", // Text
+  "white", // Color
+  "10%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Spectator: Seat available - press space
+const SPECTATOR_PRESS_SPACE = [
+  "SPECTATOR_PRESS_SPACE", // Name
+  "(Press space to join as player)", // Text
+  "white", // Color
+  "10%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
 class UIElement extends TextBlock {
   blinking = false;
   private lastUpdate = 0;
@@ -317,6 +362,9 @@ export class GUI {
     this.createNewText(PLAYER_1_SCORE_DESCRIPTION);
     this.createNewText(PLAYER_2_SCORE);
     this.createNewText(PLAYER_2_SCORE_DESCRIPTION);
+    this.createNewText(SPECTATOR_WATCHING);
+    this.createNewText(SPECTATOR_NO_SEATS);
+    this.createNewText(SPECTATOR_PRESS_SPACE);
   }
 
   createNewText(attributes: any) {
@@ -461,5 +509,12 @@ export class GUI {
       this.textFadeIn("PLAYER_1_SCORE_DESCRIPTION");
       this.textFadeIn("PLAYER_2_SCORE_DESCRIPTION");
     }
+  }
+
+  spectatorWaitingUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("SPECTATOR_WATCHING");
+    this.textFadeIn("SPECTATOR_PRESS_SPACE");
+    this.toggleTextBlink(this.GUI.getScene()!, "SPECTATOR_PRESS_SPACE");
   }
 }  

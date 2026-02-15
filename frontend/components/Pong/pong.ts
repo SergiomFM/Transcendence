@@ -183,6 +183,7 @@ export class Pong {
   server!: WebSocket;
   GUI!: GUI;
 
+  spectating = false;
   running = false;
   loaded = false;
   online = false;

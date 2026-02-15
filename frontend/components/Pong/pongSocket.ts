@@ -86,6 +86,18 @@ function handleServerMessage(pong: Pong, message: any) {
       handleCollision(pong, message);
       break;
 
+    case "PLAYER_SEAT_AVAILABLE":
+      handleSeatAvailable(pong, message);
+      break;
+
+    case "PLAYER_PROMOTED":
+      handlePlayerPromoted(pong, message);
+      break;
+
+    case "PLAYER_SEAT_UNAVAILABLE":
+      handleSeatUnavailable(pong);
+      break;
+
     default:
       console.log("Unknown message type:", message.type);
   }
@@ -145,6 +157,17 @@ function handleGameReady(pong: Pong) {
 function handleGameJoined(pong: Pong, message: any) {
   console.log("Joined game room:", message.roomId);
   pong.online = true;
+  
+  // Set spectating status
+  pong.spectating = message.role === "spectator" || message.spectating || false;
+
+  if (pong.spectating) {
+    console.log("Joined as spectator");
+    if (pong.GUI) {
+      pong.GUI.spectatorWaitingUI();
+    }
+    return;
+  }
 
   // Reassigning the keys for online play
   Events.assignKeys(pong);
@@ -178,13 +201,21 @@ function handleGameStart(pong: Pong) {
 }
 
 function handleGameDisconnection(pong: Pong) {
-  console.log("Opponent disconnected");
+  console.log("Player disconnected");
 
   pong.running = false;
-  pong.player2.connected = false;
-
-  if (pong.GUI) {
-    pong.GUI.opponentLeftUI();
+  
+  if (!pong.spectating) {
+    pong.player2.connected = false;
+    if (pong.GUI) {
+      pong.GUI.opponentLeftUI();
+    }
+  } else {
+    // Spectators might see seat availability change
+    // The server should send PLAYER_SEAT_AVAILABLE separately
+    if (pong.GUI) {
+      pong.GUI.spectatorWaitingUI();
+    }
   }
 }
 
@@ -209,6 +240,34 @@ function handleCollision(pong: Pong, message: any) {
     message.angle,
     COLLISION_VFX,
   );
+}
+
+function handleSeatAvailable(pong: Pong, message: any) {
+  console.log("Seat available!");
+  
+  if (pong.spectating && pong.GUI) {
+    pong.GUI.pressReadyUI();
+  }
+}
+
+function handlePlayerPromoted(pong: Pong, message: any) {
+  console.log("Promoted to player!");
+  pong.spectating = false;
+  
+  // Reassign keys for player mode
+  Events.assignKeys(pong);
+  
+  if (pong.GUI) {
+    pong.GUI.pressReadyUI();
+  }
+}
+
+function handleSeatUnavailable(pong: Pong) {
+  console.log("No seats available");
+  
+  if (pong.spectating && pong.GUI) {
+    pong.GUI.spectatorWaitingUI();
+  }
 }
 
 // Functions to send messages to the server
@@ -260,6 +319,16 @@ export function sendPlayerReady(pong: Pong) {
     pong.socket.send(
       JSON.stringify({
         type: "PLAYER_READY",
+      }),
+    );
+  }
+}
+
+export function sendBecomeSpectator(pong: Pong) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "BECOME_SPECTATOR",
       }),
     );
   }
