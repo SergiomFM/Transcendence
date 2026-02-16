@@ -45,6 +45,7 @@ const Pong = ({
   return (
     <canvas
       ref={canvasRef}
+      style={{ width: 854, height: 480 }}
       className={cn("w-full h-full", className)}
     />
   );

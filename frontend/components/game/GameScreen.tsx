@@ -63,14 +63,6 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         isFullscreen && "relative"
       )}
     >
-      {!isFullscreen && (
-        <div className="p-4 flex-shrink-0 flex justify-start items-center">
-          <Button onClick={handleBackToMenu} variant="outline" size="sm">
-            ← Back to Menu
-          </Button>
-        </div>
-      )}
-
       <div
         className={cn(
           "flex-1 flex justify-center items-center overflow-hidden",
@@ -82,16 +74,8 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-auto max-w-[65vw] max-h-[70vh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
           )}
-          style={{
-            aspectRatio: "854/480",
-            ...(isFullscreen
-              ? {}
-              : {
-                  width: "min(95vw, calc(80vh * 854 / 480))",
-                })
-          }}
         >
           <Suspense
             fallback={
@@ -101,7 +85,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             }
           >
             <Pong
-              className="w-full h-full"
+              className="w-full h-full min-w-full min-h-full"
               online={gameMode === "online"}
               serverUrl={GAME_WS_URL}
               gameServerUrl={GAME_HTTP_URL}
