@@ -85,7 +85,7 @@ export function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href="/login">
+            <Link href="/auth">
               <Button variant="default" size="sm">
                 {t("common.login")}
               </Button>

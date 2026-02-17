@@ -33,4 +33,6 @@ export const Auth = {
 
   avatarUrl: (userId: string) =>
     userId ? `${USERS_BACKEND_URL}/users/${userId}/avatar` : "",
+
+  googleOAuthUrl: () => `${USERS_BACKEND_URL}/auth/google`,
 };
