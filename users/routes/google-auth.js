@@ -26,12 +26,12 @@ export default async function (fastify){
 
 			if (user.two_factor_enabled) {
 				req.session.pending2FA = user.id;
-				return reply.redirect('/2fa');
+				return reply.redirect('http://localhost:3000/2fa');
 			}
 
-			await req.logIn(user);
-			reply.redirect('/dashboard');
-		}) (req, reply);
+			await req.logIn(req.user);
+			reply.redirect('http://localhost:3000/dashboard');
+		})
 	});
 	
 	// PROTECTED ROUTE (REASON FOR EXISTENCE: DEMONSTRATE AUTHORIZATION)

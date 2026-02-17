@@ -8,9 +8,9 @@ const prisma = require('./utilities/prisma_setup')
 const options = {}
 
 module.exports = async function (fastify, opts) {
-  // Place here your custom code!
 
   // Do not touch the following lines
+
   
   // This loads all plugins defined in plugins
   // those should be support plugins that are reused
@@ -26,8 +26,6 @@ module.exports = async function (fastify, opts) {
     dir: path.join(__dirname, 'routes'),
     options: Object.assign({}, opts)
   })
-
-  prisma(fastify)
 }
 
 module.exports.options = options

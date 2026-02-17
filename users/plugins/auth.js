@@ -41,7 +41,7 @@ async function authPlugin(fastify){
 			{
 				clientID: process.env.GOOGLE_CLIENT_ID,
 				clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-				callbackURL: 'http://localhost:3000/auth/google/callback'
+				callbackURL: 'http://localhost:3001/auth/google/callback'
 			},
 			async (accessToken, refreshToken, profile, done) => {
 
@@ -64,7 +64,14 @@ async function authPlugin(fastify){
 							const id = crypto.randomUUID()
 							fastify.users.createGoogleUser.run(id, email, alias, googleId)
 							user = fastify.users.findById.get(id)
+
+							fastify.profiles.createProfile.run(
+								crypto.randomUUID(),
+								user.id,
+								alias
+							)
 						}
+
 					}
 					if (user && !user.is_active) {
 						return done(null, false, { message: "Account disabled" })
