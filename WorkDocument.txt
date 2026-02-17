@@ -59,16 +59,16 @@ Developers - Todos
 | WORK |
 
 Paulo:
-Organizar os containers(feito), makefile(feito) etc. Coisas de backend (?) e Spectators, dar handle em player disconnect(aguardar new player) e score
+Spectators and inventar
 
 Lourenço:
-Vibe coding, Integrar com o frontend, auth e coisas.
+Vibe coding and auth fix
 
 Sergio:
 Websockets do chat, frontend do chat, configurar prisma nos users
 
 Afonso:
-Limar arestas do frontend (fullscreen, window resizing), refactoring da integração de endpoints, chatbot
+chatbot, user profile, frontend integrations and game sreen fix
 
 Tiago:
-Polir o frontend do jogo, dar fix do UI (feito!) e refactor para comportar pontuação (feito!), balance do jogo e forçar camera de topo no offline (feito!).
+Polir o frontend do jogo, spectator UI, balance do jogo.
