@@ -1,0 +1,16 @@
+player_profiles
+────────────────────────────────
+id                  TEXT PRIMARY KEY
+user_id             TEXT UNIQUE NOT NULL
+
+display_name        TEXT NOT NULL
+bio                 TEXT
+avatar_url          TEXT
+
+status              TEXT DEFAULT 'offline'
+visibility          TEXT DEFAULT 'public'
+
+created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
