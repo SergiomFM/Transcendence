@@ -25,7 +25,11 @@
     "usernameRequired": "Username is required",
     "passwordMismatch": "Passwords do not match",
     "signupSuccess": "Account created successfully",
-    "loginSuccess": "Logged in successfully"
+    "loginSuccess": "Logged in successfully",
+    "loginWithGoogle": "Continue with Google",
+    "orContinueWith": "or continue with",
+    "switchToSignup": "Sign Up",
+    "switchToLogin": "Sign In"
   },
   "navbar": {
     "home": "Home",

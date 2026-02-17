@@ -25,7 +25,11 @@
     "usernameRequired": "Nome de utilizador é obrigatório",
     "passwordMismatch": "As palavras-passe não coincidem",
     "signupSuccess": "Conta criada com sucesso",
-    "loginSuccess": "Sessão iniciada com sucesso"
+    "loginSuccess": "Sessão iniciada com sucesso",
+    "loginWithGoogle": "Continuar com o Google",
+    "orContinueWith": "ou continuar com",
+    "switchToSignup": "Registar",
+    "switchToLogin": "Entrar"
   },
   "navbar": {
     "home": "Início",
