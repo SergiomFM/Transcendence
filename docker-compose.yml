@@ -16,12 +16,12 @@ services:
   users:
     image: node:22.18.0
     working_dir: /app
-    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && npm run start"
+    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && openssl rand 32 > secret-key && npm run start"
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=file:./data/dev.db
+      - DATABASE_URL=file:./database/app.db
     env_file:
       - users/.env
     volumes:
@@ -79,12 +79,12 @@ services:
   users-dev:
     image: node:22.18.0
     working_dir: /app
-    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && npm run dev"
+    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && openssl rand 32 > secret-key && npm run dev"
     ports:
       - "3001:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=file:./data/dev.db
+      - DATABASE_URL=file:./database/app.db
     env_file:
       - users/.env
     volumes:
