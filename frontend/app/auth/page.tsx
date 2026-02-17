@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { isRequestError } from "@/lib/backend";
-import { Auth } from "@/lib/backend/auth";
+import { Users } from "@/lib/backend/users";
 import { FcGoogle } from "react-icons/fc";
 
 export default function AuthPage() {
@@ -46,8 +46,6 @@ export default function AuthPage() {
       setError(oauthMessage);
     }
   }, [searchParams]);
-
-
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,7 +122,10 @@ export default function AuthPage() {
           <div className="flex rounded-lg border p-1 mb-2">
             <button
               type="button"
-              onClick={() => { setIsSignup(false); setError(""); }}
+              onClick={() => {
+                setIsSignup(false);
+                setError("");
+              }}
               className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 !isSignup
                   ? "bg-primary text-primary-foreground shadow-sm"
@@ -135,7 +136,10 @@ export default function AuthPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setIsSignup(true); setError(""); }}
+              onClick={() => {
+                setIsSignup(true);
+                setError("");
+              }}
               className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                 isSignup
                   ? "bg-primary text-primary-foreground shadow-sm"
@@ -235,7 +239,9 @@ export default function AuthPage() {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => { window.location.href = Auth.googleOAuthUrl(); }}
+                onClick={() => {
+                  window.location.href = Users.googleOAuthUrl();
+                }}
                 disabled={isLoading}
               >
                 <FcGoogle className="mr-2 h-4 w-4" />
@@ -293,7 +299,9 @@ export default function AuthPage() {
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => { window.location.href = Auth.googleOAuthUrl(); }}
+                onClick={() => {
+                  window.location.href = Users.googleOAuthUrl();
+                }}
                 disabled={isLoading}
               >
                 <FcGoogle className="mr-2 h-4 w-4" />

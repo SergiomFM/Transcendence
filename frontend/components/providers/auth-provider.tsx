@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Auth, type User } from "@/lib/backend";
+import { Users, type User } from "@/lib/backend";
 
 interface AuthContextType {
   user: User | null;
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      const userData = await Auth.dashboard();
+      const userData = await Users.dashboard();
       setUser(userData);
     } catch {
       setUser(null);
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (identifier: string, password: string) => {
-    const response = await Auth.login({ identifier, password });
+    const response = await Users.login({ identifier, password });
     if (response.data.twoFactorRequired) {
       throw new Error("2FA_REQUIRED");
     }
@@ -59,13 +59,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     alias: string,
   ) => {
-    const response = await Auth.register({ username, email, password, alias });
+    const response = await Users.register({ username, email, password, alias });
     setUser(response.data.user);
   };
 
   const logout = async () => {
     try {
-      await Auth.logout();
+      await Users.logout();
     } catch {}
     setUser(null);
   };

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, User } from "lucide-react";
-import { Auth } from "@/lib/backend";
+import { Users } from "@/lib/backend";
 
 export function Navbar() {
   const t = useTranslations();
@@ -57,7 +57,7 @@ export function Navbar() {
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage
-                      src={Auth.avatarUrl(user.id)}
+                      src={Users.avatarUrl(user.id)}
                       alt={user.alias || user.username}
                     />
                     <AvatarFallback>
