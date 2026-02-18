@@ -59,7 +59,7 @@ Developers - Todos
 | WORK |
 
 Paulo:
-Spectators and inventar
+Spectators and inventar (done)
 
 Lourenço:
 Vibe coding and auth fix
