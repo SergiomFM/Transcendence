@@ -1,81 +1,49 @@
 services:
   frontend:
+    image: ghcr.io/pvcordeiro/transcendence-frontend
     build:
       context: .
       dockerfile: frontend/Dockerfile
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - HOSTNAME=0.0.0.0
-    volumes:
-      - ./shared:/app/shared
-    profiles:
-      - prod
-
-  users:
-    image: node:22.18.0
-    working_dir: /app
-    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && openssl rand 32 > secret-key && npm start"
-    ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./database/app.db
-    env_file:
-      - users/.env
-    volumes:
-      - ./users:/app
-      - users_db:/app/data
-    profiles:
-      - prod
-
-  chat:
-    image: oven/bun:latest
-    working_dir: /app
-    command: sh -c "bun install && bun run prisma generate && bun run prisma db push && bun run index.ts"
-    ports:
-      - "3003:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=file:./data/dev.db
-    volumes:
-      - ./chat:/app
-      - chat_db:/app/data
-    profiles:
-      - prod
-
-  game:
-    image: oven/bun:latest
-    working_dir: /app
-    command: sh -c "bun install && fastify start -l warn -a 0.0.0.0 app.js"
-    ports:
-      - "3002:3000"
-    environment:
-      - NODE_ENV=production
-      - USERS_BACKEND_URL=http://users:3000
-    volumes:
-      - ./game:/app
-      - ./shared:/app/shared
-      - ./frontend/public/models:/app/public/models
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
     profiles:
       - prod
 
   frontend-dev:
-    image: oven/bun:latest
+    image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run dev"
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - HOSTNAME=0.0.0.0
+      NODE_ENV: development
+      HOSTNAME: 0.0.0.0
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
       - frontend_node_modules:/app/node_modules
     profiles:
       - dev
+
+  users:
+    image: ghcr.io/pvcordeiro/transcendence-users
+    build:
+      context: .
+      dockerfile: users/Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:./database/app.db
+    env_file:
+      - users/.env
+    volumes:
+      - users_db:/app/data
+    profiles:
+      - prod
 
   users-dev:
     image: node:22.18.0
@@ -84,8 +52,8 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=file:./database/app.db
+      NODE_ENV: development
+      DATABASE_URL: file:./database/app.db
     env_file:
       - users/.env
     volumes:
@@ -95,15 +63,30 @@ services:
     profiles:
       - dev
 
+  chat:
+    image: ghcr.io/pvcordeiro/transcendence-chat
+    build:
+      context: .
+      dockerfile: chat/Dockerfile
+    ports:
+      - "3003:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:./data/dev.db
+    volumes:
+      - chat_db:/app/data
+    profiles:
+      - prod
+
   chat-dev:
-    image: oven/bun:latest
+    image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run prisma generate && bun run prisma db push && bun run index.ts"
     ports:
       - "3003:3000"
     environment:
-      - NODE_ENV=development
-      - DATABASE_URL=file:./data/dev.db
+      NODE_ENV: development
+      DATABASE_URL: file:./data/dev.db
     volumes:
       - ./chat:/app:cached
       - chat_node_modules:/app/node_modules
@@ -111,15 +94,28 @@ services:
     profiles:
       - dev
 
+  game:
+    image: ghcr.io/pvcordeiro/transcendence-game
+    build:
+      context: .
+      dockerfile: game/Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      NODE_ENV: production
+      USERS_BACKEND_URL: http://users:3000
+    profiles:
+      - prod
+
   game-dev:
-    image: oven/bun:latest
+    image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run dev"
     ports:
       - "3002:3000"
     environment:
-      - NODE_ENV=development
-      - USERS_BACKEND_URL=http://users-dev:3000
+      NODE_ENV: development
+      USERS_BACKEND_URL: http://users-dev:3000
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached
