@@ -591,4 +591,15 @@ export class GUI {
       player2Score.text = score2.toString();
     }
   }
+
+  updatePlayerLabels(player1Name?: string | null, player2Name?: string | null) {
+    const player1Label = this.textBlocks.get("PLAYER_1_SCORE_DESCRIPTION");
+    const player2Label = this.textBlocks.get("PLAYER_2_SCORE_DESCRIPTION");
+    if (player1Label) {
+      player1Label.text = player1Name ? player1Name : "(YOU)";
+    }
+    if (player2Label) {
+      player2Label.text = player2Name ? player2Name : "(HIM)";
+    }
+  }
 }

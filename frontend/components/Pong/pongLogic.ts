@@ -70,6 +70,9 @@ function updatePlayerFromServer(
   scene: any,
 ) {
   player.x = serverPlayerData.x;
+  if (serverPlayerData.name) {
+    player.name = serverPlayerData.name;
+  }
   updateSpellFromServer(
     player.offensiveSpell,
     {

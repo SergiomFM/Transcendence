@@ -53,6 +53,7 @@ services:
       - "3002:3000"
     environment:
       - NODE_ENV=production
+      - USERS_BACKEND_URL=http://users:3000
     volumes:
       - ./game:/app
       - ./shared:/app/shared
@@ -118,6 +119,7 @@ services:
       - "3002:3000"
     environment:
       - NODE_ENV=development
+      - USERS_BACKEND_URL=http://users-dev:3000
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached

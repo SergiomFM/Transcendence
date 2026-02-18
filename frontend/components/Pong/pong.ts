@@ -74,6 +74,7 @@ export class Player {
   originalMaxSpeed = this.maxSpeed;
 
   connected = false;
+  name: string | null = null;
 
   get x() {
     return this.vector.x;

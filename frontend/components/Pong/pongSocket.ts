@@ -189,6 +189,12 @@ function handleGameJoined(pong: Pong, message: any) {
 
   pong.player1.connected = true;
   pong.player2.connected = !message.alone;
+  if (message.playerName) {
+    pong.player1.name = message.playerName;
+  }
+  if (message.opponentName) {
+    pong.player2.name = message.opponentName;
+  }
 
   if (pong.GUI) {
     if (pong.isSpectator) {
@@ -197,6 +203,12 @@ function handleGameJoined(pong: Pong, message: any) {
       pong.GUI.waitingForPlayersUI();
     } else {
       pong.GUI.pressReadyUI();
+    }
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
+    if (pong.isSpectator) {
+      pong.GUI.textFadeIn("WELCOME", 1500);
+    } else {
+      pong.GUI.textFadeIn("WELCOME");
     }
   }
 
@@ -265,6 +277,7 @@ function handlePlayerPromoted(pong: Pong, message: any) {
     pong.GUI.pressReadyUI();
     pong.GUI.hideOtherPlayerReady();
     pong.GUI.textFadeOut("WAITING_FOR_READY");
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
   if (pong.camera) {
     pong.camera.setView(false, true);
@@ -313,6 +326,7 @@ function handleGameScore(pong: Pong, message: any) {
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
     }
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
   resetRoundColor(pong);
 }

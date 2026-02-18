@@ -187,6 +187,7 @@ class GameRoom {
 		const now = performance.now();
 		return {
 			id: id,
+			name: null,
 			x: 0,
 			z: zPosition,
 			currSpeed: 0,
@@ -229,6 +230,7 @@ class GameRoom {
 			this.player1.connection = connection;
 			connection.playerId = 1;
 			connection.role = "player";
+			this.player1.name = connection.userName || playerData?.name || null;
 			if (this.player2.connection) {
 				this.loaded = true;
 				this.startGameLoop();
@@ -241,6 +243,7 @@ class GameRoom {
 			this.player2.connection = connection;
 			connection.playerId = 2;
 			connection.role = "player";
+			this.player2.name = connection.userName || playerData?.name || null;
 			if (this.player1.connection) {
 				this.loaded = true;
 				this.startGameLoop();
@@ -293,10 +296,12 @@ class GameRoom {
 		if (this.player1.connection === connection) {
 			this.player1.connection = null;
 			this.player1.ready = false;
+			this.player1.name = null;
 			connection.playerId = null;
 		} else if (this.player2.connection === connection) {
 			this.player2.connection = null;
 			this.player2.ready = false;
+			this.player2.name = null;
 			connection.playerId = null;
 		}
 
@@ -585,6 +590,7 @@ class GameRoom {
 			ball: { x: this.ball.x * abs, z: this.ball.z * abs },
 			player1: {
 				x: me.x * abs,
+				name: me.name,
 				score: me.score,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[me.currentOffensiveSpell] -
@@ -598,6 +604,7 @@ class GameRoom {
 			},
 			player2: {
 				x: enemy.x * abs,
+				name: enemy.name,
 				score: enemy.score,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[enemy.currentOffensiveSpell] -

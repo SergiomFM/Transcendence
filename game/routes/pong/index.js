@@ -1,6 +1,31 @@
 // WebSocket route for Pong multiplayer game
 const { GameRoomManager, GameRoom } = require("../../src/game");
 
+const USERS_BACKEND_URL = process.env.USERS_BACKEND_URL;
+
+async function resolveUserIdFromSession(req) {
+	const cookie = req.headers?.cookie;
+	if (!cookie) return null;
+	try {
+		const response = await fetch(`${USERS_BACKEND_URL}/me/profile`, {
+			headers: {
+				cookie,
+			},
+		});
+		if (!response.ok) {
+			return null;
+		}
+		const profile = await response.json();
+		return {
+			id: profile?.user_id || profile?.userId || profile?.id || null,
+			displayName: profile?.display_name || profile?.displayName || null,
+		};
+	} catch (error) {
+		console.error("Error resolving user session:", error);
+		return null;
+	}
+}
+
 // Global room manager
 const roomManager = new GameRoomManager();
 
@@ -38,7 +63,7 @@ module.exports = async function (fastify, opts) {
 			return null;
 		};
 
-		connection.on("message", (message) => {
+		connection.on("message", async (message) => {
 			try {
 				const data = JSON.parse(message.toString());
 				const player =
@@ -49,6 +74,11 @@ module.exports = async function (fastify, opts) {
 							: null;
 				switch (data.type) {
 					case "JOIN_GAME": {
+						if (!connection.userId) {
+							const session = await resolveUserIdFromSession(req);
+							connection.userId = session?.id || null;
+							connection.userName = session?.displayName || null;
+						}
 						let role = "spectator";
 						let assignedPlayerId = null;
 						const requestedRoomId = getRequestedRoomId();
@@ -78,9 +108,10 @@ module.exports = async function (fastify, opts) {
 							assignedPlayerId = result.playerId;
 						}
 						playerName =
-							data.playerData && data.playerData.name
+							connection.userName ||
+							(data.playerData && data.playerData.name
 								? data.playerData.name
-								: `Player${playerId}`;
+								: `Player${playerId}`);
 						console.log(
 							`Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`,
 						);
@@ -92,6 +123,8 @@ module.exports = async function (fastify, opts) {
 								roomId: currentRoom.roomId,
 								role: role,
 								playerId: assignedPlayerId,
+								playerName: currentRoom.player1?.name || null,
+								opponentName: currentRoom.player2?.name || null,
 								seatsAvailable: getSeatsAvailable(currentRoom),
 								alone: !isRoomFull(currentRoom),
 							}),
@@ -133,40 +166,40 @@ module.exports = async function (fastify, opts) {
 									);
 									currentRoom.sendStateToConnection(connection);
 									notifySeatAvailability(currentRoom);
-							if (isRoomFull(currentRoom)) {
-								currentRoom.broadcastEventToPlayers({
-									type: "GAME_READY",
-								});
-								if (
-									currentRoom.player1.ready &&
-									currentRoom.player2.ready
-								) {
-									currentRoom.broadcastEventToPlayers({
-										type: "GAME_START",
-									});
-								}
-							}
-						} else {
+									if (isRoomFull(currentRoom)) {
+										currentRoom.broadcastEventToPlayers({
+											type: "GAME_READY",
+										});
+										if (
+											currentRoom.player1.ready &&
+											currentRoom.player2.ready
+										) {
+											currentRoom.broadcastEventToPlayers({
+												type: "GAME_START",
+											});
+										}
+									}
+								} else {
 									connection.send(
 										JSON.stringify({
 											type: "PLAYER_SEAT_UNAVAILABLE",
 										}),
 									);
 								}
-						} else if (player) {
-							player.ready = true;
-							currentRoom.broadcastEventToPlayers({
-								type: "PLAYER_READY_STATUS",
-								playerId: connection.playerId,
-								ready: true,
-							});
-							// Check if both players are ready
-							if (currentRoom.player1.ready && currentRoom.player2.ready) {
+							} else if (player) {
+								player.ready = true;
 								currentRoom.broadcastEventToPlayers({
-									type: "GAME_START",
+									type: "PLAYER_READY_STATUS",
+									playerId: connection.playerId,
+									ready: true,
 								});
+								// Check if both players are ready
+								if (currentRoom.player1.ready && currentRoom.player2.ready) {
+									currentRoom.broadcastEventToPlayers({
+										type: "GAME_START",
+									});
+								}
 							}
-						}
 						}
 						break;
 
@@ -194,12 +227,12 @@ module.exports = async function (fastify, opts) {
 						break;
 
 					case "BECOME_SPECTATOR":
-							if (currentRoom && connection.role === "player") {
-								currentRoom.demotePlayerToSpectator(connection);
-								notifySeatAvailability(currentRoom);
-								currentRoom.broadcastEventToPlayers({
-									type: "PLAYER_DISCONNECTED",
-								});
+						if (currentRoom && connection.role === "player") {
+							currentRoom.demotePlayerToSpectator(connection);
+							notifySeatAvailability(currentRoom);
+							currentRoom.broadcastEventToPlayers({
+								type: "PLAYER_DISCONNECTED",
+							});
 						}
 						break;
 
@@ -273,8 +306,7 @@ module.exports = async function (fastify, opts) {
 		return Array.from(roomManager.rooms.values()).map((room) => ({
 			id: room.roomId,
 			players:
-				(room.player1.connection ? 1 : 0) +
-				(room.player2.connection ? 1 : 0),
+				(room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
 			spectators: room.spectators.size,
 			running: room.running,
 			score: {
