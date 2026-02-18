@@ -242,7 +242,7 @@ const OTHER_PLAYER_READY = [
   "pongFont1", // Font
   2, // Outline
   "black", // Outline Color
-  "5%", // Vertical deviation from center (vertical screen %)
+  "10%", // Vertical deviation from center (vertical screen %)
   "5%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_LEFT, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_TOP, // Vertical alignment type

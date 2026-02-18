@@ -104,6 +104,9 @@ export namespace Events {
       }
     } else if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online && !pong.isSpectator) {
+        if (pong.running || pong.localReady) {
+          return;
+        }
         pong.localReady = true;
         if (pong.GUI) {
           pong.GUI.hideOtherPlayerReady();
@@ -135,6 +138,9 @@ export namespace Events {
   function waitingForStartEvents(key: any, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online) {
+        if (pong.running || pong.localReady) {
+          return;
+        }
         pong.localReady = true;
         sendPlayerReady(pong);
       } else {
