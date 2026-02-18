@@ -1,0 +1,14 @@
+.git
+.gitignore
+.DS_Store
+
+**/node_modules
+**/.next
+**/dist
+**/build
+**/coverage
+
+**/data
+**/database
+**/secret-key
+**/*.log
