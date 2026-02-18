@@ -34,5 +34,38 @@
   "navbar": {
     "home": "Home",
     "play": "Play"
+  },
+  "profile": {
+    "notFound": "User not found",
+    "memberSince": "Member since",
+    "editProfile": "Edit Profile",
+    "wins": "Wins",
+    "losses": "Losses",
+    "friends": "Friends"
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Manage your account settings and security",
+    "changePassword": "Change Password",
+    "changePasswordDesc": "Update your password to keep your account secure",
+    "currentPassword": "Current Password",
+    "currentPasswordRequired": "Current password is required",
+    "newPassword": "New Password",
+    "passwordChanged": "Password changed successfully",
+    "notAuthenticated": "You must be logged in to view settings",
+    "twoFA": "Two-Factor Authentication",
+    "twoFADesc": "Add an extra layer of security to your account",
+    "twoFAEnabled": "Two-factor authentication is enabled",
+    "twoFADisabled": "Two-factor authentication is not enabled",
+    "twoFAActivated": "Two-factor authentication has been enabled",
+    "enable2FA": "Enable 2FA",
+    "scanQR": "Scan this QR code with your authenticator app (e.g. Google Authenticator)",
+    "enterCode": "Enter the 6-digit code from your app",
+    "verify": "Verify",
+    "tokenRequired": "Please enter the authentication code",
+    "recoveryCodes": "Recovery Codes",
+    "recoveryCodesDesc": "Save these codes in a safe place. Each code can only be used once.",
+    "copyCodes": "Copy Codes",
+    "copied": "Copied!"
   }
 }

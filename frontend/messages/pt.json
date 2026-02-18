@@ -34,5 +34,38 @@
   "navbar": {
     "home": "Início",
     "play": "Jogar"
+  },
+  "profile": {
+    "notFound": "Utilizador não encontrado",
+    "memberSince": "Membro desde",
+    "editProfile": "Editar Perfil",
+    "wins": "Vitórias",
+    "losses": "Derrotas",
+    "friends": "Amigos"
+  },
+  "settings": {
+    "title": "Definições",
+    "subtitle": "Gere as definições e segurança da tua conta",
+    "changePassword": "Alterar Palavra-passe",
+    "changePasswordDesc": "Atualiza a tua palavra-passe para manteres a conta segura",
+    "currentPassword": "Palavra-passe Atual",
+    "currentPasswordRequired": "A palavra-passe atual é obrigatória",
+    "newPassword": "Nova Palavra-passe",
+    "passwordChanged": "Palavra-passe alterada com sucesso",
+    "notAuthenticated": "Tens de iniciar sessão para ver as definições",
+    "twoFA": "Autenticação de Dois Fatores",
+    "twoFADesc": "Adiciona uma camada extra de segurança à tua conta",
+    "twoFAEnabled": "A autenticação de dois fatores está ativa",
+    "twoFADisabled": "A autenticação de dois fatores não está ativa",
+    "twoFAActivated": "A autenticação de dois fatores foi ativada",
+    "enable2FA": "Ativar 2FA",
+    "scanQR": "Lê este código QR com a tua aplicação de autenticação (ex: Google Authenticator)",
+    "enterCode": "Introduz o código de 6 dígitos da tua aplicação",
+    "verify": "Verificar",
+    "tokenRequired": "Por favor introduz o código de autenticação",
+    "recoveryCodes": "Códigos de Recuperação",
+    "recoveryCodesDesc": "Guarda estes códigos num local seguro. Cada código só pode ser usado uma vez.",
+    "copyCodes": "Copiar Códigos",
+    "copied": "Copiado!"
   }
 }
