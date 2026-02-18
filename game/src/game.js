@@ -97,6 +97,20 @@ class GameRoom {
 				console.error("Error sending SPELL_USED to player2:", error);
 			}
 		}
+
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(
+					JSON.stringify({
+						type: "SPELL_USED",
+						enemy: playerID === 2,
+						offensive: offensive,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending SPELL_USED to spectator:", error);
+			}
+		}
 	}
 
 	broadcastSpellSwitched(playerID, offensive, spellName) {
@@ -110,6 +124,13 @@ class GameRoom {
 		const player2Message = JSON.stringify({
 			type: "SPELL_SWITCHED",
 			enemy: playerID === 2 ? false : true,
+			offensive: offensive,
+			spellName: spellName,
+		});
+
+		const spectatorMessage = JSON.stringify({
+			type: "SPELL_SWITCHED",
+			enemy: playerID === 2,
 			offensive: offensive,
 			spellName: spellName,
 		});
@@ -128,6 +149,14 @@ class GameRoom {
 				this.player2.connection.send(player2Message);
 			} catch (error) {
 				console.error("Error sending SPELL_USED to player2:", error);
+			}
+		}
+
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(spectatorMessage);
+			} catch (error) {
+				console.error("Error sending SPELL_SWITCHED to spectator:", error);
 			}
 		}
 	}
