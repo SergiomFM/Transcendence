@@ -1,5 +1,5 @@
 // WebSocket route for Pong multiplayer game
-const { GameRoomManager } = require("../../src/game");
+const { GameRoomManager, GameRoom } = require("../../src/game");
 
 // Global room manager
 const roomManager = new GameRoomManager();
@@ -30,6 +30,14 @@ module.exports = async function (fastify, opts) {
 		};
 
 		// Handle incoming messages from client
+		const getRequestedRoomId = () => {
+			const roomId = req.query?.roomId;
+			if (typeof roomId === "string" && roomId.trim() !== "") {
+				return roomId;
+			}
+			return null;
+		};
+
 		connection.on("message", (message) => {
 			try {
 				const data = JSON.parse(message.toString());
@@ -41,13 +49,34 @@ module.exports = async function (fastify, opts) {
 							: null;
 				switch (data.type) {
 					case "JOIN_GAME": {
-						// Find or create a room for this player
-						const result = roomManager.findOrCreateRoom(
-							connection,
-							data.playerData || {},
-						);
-						currentRoom = result.room;
-						playerId = result.playerId;
+						let role = "spectator";
+						let assignedPlayerId = null;
+						const requestedRoomId = getRequestedRoomId();
+						if (requestedRoomId) {
+							const requestedRoom = roomManager.rooms.get(requestedRoomId);
+							if (requestedRoom) {
+								requestedRoom.addSpectator(connection);
+								currentRoom = requestedRoom;
+								playerId = null;
+							} else {
+								const roomId = requestedRoomId;
+								const room = new GameRoom(roomId);
+								room.addSpectator(connection);
+								roomManager.rooms.set(roomId, room);
+								currentRoom = room;
+								playerId = null;
+							}
+						} else {
+							// Find or create a room for this player
+							const result = roomManager.findOrCreateRoom(
+								connection,
+								data.playerData || {},
+							);
+							currentRoom = result.room;
+							playerId = result.playerId;
+							role = result.role;
+							assignedPlayerId = result.playerId;
+						}
 						playerName =
 							data.playerData && data.playerData.name
 								? data.playerData.name
@@ -61,8 +90,8 @@ module.exports = async function (fastify, opts) {
 							JSON.stringify({
 								type: "GAME_JOINED",
 								roomId: currentRoom.roomId,
-								role: result.role,
-								playerId: result.playerId,
+								role: role,
+								playerId: assignedPlayerId,
 								seatsAvailable: getSeatsAvailable(currentRoom),
 								alone: !isRoomFull(currentRoom),
 							}),
@@ -237,5 +266,29 @@ module.exports = async function (fastify, opts) {
 				},
 			})),
 		};
+	});
+
+	// REST endpoint to list rooms for UI
+	fastify.get("/rooms", async (request, reply) => {
+		return Array.from(roomManager.rooms.values()).map((room) => ({
+			id: room.roomId,
+			players:
+				(room.player1.connection ? 1 : 0) +
+				(room.player2.connection ? 1 : 0),
+			spectators: room.spectators.size,
+			running: room.running,
+			score: {
+				player1: room.player1.score,
+				player2: room.player2.score,
+			},
+		}));
+	});
+
+	// REST endpoint to create a room
+	fastify.post("/rooms", async (request, reply) => {
+		const roomId = roomManager.generateRoomId();
+		const room = new GameRoom(roomId);
+		roomManager.rooms.set(roomId, room);
+		return { id: roomId };
 	});
 };

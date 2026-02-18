@@ -9,10 +9,12 @@ import { switchPlayerHandsPosition } from "./pongAnimations";
 export function connectToGameServer(
   pong: Pong,
   serverUrl: string = GAME_WS_URL,
+  roomId?: string,
 ) {
-  console.log("Connecting to game server:", serverUrl);
+  const wsUrl = roomId ? `${serverUrl}?roomId=${roomId}` : serverUrl;
+  console.log("Connecting to game server:", wsUrl);
 
-  pong.socket = new WebSocket(serverUrl);
+  pong.socket = new WebSocket(wsUrl);
 
   pong.socket.onopen = (event) => {
     console.log("✅ Connected to game server");

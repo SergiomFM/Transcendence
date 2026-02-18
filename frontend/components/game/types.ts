@@ -1,1 +1,1 @@
-export type GameMode = "menu" | "local" | "online";
+export type GameMode = "menu" | "local" | "online" | "multiplayer";

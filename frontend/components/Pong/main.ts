@@ -19,7 +19,12 @@ async function fetchGameConstants(gameServerUrl: string) {
 
 export const startPong = async (
   canvas: HTMLCanvasElement,
-  options?: { online?: boolean; serverUrl?: string; gameServerUrl?: string },
+  options?: {
+    online?: boolean;
+    serverUrl?: string;
+    gameServerUrl?: string;
+    roomId?: string;
+  },
 ) => {
   let pong = new Pong(canvas);
   await pong.initPong();
@@ -27,7 +32,7 @@ export const startPong = async (
   // Connect to multiplayer server if online mode
   if (options?.online) {
     pong.online = true;
-    connectToGameServer(pong, options.serverUrl);
+    connectToGameServer(pong, options.serverUrl, options.roomId);
     pong.camera.instantSwitchCameraPOV();
   }
   switchPlayerHandsPosition(pong, pong.camera.topView, true);

@@ -9,6 +9,7 @@ interface PongProps {
   online?: boolean;
   serverUrl?: string;
   gameServerUrl?: string;
+  roomId?: string;
 }
 
 const Pong = ({
@@ -16,6 +17,7 @@ const Pong = ({
   online = false,
   serverUrl,
   gameServerUrl,
+  roomId,
 }: PongProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -33,6 +35,7 @@ const Pong = ({
       online,
       serverUrl,
       gameServerUrl,
+      roomId,
     }).then((cleanupFn) => {
       cleanup = cleanupFn;
     });
@@ -40,7 +43,7 @@ const Pong = ({
     return () => {
       if (cleanup) cleanup();
     };
-  }, [online, serverUrl, gameServerUrl]);
+  }, [online, serverUrl, gameServerUrl, roomId]);
 
   return (
     <canvas
