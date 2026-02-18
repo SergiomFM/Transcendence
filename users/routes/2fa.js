@@ -2,7 +2,7 @@ import QRCode from "qrcode";
 import { generate2FASecret, verify2FA, generateRecoveryCodes, verifyRecoveryCode } from "../utilities/2FA.js";
 
 //begins 2FA setup and generates QR code
-export default async function twoFARoutes(fastify){
+export default async function twoFARoutes(fastify, opts){
 
 	fastify.post("/auth/2fa/setup", async (req, reply) => {
 		if (!req.isAuthenticated()) {
