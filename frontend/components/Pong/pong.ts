@@ -192,6 +192,10 @@ export class Pong {
   socket?: WebSocket;
   serverGameState?: any;
   serverGameStateApplied = false;
+  isSpectator = false;
+  seatsAvailable = 0;
+  playerId: number | null = null;
+  localReady = false;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;

@@ -96,6 +96,16 @@ function applyServerState(pong: Pong, serverState: any) {
   updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
   updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
 
+  if (pong.GUI) {
+    if (typeof serverState.player1.score === "number") {
+      pong.player1.score = serverState.player1.score;
+    }
+    if (typeof serverState.player2.score === "number") {
+      pong.player2.score = serverState.player2.score;
+    }
+    pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+  }
+
   pong.running = serverState.running;
 }
 

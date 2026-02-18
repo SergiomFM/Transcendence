@@ -4,10 +4,12 @@ import { PongCamera } from "./pongCamera";
 import { Ball, Player, Pong } from "./pong";
 import {
   sendPlayerReady,
+  sendBecomePlayer,
   sendUseDash,
   sendSwitchSpell,
   sendUseSpell,
   sendPlayerDirection,
+  sendBecomeSpectator,
 } from "./pongSocket";
 
 enum PLAYER_KEYS {
@@ -43,11 +45,13 @@ let player2Keys = [
 enum MENU_KEY {
   READY,
   SWITCH_VIEW,
+  TOGGLE_SPECTATOR,
 }
 
 let menuKeys = [
   " ", // READY
   "c", // SWITCH_VIEW
+  "p", // TOGGLE_SPECTATOR
 ];
 
 export namespace Events {
@@ -77,7 +81,45 @@ export namespace Events {
     }
     if (key in keyStatus && keyStatus[key] != true) {
       PlayerDirectionEvent(key, pong, true);
+    } else if (key == menuKeys[MENU_KEY.TOGGLE_SPECTATOR] && pong.online) {
+      if (pong.isSpectator) {
+        if (pong.seatsAvailable > 0) {
+          sendBecomePlayer(pong);
+        }
+      } else {
+        sendBecomeSpectator(pong);
+        pong.isSpectator = true;
+        pong.playerId = null;
+        pong.player1.score = 0;
+        pong.player2.score = 0;
+        if (pong.GUI) {
+          pong.GUI.spectatorModeUI(pong.seatsAvailable);
+          pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+          pong.GUI.hideOtherPlayerReady();
+        }
+        if (pong.camera) {
+          pong.camera.setView(true, true);
+          switchPlayerHandsPosition(pong, pong.camera.topView, false);
+        }
+      }
+    } else if (key == menuKeys[MENU_KEY.READY]) {
+      if (pong.online && !pong.isSpectator) {
+        pong.localReady = true;
+        if (pong.GUI) {
+          pong.GUI.hideOtherPlayerReady();
+          pong.GUI.waitingForOpponentReadyUI();
+        }
+        sendPlayerReady(pong);
+      } else if (pong.online && pong.isSpectator) {
+        return;
+      } else if (!pong.online) {
+        pong.player1.ready = true;
+        pong.player2.ready = true;
+      }
     } else if (key == menuKeys[MENU_KEY.SWITCH_VIEW]) {
+      if (pong.online && pong.isSpectator) {
+        return;
+      }
       // Changes the camera perspective and moves scene elements
       camera.switchCameraPOV();
       switchPlayerHandsPosition(pong, camera.topView, false);
@@ -93,6 +135,7 @@ export namespace Events {
   function waitingForStartEvents(key: any, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online) {
+        pong.localReady = true;
         sendPlayerReady(pong);
       } else {
         pong.player1.ready = true;
@@ -125,6 +168,9 @@ export namespace Events {
     console.log(keyStatus);
 
     if (player1KeysSlice.includes(key)) {
+      if (pong.online && pong.isSpectator) {
+        return;
+      }
       const direction = getPlayerDirection(pong.player1);
       pong.player1.direction = direction;
       if (pong.online) {
@@ -137,6 +183,9 @@ export namespace Events {
   }
 
   function playerSwitchSpellEvent(key: any, pong: Pong) {
+    if (pong.online && pong.isSpectator) {
+      return;
+    }
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
       pong.online
         ? sendSwitchSpell(pong, false)
@@ -158,6 +207,9 @@ export namespace Events {
   }
 
   function playerUseSpellEvent(key: any, pong: Pong) {
+    if (pong.online && pong.isSpectator) {
+      return;
+    }
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
       pong.online
         ? sendUseSpell(pong, false)
@@ -177,6 +229,9 @@ export namespace Events {
   }
 
   function playerDashEvent(key: any, pong: Pong) {
+    if (pong.online && pong.isSpectator) {
+      return;
+    }
     if (key == player1Keys[PLAYER_KEYS.DASH]) {
       if (pong.player1.dashReady) {
         pong.player1.dashActive = true;

@@ -3,8 +3,8 @@ import { splashEffect, COLLISION_VFX, resetRoundColor } from "./pongVFX";
 import { Vector3, Color4 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
-import { platform } from "os";
 import { GAME_WS_URL } from "@/lib/backend/config";
+import { switchPlayerHandsPosition } from "./pongAnimations";
 
 export function connectToGameServer(
   pong: Pong,
@@ -74,6 +74,22 @@ function handleServerMessage(pong: Pong, message: any) {
       handleGameScore(pong, message);
       break;
 
+    case "PLAYER_SEAT_AVAILABLE":
+      handleSeatAvailable(pong, message);
+      break;
+
+    case "PLAYER_PROMOTED":
+      handlePlayerPromoted(pong, message);
+      break;
+
+    case "PLAYER_SEAT_UNAVAILABLE":
+      handleSeatUnavailable(pong);
+      break;
+
+    case "PLAYER_READY_STATUS":
+      handlePlayerReadyStatus(pong, message);
+      break;
+
     case "SPELL_USED":
       handleSpellUsed(pong, message);
       break;
@@ -133,11 +149,19 @@ function handleSpellSwitched(pong: Pong, message: any) {
 function handleGameReady(pong: Pong) {
   console.log("Both Players connected to the game!");
 
+  if (pong.isSpectator) {
+    return;
+  }
+
   if (!pong.player2.connected) {
     pong.player2.connected = true;
 
     if (pong.GUI) {
-      pong.GUI.pressReadyUI();
+      pong.GUI.showReadyPrompt();
+      if (pong.localReady) {
+        pong.GUI.showOtherPlayerReady();
+        pong.GUI.waitingForOpponentReadyUI();
+      }
     }
   }
 }
@@ -145,35 +169,55 @@ function handleGameReady(pong: Pong) {
 function handleGameJoined(pong: Pong, message: any) {
   console.log("Joined game room:", message.roomId);
   pong.online = true;
+  pong.isSpectator = message.role === "spectator";
+  pong.seatsAvailable = message.seatsAvailable ?? 0;
+  pong.playerId = message.playerId ?? null;
+  pong.localReady = false;
 
   // Reassigning the keys for online play
   Events.assignKeys(pong);
 
-  if (message.alone) {
-    pong.player1.connected = true;
-    pong.player2.connected = false;
+  pong.player1.connected = true;
+  pong.player2.connected = !message.alone;
 
-    if (pong.GUI) {
+  if (pong.GUI) {
+    if (pong.isSpectator) {
+      pong.GUI.spectatorModeUI(pong.seatsAvailable);
+    } else if (message.alone) {
       pong.GUI.waitingForPlayersUI();
-      pong.GUI.textFadeIn("WELCOME");
-    }
-  } else {
-    pong.player1.connected = true;
-    pong.player2.connected = true;
-
-    if (pong.GUI) {
+    } else {
       pong.GUI.pressReadyUI();
+    }
+    if (pong.isSpectator) {
+      pong.GUI.textFadeIn("WELCOME", 1500);
+    } else {
       pong.GUI.textFadeIn("WELCOME");
     }
+  }
+
+  if (pong.camera) {
+    pong.camera.setView(pong.isSpectator, true);
+    switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
 }
 
 function handleGameStart(pong: Pong) {
   console.log("Game starting!");
-  pong.running = true;
+  if (pong.isSpectator) {
+    pong.running = false;
+    if (pong.GUI) {
+      pong.GUI.spectatorModeUI(pong.seatsAvailable);
+      pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+      pong.GUI.hideOtherPlayerReady();
+    }
+    return;
+  }
 
+  pong.running = true;
   if (pong.GUI) {
     pong.GUI.startRoundUI();
+    pong.GUI.hideOtherPlayerReady();
+    pong.GUI.textFadeOut("WAITING_FOR_READY");
   }
 }
 
@@ -182,20 +226,87 @@ function handleGameDisconnection(pong: Pong) {
 
   pong.running = false;
   pong.player2.connected = false;
+  pong.localReady = false;
 
   if (pong.GUI) {
-    pong.GUI.opponentLeftUI();
+    if (pong.isSpectator) {
+      pong.GUI.spectatorModeUI(pong.seatsAvailable);
+    } else {
+      pong.GUI.opponentLeftUI();
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
+      pong.GUI.hideOtherPlayerReady();
+    }
+  }
+}
+
+function handleSeatAvailable(pong: Pong, message: any) {
+  pong.seatsAvailable = message.seatsAvailable ?? 0;
+  if (pong.isSpectator && pong.GUI) {
+    pong.GUI.spectatorModeUI(pong.seatsAvailable);
+  }
+  if (pong.isSpectator && pong.camera) {
+    pong.camera.setView(true, true);
+    switchPlayerHandsPosition(pong, pong.camera.topView, false);
+  }
+}
+
+function handlePlayerPromoted(pong: Pong, message: any) {
+  pong.isSpectator = false;
+  pong.localReady = false;
+  pong.playerId = message.playerId ?? pong.playerId;
+  pong.player1.connected = true;
+  pong.player2.connected = true;
+  if (pong.GUI) {
+    pong.GUI.pressReadyUI();
+    pong.GUI.hideOtherPlayerReady();
+    pong.GUI.textFadeOut("WAITING_FOR_READY");
+  }
+  if (pong.camera) {
+    pong.camera.setView(false, true);
+    switchPlayerHandsPosition(pong, pong.camera.topView, false);
+  }
+}
+
+function handleSeatUnavailable(pong: Pong) {
+  if (pong.isSpectator && pong.GUI) {
+    pong.GUI.spectatorModeUI(pong.seatsAvailable);
+  }
+  if (pong.isSpectator && pong.camera) {
+    pong.camera.setView(true, true);
+    switchPlayerHandsPosition(pong, pong.camera.topView, false);
+  }
+}
+
+function handlePlayerReadyStatus(pong: Pong, message: any) {
+  if (pong.isSpectator || pong.localReady) {
+    return;
+  }
+  if (pong.GUI && message.ready) {
+    pong.GUI.showOtherPlayerReady();
   }
 }
 
 function handleGameScore(pong: Pong, message: any) {
   console.log("Score!", message);
 
+  if (typeof message.player1Score === "number") {
+    pong.player1.score = message.player1Score;
+  }
+  if (typeof message.player2Score === "number") {
+    pong.player2.score = message.player2Score;
+  }
+
   if (pong.GUI) {
-    if (message.enemy) {
+    if (pong.isSpectator) {
+      pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+    } else if (message.enemy) {
       pong.GUI.roundLostUI(true, message.player1Score, message.player2Score);
+      pong.localReady = false;
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
     } else {
       pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
+      pong.localReady = false;
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
     }
   }
   resetRoundColor(pong);
@@ -260,6 +371,20 @@ export function sendPlayerReady(pong: Pong) {
     pong.socket.send(
       JSON.stringify({
         type: "PLAYER_READY",
+      }),
+    );
+  }
+}
+
+export function sendBecomePlayer(pong: Pong) {
+  sendPlayerReady(pong);
+}
+
+export function sendBecomeSpectator(pong: Pong) {
+  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
+    pong.socket.send(
+      JSON.stringify({
+        type: "BECOME_SPECTATOR",
       }),
     );
   }
