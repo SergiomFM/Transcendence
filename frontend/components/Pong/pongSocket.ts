@@ -17,6 +17,14 @@ export function connectToGameServer(
   pong.socket.onopen = (event) => {
     console.log("✅ Connected to game server");
 
+    pong.isSpectator = true;
+
+    if (pong.GUI) {
+      pong.GUI.textFadeIn("WELCOME", 1500);
+    } else {
+      pong.pendingWelcome = true;
+    }
+
     // Join the game immediately upon connection
     pong.socket!.send(
       JSON.stringify({
@@ -187,11 +195,6 @@ function handleGameJoined(pong: Pong, message: any) {
       pong.GUI.waitingForPlayersUI();
     } else {
       pong.GUI.pressReadyUI();
-    }
-    if (pong.isSpectator) {
-      pong.GUI.textFadeIn("WELCOME", 1500);
-    } else {
-      pong.GUI.textFadeIn("WELCOME");
     }
   }
 

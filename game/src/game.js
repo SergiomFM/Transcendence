@@ -284,6 +284,7 @@ class GameRoom {
 		}
 		this.removePlayer(connection);
 		this.addSpectator(connection);
+		this.sendStateToConnection(connection);
 		return { success: true };
 	}
 
@@ -584,6 +585,7 @@ class GameRoom {
 			ball: { x: this.ball.x * abs, z: this.ball.z * abs },
 			player1: {
 				x: me.x * abs,
+				score: me.score,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[me.currentOffensiveSpell] -
 					Math.max(0, me.spells.offensive.cooldown - now),
@@ -596,6 +598,7 @@ class GameRoom {
 			},
 			player2: {
 				x: enemy.x * abs,
+				score: enemy.score,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[enemy.currentOffensiveSpell] -
 					Math.max(0, enemy.spells.offensive.cooldown - now),
@@ -693,6 +696,26 @@ class GameRoom {
 		}
 	}
 
+	broadcastEventToPlayers(event) {
+		const message = JSON.stringify(event);
+
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(message);
+			} catch (error) {
+				console.error("Error sending event to player1:", error);
+			}
+		}
+
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(message);
+			} catch (error) {
+				console.error("Error sending event to player2:", error);
+			}
+		}
+	}
+
 	cleanup() {
 		if (this.gameLoopTimeout) {
 			clearTimeout(this.gameLoopTimeout);
@@ -741,17 +764,7 @@ class GameRoomManager {
 	}
 
 	findOrCreateRoom(connection, playerData) {
-		// Try to find a waiting room (room with empty player slot)
-		for (const [roomId, room] of this.rooms) {
-			if (!room.player1.connection || !room.player2.connection) {
-				const result = room.addPlayer(connection, playerData);
-				if (result.success) {
-					return { room, playerId: result.playerId, role: "player" };
-				}
-			}
-		}
-
-		// If no player slots available, add as spectator to an existing room
+		// Always join as spectator first
 		for (const [roomId, room] of this.rooms) {
 			const result = room.addSpectator(connection);
 			if (result.success) {
@@ -759,13 +772,13 @@ class GameRoomManager {
 			}
 		}
 
-		// Create a new room
+		// Create a new room and join as spectator
 		const roomId = this.generateRoomId();
 		const room = new GameRoom(roomId);
 		this.rooms.set(roomId, room);
 
-		const result = room.addPlayer(connection, playerData);
-		return { room, playerId: result.playerId, role: "player" };
+		room.addSpectator(connection);
+		return { room, playerId: null, role: "spectator" };
 	}
 
 	removeConnectionFromRoom(connection) {

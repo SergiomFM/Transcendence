@@ -196,6 +196,7 @@ export class Pong {
   seatsAvailable = 0;
   playerId: number | null = null;
   localReady = false;
+  pendingWelcome = false;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -260,7 +261,10 @@ export class Pong {
     // Creating the Game UI elements
     this.GUI = new GUI();
     this.GUI.pressReadyUI();
-    this.GUI.textFadeIn("WELCOME");
+    if (this.pendingWelcome) {
+      this.GUI.textFadeIn("WELCOME", 1500);
+      this.pendingWelcome = false;
+    }
 
     // Registering Key inputs
     Events.assignKeys(this);
