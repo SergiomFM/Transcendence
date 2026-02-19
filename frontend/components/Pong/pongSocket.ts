@@ -138,7 +138,6 @@ function handleGameState(pong: Pong, message: any) {
 }
 
 function handleSpellUsed(pong: Pong, message: any) {
-  console.log("Spell used:", message);
 
   let player;
   message.enemy ? (player = pong.player2) : (player = pong.player1);
@@ -149,7 +148,6 @@ function handleSpellUsed(pong: Pong, message: any) {
 }
 
 function handleSpellSwitched(pong: Pong, message: any) {
-  console.log("Spell switched:", message);
 
   let player;
   message.enemy ? (player = pong.player2) : (player = pong.player1);

@@ -181,11 +181,13 @@ const Pong = ({
         <div
           className="h-full w-auto max-w-full max-h-full"
           style={{ aspectRatio: "16 / 9" }}
+          onContextMenu={(e) => e.preventDefault()}
         >
           <canvas
             ref={canvasRef}
             style={{ width: "100%", height: "100%" }}
             className="block"
+            onContextMenu={(e) => e.preventDefault()}
           />
         </div>
       </div>
@@ -200,6 +202,7 @@ const Pong = ({
               onPointerUp={handleDirectionalRelease("a", "left")}
               onPointerLeave={handleDirectionalRelease("a", "left")}
               onPointerCancel={handleDirectionalRelease("a", "left")}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <img
                 src={getButtonSrc("left")}
@@ -215,6 +218,7 @@ const Pong = ({
               onPointerUp={handleDirectionalRelease("d", "right")}
               onPointerLeave={handleDirectionalRelease("d", "right")}
               onPointerCancel={handleDirectionalRelease("d", "right")}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <img
                 src={getButtonSrc("right")}
@@ -233,6 +237,7 @@ const Pong = ({
               onPointerUp={handleTapRelease(" ", "ready")}
               onPointerLeave={handleTapRelease(" ", "ready")}
               onPointerCancel={handleTapRelease(" ", "ready")}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <img
                 src={getReadyButtonSrc()}
@@ -251,6 +256,7 @@ const Pong = ({
                 onPointerUp={handleTapRelease("c", "spec")}
                 onPointerLeave={handleTapRelease("c", "spec")}
                 onPointerCancel={handleTapRelease("c", "spec")}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <img
                   src={getSpectateButtonSrc()}
@@ -270,6 +276,7 @@ const Pong = ({
               onPointerUp={handleTapRelease("q", "def")}
               onPointerLeave={handleTapRelease("q", "def")}
               onPointerCancel={handleTapRelease("q", "def")}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <img
                 src={getButtonSrc("def")}
@@ -285,6 +292,7 @@ const Pong = ({
               onPointerUp={handleTapRelease("e", "atk")}
               onPointerLeave={handleTapRelease("e", "atk")}
               onPointerCancel={handleTapRelease("e", "atk")}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <img
                 src={getButtonSrc("atk")}

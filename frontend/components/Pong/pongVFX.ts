@@ -301,7 +301,6 @@ export function splashEffect(
     Math.sin(spread),
   ).normalize();
 
-  console.log(angle);
   // Rotating the particles direction
   const matrix = Matrix.RotationY(angle);
   cone.direction1 = Vector3.TransformCoordinates(cone.direction1, matrix);

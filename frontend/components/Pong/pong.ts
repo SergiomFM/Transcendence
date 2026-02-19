@@ -101,7 +101,6 @@ export class Player {
     // Getting a paddle mesh to use its vector
     const mesh = scene.getMeshByName(meshName)!;
     this.vector = mesh.position;
-    console.log(this.vector.z);
 
     // Associating a paddle with the correct Player
     if (meshName == "paddle1") {

@@ -147,7 +147,6 @@ export namespace Events {
       playerUseSpellEvent(key, pong);
       playerDashEvent(key, pong);
     }
-    console.log(key);
   }
 
   function waitingForStartEvents(key: any, pong: Pong) {
@@ -188,7 +187,6 @@ export namespace Events {
 
   function PlayerDirectionEvent(key: any, pong: Pong, isKeyDown: boolean) {
     keyStatus[key] = isKeyDown;
-    console.log(keyStatus);
 
     if (player1KeysSlice.includes(key)) {
       if (pong.online && pong.isSpectator) {
