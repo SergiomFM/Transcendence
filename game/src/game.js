@@ -797,6 +797,29 @@ class GameRoomManager {
 	constructor() {
 		this.rooms = new Map();
 		this.waitingPlayers = [];
+		this.activeUsers = new Map();
+	}
+
+	getActiveUserConnection(userId) {
+		return this.activeUsers.get(userId) || null;
+	}
+
+	registerUserConnection(userId, connection, roomId) {
+		this.activeUsers.set(userId, { connection, roomId });
+	}
+
+	updateUserRoom(userId, connection, roomId) {
+		const active = this.activeUsers.get(userId);
+		if (active && active.connection === connection) {
+			active.roomId = roomId;
+		}
+	}
+
+	clearUserConnection(userId, connection) {
+		const active = this.activeUsers.get(userId);
+		if (active && active.connection === connection) {
+			this.activeUsers.delete(userId);
+		}
 	}
 
 	findOrCreateRoom(connection, playerData) {

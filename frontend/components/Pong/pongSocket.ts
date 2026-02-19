@@ -10,6 +10,7 @@ export function connectToGameServer(
   pong: Pong,
   serverUrl: string = GAME_WS_URL,
   roomId?: string,
+  onSessionReplaced?: () => void,
 ) {
   const wsUrl = roomId ? `${serverUrl}?roomId=${roomId}` : serverUrl;
   console.log("Connecting to game server:", wsUrl);
@@ -42,7 +43,7 @@ export function connectToGameServer(
   pong.socket.onmessage = (event) => {
     try {
       const message = JSON.parse(event.data);
-      handleServerMessage(pong, message);
+      handleServerMessage(pong, message, onSessionReplaced);
     } catch (error) {
       console.error("Error parsing server message:", error);
     }
@@ -58,7 +59,11 @@ export function connectToGameServer(
   };
 }
 
-function handleServerMessage(pong: Pong, message: any) {
+function handleServerMessage(
+  pong: Pong,
+  message: any,
+  onSessionReplaced?: () => void,
+) {
   switch (message.type) {
     case "GAME_STATE":
       handleGameState(pong, message);
@@ -98,6 +103,10 @@ function handleServerMessage(pong: Pong, message: any) {
 
     case "PLAYER_READY_STATUS":
       handlePlayerReadyStatus(pong, message);
+      break;
+
+    case "SESSION_REPLACED":
+      handleSessionReplaced(pong, onSessionReplaced);
       break;
 
     case "SPELL_USED":
@@ -301,6 +310,17 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
   }
   if (pong.GUI && message.ready) {
     pong.GUI.showOtherPlayerReady();
+  }
+}
+
+function handleSessionReplaced(
+  pong: Pong,
+  onSessionReplaced?: () => void,
+) {
+  console.log("Session replaced by another tab");
+  disconnectFromServer(pong);
+  if (onSessionReplaced) {
+    onSessionReplaced();
   }
 }
 

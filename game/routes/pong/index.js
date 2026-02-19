@@ -35,6 +35,7 @@ module.exports = async function (fastify, opts) {
 		let currentRoom = null;
 		let playerId = null;
 		let playerName = null;
+		let kickedPreviousSession = false;
 
 		const getSeatsAvailable = (room) =>
 			(room.player1.connection ? 0 : 1) + (room.player2.connection ? 0 : 1);
@@ -79,6 +80,37 @@ module.exports = async function (fastify, opts) {
 							connection.userId = session?.id || null;
 							connection.userName = session?.displayName || null;
 						}
+
+						kickedPreviousSession = false;
+						if (connection.userId) {
+							const active = roomManager.getActiveUserConnection(
+								connection.userId,
+							);
+							if (active && active.connection !== connection) {
+								try {
+									active.connection.send(
+										JSON.stringify({
+											type: "SESSION_REPLACED",
+										}),
+									);
+								} catch (error) {
+									console.error(
+										"Error notifying replaced session:",
+										error,
+									);
+								}
+								roomManager.removeConnectionFromRoom(active.connection);
+								try {
+									active.connection.close();
+								} catch (error) {
+									console.error(
+										"Error closing replaced session:",
+										error,
+									);
+								}
+								kickedPreviousSession = true;
+							}
+						}
 						let role = "spectator";
 						let assignedPlayerId = null;
 						const requestedRoomId = getRequestedRoomId();
@@ -116,6 +148,14 @@ module.exports = async function (fastify, opts) {
 							`Connected: id=${playerId}, name=${playerName}, room=${currentRoom.roomId}`,
 						);
 
+						if (connection.userId) {
+							roomManager.registerUserConnection(
+								connection.userId,
+								connection,
+								currentRoom.roomId,
+							);
+						}
+
 						// Send confirmation to client
 						connection.send(
 							JSON.stringify({
@@ -127,6 +167,7 @@ module.exports = async function (fastify, opts) {
 								opponentName: currentRoom.player2?.name || null,
 								seatsAvailable: getSeatsAvailable(currentRoom),
 								alone: !isRoomFull(currentRoom),
+								sessionReplaced: kickedPreviousSession,
 							}),
 						);
 
@@ -201,6 +242,13 @@ module.exports = async function (fastify, opts) {
 								}
 							}
 						}
+						if (currentRoom && connection.userId) {
+							roomManager.updateUserRoom(
+								connection.userId,
+								connection,
+								currentRoom.roomId,
+							);
+						}
 						break;
 
 					case "USE_DASH":
@@ -260,6 +308,9 @@ module.exports = async function (fastify, opts) {
 
 			const wasPlayer = connection.role === "player";
 			roomManager.removeConnectionFromRoom(connection);
+			if (connection.userId) {
+				roomManager.clearUserConnection(connection.userId, connection);
+			}
 
 			if (currentRoom && wasPlayer) {
 				// Notify other player/spectators

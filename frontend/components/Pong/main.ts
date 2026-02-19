@@ -24,6 +24,7 @@ export const startPong = async (
     serverUrl?: string;
     gameServerUrl?: string;
     roomId?: string;
+    onSessionReplaced?: () => void;
   },
 ) => {
   let pong = new Pong(canvas);
@@ -32,7 +33,12 @@ export const startPong = async (
   // Connect to multiplayer server if online mode
   if (options?.online) {
     pong.online = true;
-    connectToGameServer(pong, options.serverUrl, options.roomId);
+    connectToGameServer(
+      pong,
+      options.serverUrl,
+      options.roomId,
+      options.onSessionReplaced,
+    );
     pong.camera.instantSwitchCameraPOV();
   }
   switchPlayerHandsPosition(pong, pong.camera.topView, true);

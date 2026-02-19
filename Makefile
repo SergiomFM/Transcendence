@@ -21,8 +21,11 @@ dev-logs-chat:
 dev-logs-game:
 	docker compose --profile dev logs -f game-dev
 
-prod:
+prod: ensure-users-env
 	docker compose --profile prod up -d --pull=always --no-build
+
+ensure-users-env:
+	@test -f users/.env || { mkdir -p users && printf "GOOGLE_CLIENT_ID=abc\nGOOGLE_CLIENT_SECRET=test\n" > users/.env; }
 
 prod-build:
 	docker compose --profile prod build

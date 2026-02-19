@@ -137,6 +137,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   serverUrl={GAME_WS_URL}
                   gameServerUrl={GAME_HTTP_URL}
                   roomId={selectedRoomId}
+                  onSessionReplaced={() => setSelectedRoomId(null)}
                 />
               </Suspense>
 
