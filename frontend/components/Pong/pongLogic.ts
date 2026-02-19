@@ -70,6 +70,9 @@ function updatePlayerFromServer(
   scene: any,
 ) {
   player.x = serverPlayerData.x;
+  if (serverPlayerData.name) {
+    player.name = serverPlayerData.name;
+  }
   updateSpellFromServer(
     player.offensiveSpell,
     {
@@ -95,6 +98,16 @@ function applyServerState(pong: Pong, serverState: any) {
 
   updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
   updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
+
+  if (pong.GUI) {
+    if (typeof serverState.player1.score === "number") {
+      pong.player1.score = serverState.player1.score;
+    }
+    if (typeof serverState.player2.score === "number") {
+      pong.player2.score = serverState.player2.score;
+    }
+    pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+  }
 
   pong.running = serverState.running;
 }
@@ -255,6 +268,8 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.currSpeed = 0;
   pong.player2.failed = false;
   pong.player2.ready = false;
+
+  Events.emitReadyState(pong);
 
   pong.player1.counterSpell.resetSpell();
   pong.player1.offensiveSpell.resetSpell();

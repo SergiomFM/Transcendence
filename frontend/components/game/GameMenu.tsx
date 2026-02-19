@@ -24,7 +24,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
           <Button
             size="lg"
-            onClick={() => onSelectMode("online")}
+            onClick={() => onSelectMode("multiplayer")}
             className="text-lg py-6"
             variant="secondary"
           >

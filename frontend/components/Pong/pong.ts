@@ -74,6 +74,7 @@ export class Player {
   originalMaxSpeed = this.maxSpeed;
 
   connected = false;
+  name: string | null = null;
 
   get x() {
     return this.vector.x;
@@ -100,7 +101,6 @@ export class Player {
     // Getting a paddle mesh to use its vector
     const mesh = scene.getMeshByName(meshName)!;
     this.vector = mesh.position;
-    console.log(this.vector.z);
 
     // Associating a paddle with the correct Player
     if (meshName == "paddle1") {
@@ -192,6 +192,11 @@ export class Pong {
   socket?: WebSocket;
   serverGameState?: any;
   serverGameStateApplied = false;
+  isSpectator = false;
+  seatsAvailable = 0;
+  playerId: number | null = null;
+  localReady = false;
+  pendingWelcome = false;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -256,7 +261,10 @@ export class Pong {
     // Creating the Game UI elements
     this.GUI = new GUI();
     this.GUI.pressReadyUI();
-    this.GUI.textFadeIn("WELCOME");
+    if (this.pendingWelcome) {
+      this.GUI.textFadeIn("WELCOME", 1500);
+      this.pendingWelcome = false;
+    }
 
     // Registering Key inputs
     Events.assignKeys(this);

@@ -173,10 +173,10 @@ const DISCONNECTED = [
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
 ];
 
-// Multiplayer: Player 2 connected
-const PLAYER_2_CONNECTED = [
-  "PLAYER_2_CONNECTED", // Name
-  "Player 2 Connected", // Text
+// Multiplayer: Opponent connected
+const OPPONENT_CONNECTED = [
+  "OPPONENT_CONNECTED", // Name
+  "Opponent connected", // Text
   "white", // Color
   "15%", // Size (vertical screen %)
   "pongFont1", // Font
@@ -186,6 +186,66 @@ const PLAYER_2_CONNECTED = [
   "0%", // Horizontal deviation from center (horizontal screen %)
   Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
   Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Waiting for opponent ready
+const WAITING_FOR_READY = [
+  "WAITING_FOR_READY", // Name
+  "Waiting for opponent ready", // Text
+  "white", // Color
+  "10%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "35%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Spectator mode
+const SPECTATING = [
+  "SPECTATING", // Name
+  "Spectating", // Text
+  "white", // Color
+  "15%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "35%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Spectator seat prompt
+const SPECTATOR_SEAT_PROMPT = [
+  "SPECTATOR_SEAT_PROMPT", // Name
+  "Press C to claim a seat", // Text
+  "white", // Color
+  "10%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "15%", // Vertical deviation from center (vertical screen %)
+  "0%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
+];
+
+// Multiplayer: Other player ready
+const OTHER_PLAYER_READY = [
+  "OTHER_PLAYER_READY", // Name
+  "Other player ready", // Text
+  "white", // Color
+  "6%", // Size (vertical screen %)
+  "pongFont1", // Font
+  2, // Outline
+  "black", // Outline Color
+  "10%", // Vertical deviation from center (vertical screen %)
+  "5%", // Horizontal deviation from center (horizontal screen %)
+  Control.HORIZONTAL_ALIGNMENT_LEFT, // Horizontal alignment type
+  Control.VERTICAL_ALIGNMENT_TOP, // Vertical alignment type
 ];
 
 // Player 1 Score
@@ -312,7 +372,11 @@ export class GUI {
     this.createNewText(FIGHT);
     this.createNewText(OPPONENT_LEFT);
     this.createNewText(DISCONNECTED);
-    this.createNewText(PLAYER_2_CONNECTED);
+    this.createNewText(OPPONENT_CONNECTED);
+    this.createNewText(WAITING_FOR_READY);
+    this.createNewText(SPECTATING);
+    this.createNewText(SPECTATOR_SEAT_PROMPT);
+    this.createNewText(OTHER_PLAYER_READY);
     this.createNewText(PLAYER_1_SCORE);
     this.createNewText(PLAYER_1_SCORE_DESCRIPTION);
     this.createNewText(PLAYER_2_SCORE);
@@ -435,6 +499,48 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
   }
 
+  showReadyPrompt() {
+    const scene = this.GUI.getScene()!;
+    const text = this.textBlocks.get("PRESS_READY");
+    if (!text) {
+      return;
+    }
+    const waitingText = this.textBlocks.get("WAITING");
+    if (waitingText?.blinking) {
+      this.toggleTextBlink(scene, "WAITING");
+    }
+    this.textFadeOut("WAITING");
+    this.textFadeIn("OPPONENT_CONNECTED", 2000);
+    this.textFadeIn("PRESS_READY");
+    if (!text.blinking) {
+      this.toggleTextBlink(scene, "PRESS_READY");
+    }
+  }
+
+  waitingForOpponentReadyUI() {
+    const scene = this.GUI.getScene()!;
+    const readyText = this.textBlocks.get("PRESS_READY");
+    if (readyText?.blinking) {
+      this.toggleTextBlink(scene, "PRESS_READY");
+    }
+    this.textFadeOut("PRESS_READY");
+    this.textFadeIn("WAITING_FOR_READY");
+  }
+
+  showOtherPlayerReady() {
+    this.textFadeIn("OTHER_PLAYER_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "OTHER_PLAYER_READY");
+  }
+
+  hideOtherPlayerReady() {
+    const scene = this.GUI.getScene()!;
+    const text = this.textBlocks.get("OTHER_PLAYER_READY");
+    if (text?.blinking) {
+      this.toggleTextBlink(scene, "OTHER_PLAYER_READY");
+    }
+    this.textFadeOut("OTHER_PLAYER_READY");
+  }
+
   startRoundUI() {
     this.resetTexts(this.GUI.getScene()!);
     this.textFadeIn("GET_READY", GAME_CONSTANTS.ROUND_START_DELAY / 2);
@@ -452,6 +558,18 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
   }
 
+  spectatorModeUI(seatsAvailable: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("SPECTATING");
+    this.toggleTextBlink(this.GUI.getScene()!, "SPECTATING");
+    this.textFadeIn("PLAYER_1_SCORE");
+    this.textFadeIn("PLAYER_2_SCORE");
+    if (seatsAvailable > 0) {
+      this.textFadeIn("SPECTATOR_SEAT_PROMPT");
+      this.toggleTextBlink(this.GUI.getScene()!, "SPECTATOR_SEAT_PROMPT");
+    }
+  }
+
   showScores(online: boolean, score1: number, score2: number) {
     this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString();
     this.textBlocks.get("PLAYER_2_SCORE")!.text = score2.toString();
@@ -462,4 +580,26 @@ export class GUI {
       this.textFadeIn("PLAYER_2_SCORE_DESCRIPTION");
     }
   }
-}  
+
+  updateScores(score1: number, score2: number) {
+    const player1Score = this.textBlocks.get("PLAYER_1_SCORE");
+    const player2Score = this.textBlocks.get("PLAYER_2_SCORE");
+    if (player1Score) {
+      player1Score.text = score1.toString();
+    }
+    if (player2Score) {
+      player2Score.text = score2.toString();
+    }
+  }
+
+  updatePlayerLabels(player1Name?: string | null, player2Name?: string | null) {
+    const player1Label = this.textBlocks.get("PLAYER_1_SCORE_DESCRIPTION");
+    const player2Label = this.textBlocks.get("PLAYER_2_SCORE_DESCRIPTION");
+    if (player1Label) {
+      player1Label.text = player1Name ? player1Name : "(YOU)";
+    }
+    if (player2Label) {
+      player2Label.text = player2Name ? player2Name : "(HIM)";
+    }
+  }
+}

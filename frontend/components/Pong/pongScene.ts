@@ -120,13 +120,6 @@ function fixPixelArtTexturesPBR(material: PBRMaterial) {
   });
 }
 
-// See all imported meshe's information
-function importInfo(scene: Scene) {
-  scene.meshes.forEach((m: any) => console.log("Mesh:", m.name));
-  scene.transformNodes.forEach((t: any) => console.log("TransformNode:", t.name));
-  scene.rootNodes.forEach((r: any) => console.log("RootNode:", r.name));
-}
-
 // Create a persistent clandle light flickering
 function candleFlicker(scene: Scene, light: PointLight) {
   let lastUpdate = 0;

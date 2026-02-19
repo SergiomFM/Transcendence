@@ -1,39 +1,11 @@
-all: prod
+all: dev
 
-# Multiplayer dev test  (Tiago e Paulo)
-pong-dev:
-	docker compose --profile dev up frontend-dev game-dev
-
-# ALL SERVICES DEV
 dev:
 	docker compose --profile dev up
 
 dev-down:
 	docker compose --profile dev down
 
-dev-stop:
-	docker compose --profile dev stop
-
-dev-start:
-	docker compose --profile dev start
-
-dev-restart:
-	docker compose --profile dev restart
-
-# SINGLE SERVICE DEV
-dev-frontend:
-	docker compose --profile dev up frontend-dev
-
-dev-users:
-	docker compose --profile dev up users-dev
-
-dev-chat:
-	docker compose --profile dev up chat-dev
-
-dev-game:
-	docker compose --profile dev up game-dev
-
-# LOGS FOR INDIVIDUAL DEV SERVICES
 dev-logs:
 	docker compose --profile dev logs -f
 
@@ -49,14 +21,22 @@ dev-logs-chat:
 dev-logs-game:
 	docker compose --profile dev logs -f game-dev
 
-# ALL SERVICES PROD
-prod: prod-build prod-up
+prod: ensure-users-env
+	docker compose --profile prod up -d --pull=always --no-build
+
+ensure-users-env:
+	@test -f users/.env || { mkdir -p users && printf "GOOGLE_CLIENT_ID=abc\nGOOGLE_CLIENT_SECRET=test\n" > users/.env; }
 
 prod-build:
 	docker compose --profile prod build
 
-prod-up:
-	docker compose --profile prod up -d
+prod-buildx:
+	docker buildx inspect transcendence-builder >/dev/null 2>&1 || docker buildx create --use --name transcendence-builder
+	docker buildx build --platform linux/amd64,linux/arm64 -f frontend/Dockerfile -t ghcr.io/pvcordeiro/transcendence-frontend --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f game/Dockerfile -t ghcr.io/pvcordeiro/transcendence-game --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f users/Dockerfile -t ghcr.io/pvcordeiro/transcendence-users --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f chat/Dockerfile -t ghcr.io/pvcordeiro/transcendence-chat --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f nginx/Dockerfile -t ghcr.io/pvcordeiro/transcendence-proxy --push nginx
 
 prod-down:
 	docker compose --profile prod down
@@ -69,19 +49,6 @@ prod-start:
 
 prod-restart:
 	docker compose --profile prod restart
-
-# SINGLE SERVICE PROD
-prod-frontend:
-	docker compose --profile prod up -d --build frontend
-
-prod-users:
-	docker compose --profile prod up -d users
-
-prod-chat:
-	docker compose --profile prod up -d chat
-
-prod-game:
-	docker compose --profile prod up -d game
 
 # LOGS INDIVIDUAL PROD SERVICES
 prod-logs:
