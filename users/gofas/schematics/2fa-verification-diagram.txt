@@ -1,0 +1,19 @@
+User submits 2FA token
+        |
+        v
+  Is token valid for TOTP?
+        |
+    +---+----------------+
+    |                    |
+   Yes                   No
+    |                    |
+Login          Is token a recovery code?
+success        (check DB for user’s unused codes)
+                         |
+        +----------------+--------------+
+        |                               |
+      Yes                               No
+        |                               |
+ Mark code as used                 Reject login
+        |
+       Login

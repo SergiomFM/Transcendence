@@ -32,7 +32,6 @@ export default async function (fastify){
 	
 		if (user.two_factor_enabled) {
 			req.session.pending2FA = user.id;
-			await req.session.save(); // ensure session persists
 			return reply.redirect('http://localhost:3000/2fa');
 		}
 	
