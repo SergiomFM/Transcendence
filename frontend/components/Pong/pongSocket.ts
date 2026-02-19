@@ -235,6 +235,7 @@ function handleGameStart(pong: Pong) {
   console.log("Game starting!");
   if (pong.isSpectator) {
     pong.running = false;
+    Events.emitRunningState(pong);
     if (pong.GUI) {
       pong.GUI.spectatorModeUI(pong.seatsAvailable);
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
@@ -244,6 +245,7 @@ function handleGameStart(pong: Pong) {
   }
 
   pong.running = true;
+  Events.emitRunningState(pong);
   if (pong.GUI) {
     pong.GUI.startRoundUI();
     pong.GUI.hideOtherPlayerReady();
@@ -255,6 +257,7 @@ function handleGameDisconnection(pong: Pong) {
   console.log("Opponent disconnected");
 
   pong.running = false;
+  Events.emitRunningState(pong);
   pong.player2.connected = false;
   pong.localReady = false;
 
@@ -384,6 +387,7 @@ function handleGameScore(pong: Pong, message: any) {
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
   Events.emitReadyState(pong);
+  Events.emitRunningState(pong);
   resetRoundColor(pong);
 }
 

@@ -68,6 +68,10 @@ export namespace Events {
     const isReady = pong.online ? pong.localReady : pong.player1.ready;
     dispatchUiEvent("pong:ready", { isReady });
   }
+
+  export function emitRunningState(pong: Pong) {
+    dispatchUiEvent("pong:running", { isRunning: pong.running });
+  }
   // Key status
   export let keyStatus: { [key: string]: boolean } = {
     [player1Keys[0]]: false,

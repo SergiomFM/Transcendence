@@ -27,6 +27,7 @@ const Pong = ({
   const [showMobileControls, setShowMobileControls] = useState(false);
   const [isSpectator, setIsSpectator] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -80,6 +81,7 @@ const Pong = ({
     if (!online) {
       setIsSpectator(false);
       setIsReady(false);
+      setIsRunning(false);
     }
     const handleSpectator = (event: Event) => {
       const detail = (event as CustomEvent).detail as { isSpectator?: boolean };
@@ -93,14 +95,22 @@ const Pong = ({
         setIsReady(detail.isReady);
       }
     };
+    const handleRunning = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { isRunning?: boolean };
+      if (typeof detail?.isRunning === "boolean") {
+        setIsRunning(detail.isRunning);
+      }
+    };
     window.addEventListener("pong:spectator", handleSpectator as EventListener);
     window.addEventListener("pong:ready", handleReady as EventListener);
+    window.addEventListener("pong:running", handleRunning as EventListener);
     return () => {
       window.removeEventListener(
         "pong:spectator",
         handleSpectator as EventListener,
       );
       window.removeEventListener("pong:ready", handleReady as EventListener);
+      window.removeEventListener("pong:running", handleRunning as EventListener);
     };
   }, [online]);
 
@@ -111,6 +121,9 @@ const Pong = ({
     canvasRef.current?.dispatchEvent(event);
   };
 
+  const allowDirectionalInput = !online || isRunning;
+  const allowSpellInput = !online || isRunning || !isSpectator;
+
   const triggerHaptic = (duration = 15) => {
     if (typeof navigator === "undefined") return;
     if (typeof navigator.vibrate === "function") {
@@ -120,64 +133,91 @@ const Pong = ({
 
   const [pressedButtons, setPressedButtons] = useState<Record<string, boolean>>({});
 
-  const setPressed = (id: string, pressed: boolean) => {
-    setPressedButtons((prev) => ({ ...prev, [id]: pressed }));
+  const setPressed = (key: string, pressed: boolean) => {
+    setPressedButtons((prev) => ({ ...prev, [key]: pressed }));
   };
 
-  const handleDirectionalPress = (key: string, id: string) =>
+  const handleDirectionalPress = (key: string) =>
     (event: PointerEvent) => {
       event.preventDefault();
       const pointerId = event.pointerId;
-      if (activePointers.current[id] !== undefined) return;
-      activePointers.current[id] = pointerId;
+      if (activePointers.current[key] !== undefined) return;
+      activePointers.current[key] = pointerId;
       event.currentTarget.setPointerCapture?.(pointerId);
       if (event.pointerType === "touch") triggerHaptic();
-      setPressed(id, true);
+      setPressed(key, true);
       dispatchKey(key, "keydown");
     };
 
-  const handleDirectionalRelease = (key: string, id: string) =>
+  const handleDirectionalRelease = (key: string) =>
     (event: PointerEvent) => {
       event.preventDefault();
       const pointerId = event.pointerId;
-      if (activePointers.current[id] !== pointerId) return;
-      delete activePointers.current[id];
+      if (activePointers.current[key] !== pointerId) return;
+      delete activePointers.current[key];
       event.currentTarget.releasePointerCapture?.(pointerId);
-      setPressed(id, false);
+      setPressed(key, false);
       dispatchKey(key, "keyup");
     };
 
-  const handleTapPress = (id: string) =>
+  const handleTapPress = (key: string) =>
     (event: PointerEvent) => {
       event.preventDefault();
       const pointerId = event.pointerId;
-      if (activePointers.current[id] !== undefined) return;
-      activePointers.current[id] = pointerId;
+      if (activePointers.current[key] !== undefined) return;
+      activePointers.current[key] = pointerId;
       event.currentTarget.setPointerCapture?.(pointerId);
       if (event.pointerType === "touch") triggerHaptic();
-      setPressed(id, true);
+      setPressed(key, true);
     };
 
-  const handleTapRelease = (key: string, id: string) =>
+  const handleTapRelease = (key: string) =>
     (event: PointerEvent) => {
       event.preventDefault();
       const pointerId = event.pointerId;
-      if (activePointers.current[id] !== pointerId) return;
-      delete activePointers.current[id];
+      if (activePointers.current[key] !== pointerId) return;
+      delete activePointers.current[key];
       event.currentTarget.releasePointerCapture?.(pointerId);
-      setPressed(id, false);
+      setPressed(key, false);
       dispatchKey(key, "keydown");
       dispatchKey(key, "keyup");
     };
 
-  const getButtonSrc = (id: string) =>
-    pressedButtons[id] ? `/buttons/${id}_pressed.png` : `/buttons/${id}.png`;
+  const getButtonIdFromKey = (key: string) => {
+    switch (key) {
+      case "a":
+        return "left";
+      case "d":
+        return "right";
+      case "q":
+        return "def";
+      case "e":
+        return "atk";
+      case " ":
+        return "ready";
+      default:
+        return key;
+    }
+  };
 
-  const getReadyButtonSrc = () =>
-    isReady ? "/buttons/ready_pressed.png" : "/buttons/ready.png";
+  const getButtonSrc = (key: string) => {
+    const id = getButtonIdFromKey(key);
+    return pressedButtons[key]
+      ? `/buttons/${id}_pressed.png`
+      : `/buttons/${id}.png`;
+  };
 
-  const getSpectateButtonSrc = () =>
-    isSpectator ? "/buttons/play.png" : "/buttons/spectate.png";
+  const getReadyButtonSrc = () => {
+    const id = getButtonIdFromKey(" ");
+    if (pressedButtons[" "]) {
+      return `/buttons/${id}_pressed.png`;
+    }
+    return isReady ? `/buttons/${id}_pressed.png` : `/buttons/${id}.png`;
+  };
+
+  const getSpectateButtonSrc = () => {
+    return isSpectator ? "/buttons/play.png" : "/buttons/spectate.png";
+  };
 
   return (
     <div className={cn("relative w-full h-full", className)}>
@@ -202,14 +242,30 @@ const Pong = ({
             <button
               type="button"
               className="h-20 w-20 touch-none select-none"
-              onPointerDown={handleDirectionalPress("a", "left")}
-              onPointerUp={handleDirectionalRelease("a", "left")}
-              onPointerLeave={handleDirectionalRelease("a", "left")}
-              onPointerCancel={handleDirectionalRelease("a", "left")}
+              onPointerDown={
+                allowDirectionalInput
+                  ? handleDirectionalPress("a")
+                  : undefined
+              }
+              onPointerUp={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("a")
+                  : undefined
+              }
+              onPointerLeave={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("a")
+                  : undefined
+              }
+              onPointerCancel={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("a")
+                  : undefined
+              }
               onContextMenu={(e) => e.preventDefault()}
             >
               <img
-                src={getButtonSrc("left")}
+                src={getButtonSrc("a")}
                 alt="Left"
                 className="h-full w-full object-contain"
                 draggable={false}
@@ -218,14 +274,30 @@ const Pong = ({
             <button
               type="button"
               className="h-20 w-20 touch-none select-none"
-              onPointerDown={handleDirectionalPress("d", "right")}
-              onPointerUp={handleDirectionalRelease("d", "right")}
-              onPointerLeave={handleDirectionalRelease("d", "right")}
-              onPointerCancel={handleDirectionalRelease("d", "right")}
+              onPointerDown={
+                allowDirectionalInput
+                  ? handleDirectionalPress("d")
+                  : undefined
+              }
+              onPointerUp={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("d")
+                  : undefined
+              }
+              onPointerLeave={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("d")
+                  : undefined
+              }
+              onPointerCancel={
+                allowDirectionalInput
+                  ? handleDirectionalRelease("d")
+                  : undefined
+              }
               onContextMenu={(e) => e.preventDefault()}
             >
               <img
-                src={getButtonSrc("right")}
+                src={getButtonSrc("d")}
                 alt="Right"
                 className="h-full w-full object-contain"
                 draggable={false}
@@ -237,10 +309,10 @@ const Pong = ({
             <button
               type="button"
               className="touch-none select-none"
-              onPointerDown={handleTapPress("ready")}
-              onPointerUp={handleTapRelease(" ", "ready")}
-              onPointerLeave={handleTapRelease(" ", "ready")}
-              onPointerCancel={handleTapRelease(" ", "ready")}
+              onPointerDown={handleTapPress(" ")}
+              onPointerUp={handleTapRelease(" ")}
+              onPointerLeave={handleTapRelease(" ")}
+              onPointerCancel={handleTapRelease(" ")}
               onContextMenu={(e) => e.preventDefault()}
             >
               <img
@@ -253,15 +325,15 @@ const Pong = ({
           </div>
           {online && (
             <div className="pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
-              <button
-                type="button"
-                className="touch-none select-none"
-                onPointerDown={handleTapPress("spec")}
-                onPointerUp={handleTapRelease("c", "spec")}
-                onPointerLeave={handleTapRelease("c", "spec")}
-                onPointerCancel={handleTapRelease("c", "spec")}
-                onContextMenu={(e) => e.preventDefault()}
-              >
+                <button
+                  type="button"
+                  className="touch-none select-none"
+                  onPointerDown={handleTapPress("c")}
+                  onPointerUp={handleTapRelease("c")}
+                  onPointerLeave={handleTapRelease("c")}
+                  onPointerCancel={handleTapRelease("c")}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
                 <img
                   src={getSpectateButtonSrc()}
                   alt={isSpectator ? "Play" : "Spectate"}
@@ -276,14 +348,22 @@ const Pong = ({
             <button
               type="button"
               className="h-20 w-20 touch-none select-none"
-              onPointerDown={handleTapPress("def")}
-              onPointerUp={handleTapRelease("q", "def")}
-              onPointerLeave={handleTapRelease("q", "def")}
-              onPointerCancel={handleTapRelease("q", "def")}
+              onPointerDown={
+                allowSpellInput ? handleTapPress("q") : undefined
+              }
+              onPointerUp={
+                allowSpellInput ? handleTapRelease("q") : undefined
+              }
+              onPointerLeave={
+                allowSpellInput ? handleTapRelease("q") : undefined
+              }
+              onPointerCancel={
+                allowSpellInput ? handleTapRelease("q") : undefined
+              }
               onContextMenu={(e) => e.preventDefault()}
             >
               <img
-                src={getButtonSrc("def")}
+                src={getButtonSrc("q")}
                 alt="Defense"
                 className="h-full w-full object-contain"
                 draggable={false}
@@ -292,14 +372,22 @@ const Pong = ({
             <button
               type="button"
               className="h-20 w-20 touch-none select-none"
-              onPointerDown={handleTapPress("atk")}
-              onPointerUp={handleTapRelease("e", "atk")}
-              onPointerLeave={handleTapRelease("e", "atk")}
-              onPointerCancel={handleTapRelease("e", "atk")}
+              onPointerDown={
+                allowSpellInput ? handleTapPress("e") : undefined
+              }
+              onPointerUp={
+                allowSpellInput ? handleTapRelease("e") : undefined
+              }
+              onPointerLeave={
+                allowSpellInput ? handleTapRelease("e") : undefined
+              }
+              onPointerCancel={
+                allowSpellInput ? handleTapRelease("e") : undefined
+              }
               onContextMenu={(e) => e.preventDefault()}
             >
               <img
-                src={getButtonSrc("atk")}
+                src={getButtonSrc("e")}
                 alt="Attack"
                 className="h-full w-full object-contain"
                 draggable={false}

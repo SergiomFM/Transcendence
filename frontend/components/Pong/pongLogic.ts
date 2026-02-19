@@ -110,6 +110,7 @@ function applyServerState(pong: Pong, serverState: any) {
   }
 
   pong.running = serverState.running;
+  Events.emitRunningState(pong);
 }
 
 // Paddle collision check
@@ -283,4 +284,5 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.running = false;
   pong.startingRound = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
+  Events.emitRunningState(pong);
 }
