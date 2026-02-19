@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { TouchEvent } from "react";
+import type { PointerEvent } from "react";
 import { cn } from "@/lib/utils";
 import { startPong } from "./main";
 
@@ -86,35 +86,40 @@ const Pong = ({
     }
   };
 
-  const handleDirectionalPress = (key: string) => () =>
-    dispatchKey(key, "keydown");
-  const handleDirectionalRelease = (key: string) => () =>
-    dispatchKey(key, "keyup");
+  const [pressedButtons, setPressedButtons] = useState<Record<string, boolean>>({});
 
-  const handleTouchDirectionalPress = (key: string) =>
-    (event: TouchEvent) => {
-      event.preventDefault();
-      triggerHaptic();
+  const setPressed = (id: string, pressed: boolean) => {
+    setPressedButtons((prev) => ({ ...prev, [id]: pressed }));
+  };
+
+  const handleDirectionalPress = (key: string, id: string) =>
+    (event: PointerEvent) => {
+      if (event.pointerType === "touch") triggerHaptic();
+      setPressed(id, true);
       dispatchKey(key, "keydown");
     };
 
-  const handleTouchDirectionalRelease = (key: string) =>
-    (event: TouchEvent) => {
-      event.preventDefault();
+  const handleDirectionalRelease = (key: string, id: string) =>
+    () => {
+      setPressed(id, false);
       dispatchKey(key, "keyup");
     };
 
-  const handleTapKey = (key: string) => () => {
-    dispatchKey(key, "keydown");
-    dispatchKey(key, "keyup");
-  };
+  const handleTapPress = (id: string) =>
+    (event: PointerEvent) => {
+      if (event.pointerType === "touch") triggerHaptic();
+      setPressed(id, true);
+    };
 
-  const handleTouchTapKey = (key: string) => (event: TouchEvent) => {
-    event.preventDefault();
-    triggerHaptic();
-    dispatchKey(key, "keydown");
-    dispatchKey(key, "keyup");
-  };
+  const handleTapRelease = (key: string, id: string) =>
+    () => {
+      setPressed(id, false);
+      dispatchKey(key, "keydown");
+      dispatchKey(key, "keyup");
+    };
+
+  const getButtonSrc = (id: string) =>
+    pressedButtons[id] ? `/buttons/${id}_pressed.png` : `/buttons/${id}.png`;
 
   return (
     <div className={cn("relative w-full h-full", className)}>
@@ -133,75 +138,107 @@ const Pong = ({
 
       {showMobileControls && (
         <div className="pointer-events-none absolute inset-0">
-        <div className="pointer-events-auto absolute bottom-6 left-4 flex items-center gap-3">
-          <button
-            type="button"
-            className="h-16 w-16 rounded-full border border-white/30 bg-black/40 text-white text-2xl shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-            onPointerDown={handleDirectionalPress("a")}
-            onPointerUp={handleDirectionalRelease("a")}
-            onPointerLeave={handleDirectionalRelease("a")}
-            onPointerCancel={handleDirectionalRelease("a")}
-            onTouchStart={handleTouchDirectionalPress("a")}
-            onTouchEnd={handleTouchDirectionalRelease("a")}
-            onTouchCancel={handleTouchDirectionalRelease("a")}
-          >
-            &lt;
-          </button>
-          <button
-            type="button"
-            className="h-16 w-16 rounded-full border border-white/30 bg-black/40 text-white text-2xl shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-            onPointerDown={handleDirectionalPress("d")}
-            onPointerUp={handleDirectionalRelease("d")}
-            onPointerLeave={handleDirectionalRelease("d")}
-            onPointerCancel={handleDirectionalRelease("d")}
-            onTouchStart={handleTouchDirectionalPress("d")}
-            onTouchEnd={handleTouchDirectionalRelease("d")}
-            onTouchCancel={handleTouchDirectionalRelease("d")}
-          >
-            &gt;
-          </button>
-        </div>
-
-        <div className="pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
-          <button
-            type="button"
-            className="px-4 py-2.5 rounded-full border border-white/30 bg-black/40 text-white text-sm shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-            onClick={handleTapKey(" ")}
-            onTouchStart={handleTouchTapKey(" ")}
-          >
-            Ready
-          </button>
-          {online && (
+          <div className="pointer-events-auto absolute bottom-6 left-4 flex items-center gap-3">
             <button
               type="button"
-              className="px-4 py-2.5 rounded-full border border-white/30 bg-black/40 text-white text-sm shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-              onClick={handleTapKey("p")}
-              onTouchStart={handleTouchTapKey("p")}
+              className="h-20 w-20 touch-none select-none"
+              onPointerDown={handleDirectionalPress("a", "left")}
+              onPointerUp={handleDirectionalRelease("a", "left")}
+              onPointerLeave={handleDirectionalRelease("a", "left")}
+              onPointerCancel={handleDirectionalRelease("a", "left")}
             >
-              Spectate/Play
+              <img
+                src={getButtonSrc("left")}
+                alt="Left"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
             </button>
-          )}
-        </div>
+            <button
+              type="button"
+              className="h-20 w-20 touch-none select-none"
+              onPointerDown={handleDirectionalPress("d", "right")}
+              onPointerUp={handleDirectionalRelease("d", "right")}
+              onPointerLeave={handleDirectionalRelease("d", "right")}
+              onPointerCancel={handleDirectionalRelease("d", "right")}
+            >
+              <img
+                src={getButtonSrc("right")}
+                alt="Right"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </button>
+          </div>
 
-        <div className="pointer-events-auto absolute bottom-6 right-4 flex items-center gap-3">
-          <button
-            type="button"
-            className="h-14 w-14 rounded-full border border-white/30 bg-black/40 text-white text-lg shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-            onClick={handleTapKey("q")}
-            onTouchStart={handleTouchTapKey("q")}
-          >
-            Q
-          </button>
-          <button
-            type="button"
-            className="h-14 w-14 rounded-full border border-white/30 bg-black/40 text-white text-lg shadow-lg backdrop-blur active:bg-black/60 touch-none select-none"
-            onClick={handleTapKey("e")}
-            onTouchStart={handleTouchTapKey("e")}
-          >
-            E
-          </button>
+          <div className="pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+            <button
+              type="button"
+              className="touch-none select-none"
+              onPointerDown={handleTapPress("ready")}
+              onPointerUp={handleTapRelease(" ", "ready")}
+              onPointerLeave={handleTapRelease(" ", "ready")}
+              onPointerCancel={handleTapRelease(" ", "ready")}
+            >
+              <img
+                src={getButtonSrc("ready")}
+                alt="Ready"
+                className="h-10 w-auto object-contain"
+                draggable={false}
+              />
+            </button>
+            {online && (
+              <button
+                type="button"
+                className="touch-none select-none"
+                onPointerDown={handleTapPress("spec")}
+                onPointerUp={handleTapRelease("p", "spec")}
+                onPointerLeave={handleTapRelease("p", "spec")}
+                onPointerCancel={handleTapRelease("p", "spec")}
+              >
+                <img
+                  src={getButtonSrc("spec")}
+                  alt="Spectate"
+                  className="h-10 w-auto object-contain"
+                  draggable={false}
+                />
+              </button>
+            )}
+          </div>
+
+          <div className="pointer-events-auto absolute bottom-6 right-4 flex items-center gap-3">
+            <button
+              type="button"
+              className="h-20 w-20 touch-none select-none"
+              onPointerDown={handleTapPress("def")}
+              onPointerUp={handleTapRelease("q", "def")}
+              onPointerLeave={handleTapRelease("q", "def")}
+              onPointerCancel={handleTapRelease("q", "def")}
+            >
+              <img
+                src={getButtonSrc("def")}
+                alt="Defense"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </button>
+            <button
+              type="button"
+              className="h-20 w-20 touch-none select-none"
+              onPointerDown={handleTapPress("atk")}
+              onPointerUp={handleTapRelease("e", "atk")}
+              onPointerLeave={handleTapRelease("e", "atk")}
+              onPointerCancel={handleTapRelease("e", "atk")}
+            >
+              <img
+                src={getButtonSrc("atk")}
+                alt="Attack"
+                className="h-full w-full object-contain"
+                draggable={false}
+              />
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );
