@@ -36,18 +36,23 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     window.matchMedia("(max-width: 640px)").matches;
 
   const lockLandscape = async () => {
-    if (typeof screen === "undefined" || !screen.orientation?.lock) return;
+    if (typeof screen === "undefined" || !screen.orientation) return;
+    if (!("lock" in screen.orientation)) return;
+    type OrientationLock = "any" | "natural" | "landscape" | "portrait" | "portrait-primary" | "portrait-secondary" | "landscape-primary" | "landscape-secondary";
     try {
-      await screen.orientation.lock("landscape");
+      await (screen.orientation as ScreenOrientation & { lock: (orientation: OrientationLock) => Promise<void> }).lock(
+        "landscape"
+      );
     } catch (err) {
       console.warn("Unable to lock orientation:", err);
     }
   };
 
   const unlockOrientation = () => {
-    if (typeof screen === "undefined" || !screen.orientation?.unlock) return;
+    if (typeof screen === "undefined" || !screen.orientation) return;
+    if (!("unlock" in screen.orientation)) return;
     try {
-      screen.orientation.unlock();
+      (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
     } catch (err) {
       console.warn("Unable to unlock orientation:", err);
     }
