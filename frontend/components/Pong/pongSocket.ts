@@ -315,18 +315,30 @@ function handleSeatUnavailable(pong: Pong) {
 }
 
 function handlePlayerReadyStatus(pong: Pong, message: any) {
-  if (pong.isSpectator || pong.localReady) {
+  if (pong.isSpectator) {
     return;
   }
   if (!pong.GUI) {
     return;
   }
-  if (message.ready) {
+  const isLocalPlayer = message.playerId === pong.playerId;
+  if (isLocalPlayer) {
+    pong.localReady = !!message.ready;
+    if (pong.localReady) {
+      pong.GUI.waitingForOpponentReadyUI();
+    } else {
+      pong.GUI.hideOtherPlayerReady();
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
+      pong.GUI.pressReadyUI();
+    }
+  } else if (message.ready) {
     pong.GUI.showOtherPlayerReady();
   } else {
     pong.GUI.hideOtherPlayerReady();
     pong.GUI.textFadeOut("WAITING_FOR_READY");
-    pong.GUI.pressReadyUI();
+    if (!pong.localReady) {
+      pong.GUI.pressReadyUI();
+    }
   }
   Events.emitReadyState(pong);
 }

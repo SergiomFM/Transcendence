@@ -54,6 +54,35 @@ module.exports = async function (fastify, opts) {
 				notifySeatAvailability(room);
 			}
 		};
+		const sendReadyStatusToConnection = (room, connection) => {
+			const sendStatus = (playerId, ready) => {
+				try {
+					connection.send(
+						JSON.stringify({
+							type: "PLAYER_READY_STATUS",
+							playerId,
+							ready,
+						}),
+					);
+				} catch (error) {
+					console.error("Error sending ready status:", error);
+				}
+			};
+			sendStatus(1, !!room.player1.ready);
+			sendStatus(2, !!room.player2.ready);
+		};
+		const broadcastReadyStatus = (room) => {
+			room.broadcastEventToPlayers({
+				type: "PLAYER_READY_STATUS",
+				playerId: 1,
+				ready: !!room.player1.ready,
+			});
+			room.broadcastEventToPlayers({
+				type: "PLAYER_READY_STATUS",
+				playerId: 2,
+				ready: !!room.player2.ready,
+			});
+		};
 
 		// Handle incoming messages from client
 		const getRequestedRoomId = () => {
@@ -174,6 +203,7 @@ module.exports = async function (fastify, opts) {
 						);
 
 						currentRoom.sendStateToConnection(connection);
+						sendReadyStatusToConnection(currentRoom, connection);
 						notifyGameReadyIfFull(currentRoom);
 
 						break;
@@ -198,8 +228,6 @@ module.exports = async function (fastify, opts) {
 										promotion.playerId === 1
 											? currentRoom.player1
 											: currentRoom.player2;
-									currentRoom.player1.ready = false;
-									currentRoom.player2.ready = false;
 									promotedPlayer.ready = false;
 									connection.role = "player";
 									connection.send(
@@ -210,16 +238,8 @@ module.exports = async function (fastify, opts) {
 										}),
 									);
 									currentRoom.sendStateToConnection(connection);
-									currentRoom.broadcastEventToPlayers({
-										type: "PLAYER_READY_STATUS",
-										playerId: 1,
-										ready: false,
-									});
-									currentRoom.broadcastEventToPlayers({
-										type: "PLAYER_READY_STATUS",
-										playerId: 2,
-										ready: false,
-									});
+									sendReadyStatusToConnection(currentRoom, connection);
+									broadcastReadyStatus(currentRoom);
 									notifySeatAvailability(currentRoom);
 									if (isRoomFull(currentRoom)) {
 										currentRoom.broadcastEventToPlayers({
