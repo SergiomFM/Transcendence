@@ -23,6 +23,7 @@ const Pong = ({
   onSessionReplaced,
 }: PongProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const activePointers = useRef<Record<string, number | undefined>>({});
   const [showMobileControls, setShowMobileControls] = useState(false);
 
   useEffect(() => {
@@ -94,25 +95,41 @@ const Pong = ({
 
   const handleDirectionalPress = (key: string, id: string) =>
     (event: PointerEvent) => {
+      const pointerId = event.pointerId;
+      if (activePointers.current[id] !== undefined) return;
+      activePointers.current[id] = pointerId;
+      event.currentTarget.setPointerCapture?.(pointerId);
       if (event.pointerType === "touch") triggerHaptic();
       setPressed(id, true);
       dispatchKey(key, "keydown");
     };
 
   const handleDirectionalRelease = (key: string, id: string) =>
-    () => {
+    (event: PointerEvent) => {
+      const pointerId = event.pointerId;
+      if (activePointers.current[id] !== pointerId) return;
+      delete activePointers.current[id];
+      event.currentTarget.releasePointerCapture?.(pointerId);
       setPressed(id, false);
       dispatchKey(key, "keyup");
     };
 
   const handleTapPress = (id: string) =>
     (event: PointerEvent) => {
+      const pointerId = event.pointerId;
+      if (activePointers.current[id] !== undefined) return;
+      activePointers.current[id] = pointerId;
+      event.currentTarget.setPointerCapture?.(pointerId);
       if (event.pointerType === "touch") triggerHaptic();
       setPressed(id, true);
     };
 
   const handleTapRelease = (key: string, id: string) =>
-    () => {
+    (event: PointerEvent) => {
+      const pointerId = event.pointerId;
+      if (activePointers.current[id] !== pointerId) return;
+      delete activePointers.current[id];
+      event.currentTarget.releasePointerCapture?.(pointerId);
       setPressed(id, false);
       dispatchKey(key, "keydown");
       dispatchKey(key, "keyup");
@@ -171,7 +188,7 @@ const Pong = ({
             </button>
           </div>
 
-          <div className="pointer-events-auto absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
+          <div className="pointer-events-auto absolute left-4 top-1/2 -translate-y-1/2 flex items-center">
             <button
               type="button"
               className="touch-none select-none"
@@ -187,7 +204,9 @@ const Pong = ({
                 draggable={false}
               />
             </button>
-            {online && (
+          </div>
+          {online && (
+            <div className="pointer-events-auto absolute right-4 top-1/2 -translate-y-1/2 flex items-center">
               <button
                 type="button"
                 className="touch-none select-none"
@@ -203,8 +222,8 @@ const Pong = ({
                   draggable={false}
                 />
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="pointer-events-auto absolute bottom-6 right-4 flex items-center gap-3">
             <button
