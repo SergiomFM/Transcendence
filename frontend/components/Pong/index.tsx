@@ -126,6 +126,7 @@ const Pong = ({
 
   const handleDirectionalPress = (key: string, id: string) =>
     (event: PointerEvent) => {
+      event.preventDefault();
       const pointerId = event.pointerId;
       if (activePointers.current[id] !== undefined) return;
       activePointers.current[id] = pointerId;
@@ -137,6 +138,7 @@ const Pong = ({
 
   const handleDirectionalRelease = (key: string, id: string) =>
     (event: PointerEvent) => {
+      event.preventDefault();
       const pointerId = event.pointerId;
       if (activePointers.current[id] !== pointerId) return;
       delete activePointers.current[id];
@@ -147,6 +149,7 @@ const Pong = ({
 
   const handleTapPress = (id: string) =>
     (event: PointerEvent) => {
+      event.preventDefault();
       const pointerId = event.pointerId;
       if (activePointers.current[id] !== undefined) return;
       activePointers.current[id] = pointerId;
@@ -157,6 +160,7 @@ const Pong = ({
 
   const handleTapRelease = (key: string, id: string) =>
     (event: PointerEvent) => {
+      event.preventDefault();
       const pointerId = event.pointerId;
       if (activePointers.current[id] !== pointerId) return;
       delete activePointers.current[id];

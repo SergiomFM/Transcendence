@@ -28,6 +28,40 @@ const nextConfig: NextConfig = {
     return config;
   },
 
+  async headers() {
+    return [
+      {
+        // Disable caching for game-related assets (buttons, models)
+        source: '/buttons/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+        ],
+      },
+      {
+        source: '/models/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          },
+        ],
+      },
+      {
+        // Allow short-term caching for fonts
+        source: '/fonts/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate',
+          },
+        ],
+      },
+    ];
+  },
+
   async rewrites() {
     return [];
   },
