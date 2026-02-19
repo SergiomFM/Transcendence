@@ -153,3 +153,11 @@ canvas {
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .game-shell:fullscreen .game-frame {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+}

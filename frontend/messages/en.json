@@ -3,6 +3,7 @@
     "login": "Login",
     "signup": "Sign Up",
     "logout": "Logout",
+    "settings": "Settings",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",

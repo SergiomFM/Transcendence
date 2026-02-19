@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { Users } from "@/lib/backend";
 
 export function Navbar() {
@@ -75,6 +75,12 @@ export function Navbar() {
                     </p>
                   </div>
                 </div>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t("common.settings")}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer text-red-600 focus:text-red-600"
                   onClick={handleLogout}

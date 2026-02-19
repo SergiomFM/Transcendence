@@ -158,7 +158,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         <div
           ref={gameContainerRef}
           className={cn(
-            "w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
             isFullscreen && "relative"
           )}
         >
@@ -170,7 +170,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
           >
             <div
               className={cn(
-                "relative",
+                "game-frame relative",
                 isFullscreen
                   ? "w-full h-full"
                   : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
@@ -312,7 +312,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     <div
       ref={gameContainerRef}
       className={cn(
-        "w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
         isFullscreen && "relative"
       )}
     >
@@ -324,7 +324,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
       >
         <div
           className={cn(
-            "relative",
+            "game-frame relative",
             isFullscreen
               ? "w-full h-full"
               : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"

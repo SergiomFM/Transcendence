@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import { Users, type User } from "@/lib/backend";
 
 interface AuthContextType {
@@ -27,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -68,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await Users.logout();
     } catch {}
     setUser(null);
+    router.replace("/auth");
   };
 
   return (

@@ -27,7 +27,7 @@ export const Users = {
       (response) => response.data.user,
     ),
 
-  logout: () => Promise.resolve(),
+  logout: () => usersBackend("auth/logout", Method.GET),
 
   avatarUrl: (userId: string) =>
     userId ? `${USERS_BACKEND_URL}/users/${userId}/avatar` : "",
