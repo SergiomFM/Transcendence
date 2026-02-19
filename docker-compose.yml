@@ -1,11 +1,38 @@
 services:
+  proxy:
+    image: ghcr.io/pvcordeiro/transcendence-proxy
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - frontend
+      - users
+      - game
+      - chat
+    profiles:
+      - prod
+
+  proxy-dev:
+    image: nginx:1.27-alpine
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - frontend-dev
+      - users-dev
+      - game-dev
+      - chat-dev
+    profiles:
+      - dev
+
   frontend:
     image: ghcr.io/pvcordeiro/transcendence-frontend
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
@@ -16,8 +43,6 @@ services:
     image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run dev"
-    ports:
-      - "3000:3000"
     environment:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0

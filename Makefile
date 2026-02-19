@@ -33,6 +33,7 @@ prod-buildx:
 	docker buildx build --platform linux/amd64,linux/arm64 -f game/Dockerfile -t ghcr.io/pvcordeiro/transcendence-game --push .
 	docker buildx build --platform linux/amd64,linux/arm64 -f users/Dockerfile -t ghcr.io/pvcordeiro/transcendence-users --push .
 	docker buildx build --platform linux/amd64,linux/arm64 -f chat/Dockerfile -t ghcr.io/pvcordeiro/transcendence-chat --push .
+	docker buildx build --platform linux/amd64,linux/arm64 -f nginx/Dockerfile -t ghcr.io/pvcordeiro/transcendence-proxy --push nginx
 
 prod-down:
 	docker compose --profile prod down

@@ -27,6 +27,10 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+
+  async rewrites() {
+    return [];
+  },
 };
 
 export default withNextIntl(nextConfig);
