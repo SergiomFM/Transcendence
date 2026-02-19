@@ -308,8 +308,15 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
   if (pong.isSpectator || pong.localReady) {
     return;
   }
-  if (pong.GUI && message.ready) {
+  if (!pong.GUI) {
+    return;
+  }
+  if (message.ready) {
     pong.GUI.showOtherPlayerReady();
+  } else {
+    pong.GUI.hideOtherPlayerReady();
+    pong.GUI.textFadeOut("WAITING_FOR_READY");
+    pong.GUI.pressReadyUI();
   }
 }
 

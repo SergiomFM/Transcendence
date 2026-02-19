@@ -196,6 +196,8 @@ module.exports = async function (fastify, opts) {
 										promotion.playerId === 1
 											? currentRoom.player1
 											: currentRoom.player2;
+									currentRoom.player1.ready = false;
+									currentRoom.player2.ready = false;
 									promotedPlayer.ready = false;
 									connection.role = "player";
 									connection.send(
@@ -206,6 +208,16 @@ module.exports = async function (fastify, opts) {
 										}),
 									);
 									currentRoom.sendStateToConnection(connection);
+									currentRoom.broadcastEventToPlayers({
+										type: "PLAYER_READY_STATUS",
+										playerId: 1,
+										ready: false,
+									});
+									currentRoom.broadcastEventToPlayers({
+										type: "PLAYER_READY_STATUS",
+										playerId: 2,
+										ready: false,
+									});
 									notifySeatAvailability(currentRoom);
 									if (isRoomFull(currentRoom)) {
 										currentRoom.broadcastEventToPlayers({
@@ -276,10 +288,22 @@ module.exports = async function (fastify, opts) {
 
 					case "BECOME_SPECTATOR":
 						if (currentRoom && connection.role === "player") {
+							currentRoom.player1.ready = false;
+							currentRoom.player2.ready = false;
 							currentRoom.demotePlayerToSpectator(connection);
 							notifySeatAvailability(currentRoom);
 							currentRoom.broadcastEventToPlayers({
 								type: "PLAYER_DISCONNECTED",
+							});
+							currentRoom.broadcastEventToPlayers({
+								type: "PLAYER_READY_STATUS",
+								playerId: 1,
+								ready: false,
+							});
+							currentRoom.broadcastEventToPlayers({
+								type: "PLAYER_READY_STATUS",
+								playerId: 2,
+								ready: false,
 							});
 						}
 						break;
