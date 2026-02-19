@@ -109,6 +109,10 @@ function handleServerMessage(
       handleSessionReplaced(pong, onSessionReplaced);
       break;
 
+    case "ROOM_NOT_FOUND":
+      handleRoomNotFound(pong, message);
+      break;
+
     case "SPELL_USED":
       handleSpellUsed(pong, message);
       break;
@@ -225,6 +229,8 @@ function handleGameJoined(pong: Pong, message: any) {
     pong.camera.setView(pong.isSpectator, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
+  Events.emitSpectatorState(pong);
+  Events.emitReadyState(pong);
 }
 
 function handleGameStart(pong: Pong) {
@@ -263,6 +269,8 @@ function handleGameDisconnection(pong: Pong) {
       pong.GUI.hideOtherPlayerReady();
     }
   }
+  Events.emitSpectatorState(pong);
+  Events.emitReadyState(pong);
 }
 
 function handleSeatAvailable(pong: Pong, message: any) {
@@ -274,6 +282,7 @@ function handleSeatAvailable(pong: Pong, message: any) {
     pong.camera.setView(true, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
+  Events.emitSpectatorState(pong);
 }
 
 function handlePlayerPromoted(pong: Pong, message: any) {
@@ -292,6 +301,8 @@ function handlePlayerPromoted(pong: Pong, message: any) {
     pong.camera.setView(false, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
+  Events.emitSpectatorState(pong);
+  Events.emitReadyState(pong);
 }
 
 function handleSeatUnavailable(pong: Pong) {
@@ -302,6 +313,7 @@ function handleSeatUnavailable(pong: Pong) {
     pong.camera.setView(true, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
+  Events.emitSpectatorState(pong);
 }
 
 function handlePlayerReadyStatus(pong: Pong, message: any) {
@@ -318,6 +330,7 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
     pong.GUI.textFadeOut("WAITING_FOR_READY");
     pong.GUI.pressReadyUI();
   }
+  Events.emitReadyState(pong);
 }
 
 function handleSessionReplaced(
@@ -329,6 +342,11 @@ function handleSessionReplaced(
   if (onSessionReplaced) {
     onSessionReplaced();
   }
+}
+
+function handleRoomNotFound(pong: Pong, message: any) {
+  console.warn("Room not found:", message.roomId);
+  disconnectFromServer(pong);
 }
 
 function handleGameScore(pong: Pong, message: any) {
@@ -355,6 +373,7 @@ function handleGameScore(pong: Pong, message: any) {
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
+  Events.emitReadyState(pong);
   resetRoundColor(pong);
 }
 

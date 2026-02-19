@@ -121,12 +121,14 @@ module.exports = async function (fastify, opts) {
 								currentRoom = requestedRoom;
 								playerId = null;
 							} else {
-								const roomId = requestedRoomId;
-								const room = new GameRoom(roomId);
-								room.addSpectator(connection);
-								roomManager.rooms.set(roomId, room);
-								currentRoom = room;
-								playerId = null;
+								connection.send(
+									JSON.stringify({
+										type: "ROOM_NOT_FOUND",
+										roomId: requestedRoomId,
+									}),
+								);
+								connection.close();
+								return;
 							}
 						} else {
 							// Find or create a room for this player

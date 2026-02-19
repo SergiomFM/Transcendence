@@ -269,6 +269,8 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.failed = false;
   pong.player2.ready = false;
 
+  Events.emitReadyState(pong);
+
   pong.player1.counterSpell.resetSpell();
   pong.player1.offensiveSpell.resetSpell();
 

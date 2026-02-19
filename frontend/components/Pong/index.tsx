@@ -25,6 +25,8 @@ const Pong = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activePointers = useRef<Record<string, number | undefined>>({});
   const [showMobileControls, setShowMobileControls] = useState(false);
+  const [isSpectator, setIsSpectator] = useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -72,6 +74,35 @@ const Pong = ({
       window.removeEventListener("orientationchange", updateControls);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!online) {
+      setIsSpectator(false);
+      setIsReady(false);
+    }
+    const handleSpectator = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { isSpectator?: boolean };
+      if (typeof detail?.isSpectator === "boolean") {
+        setIsSpectator(detail.isSpectator);
+      }
+    };
+    const handleReady = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { isReady?: boolean };
+      if (typeof detail?.isReady === "boolean") {
+        setIsReady(detail.isReady);
+      }
+    };
+    window.addEventListener("pong:spectator", handleSpectator as EventListener);
+    window.addEventListener("pong:ready", handleReady as EventListener);
+    return () => {
+      window.removeEventListener(
+        "pong:spectator",
+        handleSpectator as EventListener,
+      );
+      window.removeEventListener("pong:ready", handleReady as EventListener);
+    };
+  }, [online]);
 
   const dispatchKey = (key: string, type: "keydown" | "keyup") => {
     if (typeof window === "undefined") return;
@@ -138,6 +169,12 @@ const Pong = ({
   const getButtonSrc = (id: string) =>
     pressedButtons[id] ? `/buttons/${id}_pressed.png` : `/buttons/${id}.png`;
 
+  const getReadyButtonSrc = () =>
+    isReady ? "/buttons/ready_pressed.png" : "/buttons/ready.png";
+
+  const getSpectateButtonSrc = () =>
+    isSpectator ? "/buttons/play.png" : "/buttons/spectate.png";
+
   return (
     <div className={cn("relative w-full h-full", className)}>
       <div className="w-full h-full flex items-center justify-center">
@@ -198,7 +235,7 @@ const Pong = ({
               onPointerCancel={handleTapRelease(" ", "ready")}
             >
               <img
-                src={getButtonSrc("ready")}
+                src={getReadyButtonSrc()}
                 alt="Ready"
                 className="h-10 w-auto object-contain"
                 draggable={false}
@@ -211,13 +248,13 @@ const Pong = ({
                 type="button"
                 className="touch-none select-none"
                 onPointerDown={handleTapPress("spec")}
-                onPointerUp={handleTapRelease("p", "spec")}
-                onPointerLeave={handleTapRelease("p", "spec")}
-                onPointerCancel={handleTapRelease("p", "spec")}
+                onPointerUp={handleTapRelease("c", "spec")}
+                onPointerLeave={handleTapRelease("c", "spec")}
+                onPointerCancel={handleTapRelease("c", "spec")}
               >
                 <img
-                  src={getButtonSrc("spec")}
-                  alt="Spectate"
+                  src={getSpectateButtonSrc()}
+                  alt={isSpectator ? "Play" : "Spectate"}
                   className="h-10 w-auto object-contain"
                   draggable={false}
                 />

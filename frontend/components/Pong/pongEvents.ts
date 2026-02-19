@@ -44,17 +44,30 @@ let player2Keys = [
 
 enum MENU_KEY {
   READY,
-  SWITCH_VIEW,
-  TOGGLE_SPECTATOR,
+  ACTION,
 }
 
 let menuKeys = [
   " ", // READY
-  "c", // SWITCH_VIEW
-  "p", // TOGGLE_SPECTATOR
+  "c", // ACTION
 ];
 
 export namespace Events {
+  function dispatchUiEvent(name: string, detail: Record<string, unknown>) {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.dispatchEvent(new CustomEvent(name, { detail }));
+  }
+
+  export function emitSpectatorState(pong: Pong) {
+    dispatchUiEvent("pong:spectator", { isSpectator: pong.isSpectator });
+  }
+
+  export function emitReadyState(pong: Pong) {
+    const isReady = pong.online ? pong.localReady : pong.player1.ready;
+    dispatchUiEvent("pong:ready", { isReady });
+  }
   // Key status
   export let keyStatus: { [key: string]: boolean } = {
     [player1Keys[0]]: false,
@@ -81,26 +94,33 @@ export namespace Events {
     }
     if (key in keyStatus && keyStatus[key] != true) {
       PlayerDirectionEvent(key, pong, true);
-    } else if (key == menuKeys[MENU_KEY.TOGGLE_SPECTATOR] && pong.online) {
-      if (pong.isSpectator) {
-        if (pong.seatsAvailable > 0) {
-          sendBecomePlayer(pong);
+    } else if (key == menuKeys[MENU_KEY.ACTION]) {
+      if (pong.online) {
+        if (pong.isSpectator) {
+          if (pong.seatsAvailable > 0) {
+            sendBecomePlayer(pong);
+          }
+        } else {
+          sendBecomeSpectator(pong);
+          pong.isSpectator = true;
+          pong.playerId = null;
+          pong.player1.score = 0;
+          pong.player2.score = 0;
+          if (pong.GUI) {
+            pong.GUI.spectatorModeUI(pong.seatsAvailable);
+            pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+            pong.GUI.hideOtherPlayerReady();
+          }
+          if (pong.camera) {
+            pong.camera.setView(true, true);
+            switchPlayerHandsPosition(pong, pong.camera.topView, false);
+          }
+          emitSpectatorState(pong);
         }
       } else {
-        sendBecomeSpectator(pong);
-        pong.isSpectator = true;
-        pong.playerId = null;
-        pong.player1.score = 0;
-        pong.player2.score = 0;
-        if (pong.GUI) {
-          pong.GUI.spectatorModeUI(pong.seatsAvailable);
-          pong.GUI.updateScores(pong.player1.score, pong.player2.score);
-          pong.GUI.hideOtherPlayerReady();
-        }
-        if (pong.camera) {
-          pong.camera.setView(true, true);
-          switchPlayerHandsPosition(pong, pong.camera.topView, false);
-        }
+        // Changes the camera perspective and moves scene elements
+        camera.switchCameraPOV();
+        switchPlayerHandsPosition(pong, camera.topView, false);
       }
     } else if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online && !pong.isSpectator) {
@@ -113,19 +133,14 @@ export namespace Events {
           pong.GUI.waitingForOpponentReadyUI();
         }
         sendPlayerReady(pong);
+        emitReadyState(pong);
       } else if (pong.online && pong.isSpectator) {
         return;
       } else if (!pong.online) {
         pong.player1.ready = true;
         pong.player2.ready = true;
+        emitReadyState(pong);
       }
-    } else if (key == menuKeys[MENU_KEY.SWITCH_VIEW]) {
-      if (pong.online && pong.isSpectator) {
-        return;
-      }
-      // Changes the camera perspective and moves scene elements
-      camera.switchCameraPOV();
-      switchPlayerHandsPosition(pong, camera.topView, false);
     } else if (pong.loaded && !pong.running) {
       waitingForStartEvents(key, pong);
     } else if (pong.loaded && pong.running) {
@@ -143,9 +158,11 @@ export namespace Events {
         }
         pong.localReady = true;
         sendPlayerReady(pong);
+        emitReadyState(pong);
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
+        emitReadyState(pong);
       }
     } else {
       playerSwitchSpellEvent(key, pong);

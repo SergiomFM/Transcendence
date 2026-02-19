@@ -221,7 +221,7 @@ const SPECTATING = [
 // Multiplayer: Spectator seat prompt
 const SPECTATOR_SEAT_PROMPT = [
   "SPECTATOR_SEAT_PROMPT", // Name
-  "Press P to claim a seat", // Text
+  "Press C to claim a seat", // Text
   "white", // Color
   "10%", // Size (vertical screen %)
   "pongFont1", // Font
