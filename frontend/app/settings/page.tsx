@@ -229,7 +229,7 @@ const TwoFASection = () => {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={qrCode}
-              alt="2FA QR Code"
+              alt={t("settings.qrCodeAlt")}
               className="rounded-md border mx-auto"
             />
             <form onSubmit={handleConfirm} className="space-y-3">
@@ -324,7 +324,7 @@ const SettingsPage = () => {
           <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("settings.subtitle")}</p>
         </div>
-        <ChangePasswordSection />
+        {!user.google_id && <ChangePasswordSection />}
         <TwoFASection />
       </div>
     </div>

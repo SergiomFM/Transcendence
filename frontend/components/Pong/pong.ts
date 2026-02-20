@@ -3,7 +3,7 @@ import { PongCamera } from "./pongCamera";
 import { createScene } from "./pongScene";
 import { Events } from "./pongEvents";
 import { Spell, BallAngleSwitch, BallStop } from "./pongSpells";
-import { GUI } from "./pongUI";
+import { GUI, PongTranslations } from "./pongUI";
 import { ANIMATION_FPS } from "./pongAnimations";
 import { GAME_CONSTANTS } from "@/shared/constants";
 
@@ -200,10 +200,12 @@ export class Pong {
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
+  translations: PongTranslations;
 
-  constructor(canvasElement: HTMLCanvasElement) {
+  constructor(canvasElement: HTMLCanvasElement, translations: PongTranslations) {
     // Creating a Ball
     this.ball = new Ball(0, BALL_Y, 0);
+    this.translations = translations;
 
     // Configuring the Game Canvas
     this.canvas = canvasElement;
@@ -259,7 +261,7 @@ export class Pong {
     this.scene.clearColor = new Color4(0, 0, 0, 1);
 
     // Creating the Game UI elements
-    this.GUI = new GUI();
+    this.GUI = new GUI(this.translations);
     this.GUI.pressReadyUI();
     if (this.pendingWelcome) {
       this.GUI.textFadeIn("WELCOME", 1500);

@@ -2,6 +2,8 @@ import fastifyPassport from '@fastify/passport'
 
 export default async function (fastify){
 
+	const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 	//GOOGLE LOGIN START
 	fastify.get(
 	
@@ -32,11 +34,11 @@ export default async function (fastify){
 	
 		if (user.two_factor_enabled) {
 			req.session.pending2FA = user.id;
-			return reply.redirect('http://localhost:3000/2fa');
+			return reply.redirect(`${FRONTEND_URL}/auth?2fa=true`);
 		}
 	
 		await req.logIn(user);
-		return reply.redirect('http://localhost:3000');
+		return reply.redirect(FRONTEND_URL);
 		}
 	);
 
@@ -61,7 +63,9 @@ export default async function (fastify){
 				email: req.user.email,
 				username: req.user.username,
 				alias: req.user.alias,
-				role: req.user.role
+				role: req.user.role,
+				google_id: req.user.google_id || null,
+				two_factor_enabled: req.user.two_factor_enabled || 0
 			}
 		}	
 	});

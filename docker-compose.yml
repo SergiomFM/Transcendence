@@ -36,6 +36,7 @@ services:
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_SITE_URL: https://transcendence.pvcordeiro.dev
     profiles:
       - prod
 
@@ -46,6 +47,7 @@ services:
     environment:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
@@ -63,6 +65,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: file:./database/app.db
+      FRONTEND_URL: https://transcendence.pvcordeiro.dev
+      GOOGLE_CALLBACK_URL: https://transcendence.pvcordeiro.dev/api/users/auth/google/callback
     env_file:
       - users/.env
     volumes:
@@ -79,6 +83,8 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_URL: file:./database/app.db
+      FRONTEND_URL: http://localhost:3000
+      GOOGLE_CALLBACK_URL: http://localhost:3001/auth/google/callback
     env_file:
       - users/.env
     volumes:
@@ -129,6 +135,7 @@ services:
     environment:
       NODE_ENV: production
       USERS_BACKEND_URL: http://users:3000
+      FRONTEND_URL: https://transcendence.pvcordeiro.dev
     profiles:
       - prod
 
@@ -141,6 +148,7 @@ services:
     environment:
       NODE_ENV: development
       USERS_BACKEND_URL: http://users-dev:3000
+      FRONTEND_URL: http://localhost:3000
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached

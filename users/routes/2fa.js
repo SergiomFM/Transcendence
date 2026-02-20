@@ -100,6 +100,10 @@ export default async function twoFARoutes(fastify, opts){
 			if (!usedRecovery) {
 				return reply.code(401).send({ error: "Invalid authentication code." });
 			}
+
+			if (usedRecovery.alreadyUsed) {
+				return reply.code(401).send({ error: "This recovery code has already been used." });
+			}
 		}
 
 		if (usedRecovery) {

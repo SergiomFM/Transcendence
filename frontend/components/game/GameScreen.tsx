@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense, lazy, useRef, useEffect, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize } from "lucide-react";
@@ -15,6 +16,7 @@ interface GameScreenProps {
 }
 
 export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
+  const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [rooms, setRooms] = useState<
     Array<{
@@ -128,7 +130,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
       try {
         const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`);
         if (!response.ok) {
-          throw new Error("Failed to load rooms");
+          throw new Error(t("game.failedToLoadRooms"));
         }
         const data = await response.json();
         if (active) {
@@ -136,7 +138,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         }
       } catch (error) {
         if (active) {
-          setRoomsError("Unable to load rooms");
+          setRoomsError(t("game.unableToLoadRooms"));
         }
       } finally {
         if (active) {
@@ -150,7 +152,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
       active = false;
       clearInterval(interval);
     };
-  }, [gameMode, selectedRoomId]);
+  }, [gameMode, selectedRoomId, t]);
 
   if (gameMode === "multiplayer") {
     if (selectedRoomId) {
@@ -179,7 +181,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               <Suspense
                 fallback={
                   <div className="flex items-center justify-center w-full h-full text-xl text-white">
-                    Loading game...
+                    {t("game.loadingGame")}
                   </div>
                 }
               >
@@ -197,8 +199,9 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 onClick={toggleFullscreen}
                 variant="ghost"
                 size="icon"
-                className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white"
-                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+                className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                onContextMenu={(event) => event.preventDefault()}
+                title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
               >
                 {isFullscreen ? (
                   <Minimize className="w-5 h-5" />
@@ -212,16 +215,17 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   setSelectedRoomId(null);
                 }}
                 variant="ghost"
-                className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white"
+                className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                onContextMenu={(event) => event.preventDefault()}
               >
-                Back to rooms
+                {t("game.backToRooms")}
               </Button>
             </div>
           </div>
 
           {!isFullscreen && (
             <div className="text-center p-4 flex-shrink-0">
-              <p className="text-sm text-gray-400">🌐 Multiplayer Rooms</p>
+              <p className="text-sm text-gray-400">{t("game.multiplayerRooms")}</p>
             </div>
           )}
         </div>
@@ -230,14 +234,14 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     return (
       <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-6 p-8">
         <div className="text-center max-w-2xl">
-          <h1 className="text-3xl font-bold">Multiplayer Rooms</h1>
+          <h1 className="text-3xl font-bold">{t("game.multiplayerRooms")}</h1>
           <p className="text-sm text-gray-400 mt-2">
-            Choose a room to spectate or grab a seat.
+            {t("game.multiplayerRoomsSubtitle")}
           </p>
         </div>
         <div className="w-full max-w-3xl border border-gray-700 rounded-xl p-6 bg-black/40 text-white">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Active Rooms</h2>
+            <h2 className="text-lg font-semibold">{t("game.activeRooms")}</h2>
                 <Button
                   size="sm"
                   variant="secondary"
@@ -247,29 +251,29 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                         method: "POST",
                       });
                   if (!response.ok) {
-                    throw new Error("Failed to create room");
+                    throw new Error(t("game.failedToCreateRoom"));
                   }
                   const data = await response.json();
                       if (data?.id) {
                         setSelectedRoomId(data.id);
                       }
                     } catch (error) {
-                      setRoomsError("Unable to create room");
+                      setRoomsError(t("game.unableToCreateRoom"));
                     }
                   }}
                 >
-              Create Room
+              {t("game.createRoom")}
             </Button>
           </div>
           <div className="space-y-3">
             {roomsLoading && (
-              <div className="text-sm text-gray-400">Loading rooms...</div>
+              <div className="text-sm text-gray-400">{t("game.loadingRooms")}</div>
             )}
             {roomsError && (
               <div className="text-sm text-red-300">{roomsError}</div>
             )}
             {!roomsLoading && !roomsError && rooms.length === 0 && (
-              <div className="text-sm text-gray-400">No active rooms yet.</div>
+              <div className="text-sm text-gray-400">{t("game.noActiveRooms")}</div>
             )}
             {rooms.map((room) => (
               <div
@@ -279,30 +283,30 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 <div>
                   <div className="text-sm font-semibold">{room.id}</div>
                   <div className="text-xs text-gray-400">
-                    Players: {room.players} · Spectators: {room.spectators}
+                    {t("game.players")}: {room.players} · {t("game.spectators")}: {room.spectators}
                   </div>
                   {room.score && (
                     <div className="text-xs text-gray-500">
-                      Score: {room.score.player1} - {room.score.player2}
+                      {t("game.score")}: {room.score.player1} - {room.score.player2}
                     </div>
                   )}
                 </div>
                 <div className="text-xs text-gray-300">
-                  {room.running ? "In match" : "Waiting"}
+                  {room.running ? t("game.inMatch") : t("game.waiting")}
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => setSelectedRoomId(room.id)}
                 >
-                  Join
+                  {t("game.join")}
                 </Button>
               </div>
             ))}
           </div>
         </div>
         <Button variant="ghost" onClick={handleBackToMenu}>
-          Back to menu
+          {t("game.backToMenu")}
         </Button>
       </div>
     );
@@ -333,7 +337,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
           <Suspense
             fallback={
               <div className="flex items-center justify-center w-full h-full text-xl text-white">
-                Loading game...
+                {t("game.loadingGame")}
               </div>
             }
           >
@@ -350,7 +354,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             variant="ghost"
             size="icon"
             className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white"
-            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+            title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
           >
             {isFullscreen ? (
               <Minimize className="w-5 h-5" />
@@ -365,8 +369,8 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         <div className="text-center p-4 flex-shrink-0">
           <p className="text-sm text-gray-400">
             {gameMode === "online"
-              ? "🌐 Online Multiplayer Mode"
-              : "🎮 Local Single Player Mode"}
+              ? t("game.onlineMode")
+              : t("game.localMode")}
           </p>
         </div>
       )}

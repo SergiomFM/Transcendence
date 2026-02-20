@@ -1,6 +1,8 @@
 const isBrowser = typeof window !== "undefined";
-const host = isBrowser ? window.location.host : "localhost:3000";
-const httpProtocol = isBrowser ? window.location.protocol : "http:";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const fallbackHost = new URL(siteUrl).host;
+const host = isBrowser ? window.location.host : fallbackHost;
+const httpProtocol = isBrowser ? window.location.protocol : new URL(siteUrl).protocol;
 const wsProtocol = isBrowser && window.location.protocol === "https:" ? "wss:" : "ws:";
 
 export const USERS_BACKEND_URL = `${httpProtocol}//${host}/api/users`;

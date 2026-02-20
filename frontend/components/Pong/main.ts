@@ -1,4 +1,5 @@
 import { Pong, FPS } from "./pong";
+import { PongTranslations } from "./pongUI";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { gameLogic } from "./pongLogic";
 import { connectToGameServer, disconnectFromServer } from "./pongSocket";
@@ -25,9 +26,30 @@ export const startPong = async (
     gameServerUrl?: string;
     roomId?: string;
     onSessionReplaced?: () => void;
+    translations?: PongTranslations;
   },
 ) => {
-  let pong = new Pong(canvas);
+  const defaultTranslations: PongTranslations = {
+    welcomeWarlock: "Welcome Warlock",
+    pressSpaceReady: "(Press space when ready)",
+    youWon: "You Won!",
+    player1Wins: "Player 1 Wins!",
+    youLost: "You Lost!",
+    player2Wins: "Player 2 Wins!",
+    waitingForOpponent: "Waiting for opponent...",
+    getReady: "Get Ready...",
+    fight: "FIGHT!",
+    opponentDisconnected: "Opponent Disconnected",
+    disconnectedFromServer: "Disconnected from Server",
+    opponentConnected: "Opponent connected",
+    waitingForOpponentReady: "Waiting for opponent ready",
+    spectating: "Spectating",
+    pressClaimSeat: "Press C to claim a seat",
+    otherPlayerReady: "Other player ready",
+    labelYou: "(YOU)",
+    labelOpponent: "(HIM)",
+  };
+  let pong = new Pong(canvas, options?.translations ?? defaultTranslations);
   await pong.initPong();
 
   // Connect to multiplayer server if online mode

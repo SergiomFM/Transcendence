@@ -8,10 +8,12 @@
     "password": "Palavra-passe",
     "confirmPassword": "Confirmar Palavra-passe",
     "username": "Nome de utilizador",
+    "alias": "Alcunha",
     "submit": "Submeter",
     "loading": "A carregar...",
     "error": "Erro",
-    "success": "Sucesso"
+    "success": "Sucesso",
+    "close": "Fechar"
   },
   "auth": {
     "loginTitle": "Bem-vindo de Volta",
@@ -30,11 +32,19 @@
     "loginWithGoogle": "Continuar com o Google",
     "orContinueWith": "ou continuar com",
     "switchToSignup": "Registar",
-    "switchToLogin": "Entrar"
+    "switchToLogin": "Entrar",
+    "placeholderUsername": "johndoe",
+    "placeholderEmail": "email@exemplo.com",
+    "placeholderAlias": "João Silva",
+    "placeholderRecoveryCode": "xxxxxxxx"
   },
   "navbar": {
     "home": "Início",
     "play": "Jogar"
+  },
+  "home": {
+    "welcomeTo": "Bem-vindo ao",
+    "playPong": "Jogar Pong"
   },
   "profile": {
     "notFound": "Utilizador não encontrado",
@@ -67,6 +77,66 @@
     "recoveryCodes": "Códigos de Recuperação",
     "recoveryCodesDesc": "Guarda estes códigos num local seguro. Cada código só pode ser usado uma vez.",
     "copyCodes": "Copiar Códigos",
-    "copied": "Copiado!"
+    "copied": "Copiado!",
+    "useRecoveryCode": "Usar um código de recuperação",
+    "enterRecoveryCode": "Introduz um dos teus códigos de recuperação",
+    "recoveryCode": "Código de Recuperação",
+    "useAuthCode": "Usar código do autenticador",
+    "qrCodeAlt": "Código QR 2FA"
+  },
+  "game": {
+    "selectMode": "Selecionar Modo de Jogo",
+    "singlePlayer": "Um Jogador",
+    "multiplayer": "Multijogador",
+    "loadingGame": "A carregar jogo...",
+    "exitFullscreen": "Sair do Ecrã Inteiro",
+    "enterFullscreen": "Ecrã Inteiro",
+    "backToRooms": "Voltar às salas",
+    "multiplayerRooms": "Salas Multijogador",
+    "multiplayerRoomsSubtitle": "Escolhe uma sala para assistir ou ocupar um lugar.",
+    "activeRooms": "Salas Ativas",
+    "createRoom": "Criar Sala",
+    "loadingRooms": "A carregar salas...",
+    "noActiveRooms": "Ainda não há salas ativas.",
+    "players": "Jogadores",
+    "spectators": "Espetadores",
+    "score": "Pontuação",
+    "inMatch": "Em jogo",
+    "waiting": "À espera",
+    "join": "Entrar",
+    "backToMenu": "Voltar ao menu",
+    "onlineMode": "Modo Multijogador Online",
+    "localMode": "Modo Um Jogador Local",
+    "failedToLoadRooms": "Falha ao carregar salas",
+    "unableToLoadRooms": "Não foi possível carregar salas",
+    "failedToCreateRoom": "Falha ao criar sala",
+    "unableToCreateRoom": "Não foi possível criar sala",
+    "ariaLeft": "Esquerda",
+    "ariaRight": "Direita",
+    "ariaReady": "Pronto",
+    "ariaPlay": "Jogar",
+    "ariaSpectate": "Assistir",
+    "ariaDefense": "Defesa",
+    "ariaAttack": "Ataque"
+  },
+  "pong": {
+    "welcomeWarlock": "Bem-vindo Feiticeiro",
+    "pressSpaceReady": "(Pressiona espaço quando estiveres pronto)",
+    "youWon": "Ganhaste!",
+    "player1Wins": "Jogador 1 Ganhou!",
+    "youLost": "Perdeste!",
+    "player2Wins": "Jogador 2 Ganhou!",
+    "waitingForOpponent": "À espera do adversário...",
+    "getReady": "Prepara-te...",
+    "fight": "LUTA!",
+    "opponentDisconnected": "Adversário Desconectou",
+    "disconnectedFromServer": "Desconectado do Servidor",
+    "opponentConnected": "Adversário conectado",
+    "waitingForOpponentReady": "À espera que o adversário esteja pronto",
+    "spectating": "A assistir",
+    "pressClaimSeat": "Pressiona C para ocupar um lugar",
+    "otherPlayerReady": "Outro jogador pronto",
+    "labelYou": "(TU)",
+    "labelOpponent": "(ELE)"
   }
 }

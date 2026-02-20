@@ -8,10 +8,12 @@
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "username": "Username",
+    "alias": "Alias",
     "submit": "Submit",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "close": "Close"
   },
   "auth": {
     "loginTitle": "Welcome Back",
@@ -30,11 +32,19 @@
     "loginWithGoogle": "Continue with Google",
     "orContinueWith": "or continue with",
     "switchToSignup": "Sign Up",
-    "switchToLogin": "Sign In"
+    "switchToLogin": "Sign In",
+    "placeholderUsername": "johndoe",
+    "placeholderEmail": "email@example.com",
+    "placeholderAlias": "John Doe",
+    "placeholderRecoveryCode": "xxxxxxxx"
   },
   "navbar": {
     "home": "Home",
     "play": "Play"
+  },
+  "home": {
+    "welcomeTo": "Welcome to",
+    "playPong": "Play Pong"
   },
   "profile": {
     "notFound": "User not found",
@@ -67,6 +77,66 @@
     "recoveryCodes": "Recovery Codes",
     "recoveryCodesDesc": "Save these codes in a safe place. Each code can only be used once.",
     "copyCodes": "Copy Codes",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "useRecoveryCode": "Use a recovery code instead",
+    "enterRecoveryCode": "Enter one of your recovery codes",
+    "recoveryCode": "Recovery Code",
+    "useAuthCode": "Use authenticator code instead",
+    "qrCodeAlt": "2FA QR Code"
+  },
+  "game": {
+    "selectMode": "Select Game Mode",
+    "singlePlayer": "Single Player",
+    "multiplayer": "Multiplayer",
+    "loadingGame": "Loading game...",
+    "exitFullscreen": "Exit Fullscreen",
+    "enterFullscreen": "Enter Fullscreen",
+    "backToRooms": "Back to rooms",
+    "multiplayerRooms": "Multiplayer Rooms",
+    "multiplayerRoomsSubtitle": "Choose a room to spectate or grab a seat.",
+    "activeRooms": "Active Rooms",
+    "createRoom": "Create Room",
+    "loadingRooms": "Loading rooms...",
+    "noActiveRooms": "No active rooms yet.",
+    "players": "Players",
+    "spectators": "Spectators",
+    "score": "Score",
+    "inMatch": "In match",
+    "waiting": "Waiting",
+    "join": "Join",
+    "backToMenu": "Back to menu",
+    "onlineMode": "Online Multiplayer Mode",
+    "localMode": "Local Single Player Mode",
+    "failedToLoadRooms": "Failed to load rooms",
+    "unableToLoadRooms": "Unable to load rooms",
+    "failedToCreateRoom": "Failed to create room",
+    "unableToCreateRoom": "Unable to create room",
+    "ariaLeft": "Left",
+    "ariaRight": "Right",
+    "ariaReady": "Ready",
+    "ariaPlay": "Play",
+    "ariaSpectate": "Spectate",
+    "ariaDefense": "Defense",
+    "ariaAttack": "Attack"
+  },
+  "pong": {
+    "welcomeWarlock": "Welcome Warlock",
+    "pressSpaceReady": "(Press space when ready)",
+    "youWon": "You Won!",
+    "player1Wins": "Player 1 Wins!",
+    "youLost": "You Lost!",
+    "player2Wins": "Player 2 Wins!",
+    "waitingForOpponent": "Waiting for opponent...",
+    "getReady": "Get Ready...",
+    "fight": "FIGHT!",
+    "opponentDisconnected": "Opponent Disconnected",
+    "disconnectedFromServer": "Disconnected from Server",
+    "opponentConnected": "Opponent connected",
+    "waitingForOpponentReady": "Waiting for opponent ready",
+    "spectating": "Spectating",
+    "pressClaimSeat": "Press C to claim a seat",
+    "otherPlayerReady": "Other player ready",
+    "labelYou": "(YOU)",
+    "labelOpponent": "(HIM)"
   }
 }

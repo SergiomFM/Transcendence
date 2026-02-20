@@ -15,6 +15,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@/components/ui/input-otp";
 import { isRequestError } from "@/lib/backend";
 import { Users } from "@/lib/backend/users";
 import { FcGoogle } from "react-icons/fc";
@@ -23,11 +37,19 @@ export default function AuthPage() {
   const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, register } = useAuth();
+  const { login, register, refreshUser } = useAuth();
 
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // 2FA modal state
+  const [show2FAModal, setShow2FAModal] = useState(false);
+  const [otpValue, setOtpValue] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
 
   // Login fields
   const [identifier, setIdentifier] = useState("");
@@ -45,7 +67,40 @@ export default function AuthPage() {
     if (oauthMessage) {
       setError(oauthMessage);
     }
+    if (searchParams.get("2fa") === "true") {
+      setShow2FAModal(true);
+    }
   }, [searchParams]);
+
+  const handle2FAVerify = async () => {
+    const token = useRecoveryCode ? recoveryCode.trim() : otpValue;
+
+    if (!useRecoveryCode && otpValue.length !== 6) {
+      setOtpError(t("settings.tokenRequired"));
+      return;
+    }
+    if (useRecoveryCode && !recoveryCode.trim()) {
+      setOtpError(t("settings.tokenRequired"));
+      return;
+    }
+
+    setOtpError("");
+    setIsVerifying2FA(true);
+    try {
+      await Users.verify2FA(token);
+      await refreshUser();
+      router.push("/");
+    } catch (err) {
+      if (isRequestError(err)) {
+        const data = err.data as { error?: string } | undefined;
+        setOtpError(data?.error || t("auth.invalidCredentials"));
+      } else {
+        setOtpError(t("auth.invalidCredentials"));
+      }
+    } finally {
+      setIsVerifying2FA(false);
+    }
+  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +121,11 @@ export default function AuthPage() {
       router.push("/");
     } catch (err) {
       if (err instanceof Error && err.message === "2FA_REQUIRED") {
-        setError("2FA is required");
+        setShow2FAModal(true);
+        setOtpValue("");
+        setRecoveryCode("");
+        setUseRecoveryCode(false);
+        setOtpError("");
       } else if (isRequestError(err)) {
         const data = err.data as { error?: string } | undefined;
         setError(data?.error || t("auth.invalidCredentials"));
@@ -170,7 +229,7 @@ export default function AuthPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="johndoe"
+                  placeholder={t("auth.placeholderUsername")}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   disabled={isLoading}
@@ -181,18 +240,18 @@ export default function AuthPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="email@example.com"
+                  placeholder={t("auth.placeholderEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="alias">Alias</Label>
+                <Label htmlFor="alias">{t("common.alias")}</Label>
                 <Input
                   id="alias"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t("auth.placeholderAlias")}
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   disabled={isLoading}
@@ -264,7 +323,7 @@ export default function AuthPage() {
                 <Input
                   id="identifier"
                   type="text"
-                  placeholder="email@example.com"
+                  placeholder={t("auth.placeholderEmail")}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   disabled={isLoading}
@@ -311,6 +370,85 @@ export default function AuthPage() {
           </form>
         )}
       </Card>
+
+      <Dialog open={show2FAModal} onOpenChange={(open) => {
+        setShow2FAModal(open);
+        if (!open) {
+          setOtpValue("");
+          setRecoveryCode("");
+          setUseRecoveryCode(false);
+          setOtpError("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("settings.twoFA")}</DialogTitle>
+            <DialogDescription>
+              {useRecoveryCode ? t("settings.enterRecoveryCode") : t("settings.enterCode")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            {otpError && (
+              <div className="w-full rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {otpError}
+              </div>
+            )}
+            {useRecoveryCode ? (
+              <div className="w-full space-y-2">
+                <Label htmlFor="recovery-code">{t("settings.recoveryCode")}</Label>
+                <Input
+                  id="recovery-code"
+                  type="text"
+                  placeholder={t("auth.placeholderRecoveryCode")}
+                  value={recoveryCode}
+                  onChange={(e) => setRecoveryCode(e.target.value)}
+                  disabled={isVerifying2FA}
+                />
+              </div>
+            ) : (
+              <InputOTP
+                maxLength={6}
+                value={otpValue}
+                onChange={(value) => setOtpValue(value)}
+                disabled={isVerifying2FA}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                </InputOTPGroup>
+                <InputOTPSeparator />
+                <InputOTPGroup>
+                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={4} />
+                  <InputOTPSlot index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            )}
+          </div>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-col">
+            <Button
+              className="w-full"
+              onClick={handle2FAVerify}
+              disabled={isVerifying2FA || (!useRecoveryCode && otpValue.length !== 6) || (useRecoveryCode && !recoveryCode.trim())}
+            >
+              {isVerifying2FA ? t("common.loading") : t("settings.verify")}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="w-full"
+              onClick={() => {
+                setUseRecoveryCode(!useRecoveryCode);
+                setOtpError("");
+              }}
+              disabled={isVerifying2FA}
+            >
+              {useRecoveryCode ? t("settings.useAuthCode") : t("settings.useRecoveryCode")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,12 +14,24 @@ import {
 import { LogOut, Settings, User } from "lucide-react";
 import { Users } from "@/lib/backend";
 
+const LOCALES = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "pt", label: "Português", flag: "🇧🇷" },
+  { code: "cv", label: "Kriolu", flag: "🇨🇻" },
+] as const;
+
 export function Navbar() {
   const t = useTranslations();
+  const locale = useLocale();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const switchLocale = (newLocale: string) => {
+    document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
+    window.location.reload();
   };
 
   return (
@@ -46,6 +58,29 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1.5">
+                <span>{LOCALES.find((l) => l.code === locale)?.flag}</span>
+                <span className="hidden sm:inline text-sm">
+                  {LOCALES.find((l) => l.code === locale)?.label}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {LOCALES.map((l) => (
+                <DropdownMenuItem
+                  key={l.code}
+                  onClick={() => switchLocale(l.code)}
+                  className={locale === l.code ? "font-semibold" : ""}
+                >
+                  <span className="mr-2">{l.flag}</span>
+                  {l.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {isLoading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
           ) : isAuthenticated && user ? (

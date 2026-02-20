@@ -5,6 +5,7 @@ export type User = {
   alias: string;
   role: string;
   two_factor_enabled?: number;
+  google_id?: string | null;
 };
 
 export type PlayerProfile = {
