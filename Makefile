@@ -66,6 +66,9 @@ prod-logs-chat:
 prod-logs-game:
 	docker compose --profile prod logs -f game
 
+prod-logs-proxy:
+	docker compose --profile prod logs -f proxy
+
 # STATUS
 status:
 	docker compose ps -a
