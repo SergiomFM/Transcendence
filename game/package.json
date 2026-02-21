@@ -8,8 +8,8 @@
   },
   "scripts": {
     "test": "node --test test/**/*.test.js",
-    "start": "fastify start -l warn app.js",
-    "dev": "fastify start -w -l warn -a 0.0.0.0 app.js"
+    "start": "fastify start -l info app.js",
+    "dev": "fastify start -w -l info -a 0.0.0.0 app.js"
   },
   "keywords": [],
   "author": "",
