@@ -9,7 +9,7 @@ import {
 import { Ball, Player, Pong } from "./pong";
 import { Spell } from "./pongSpells";
 import { GAME_CONSTANTS } from "@/shared/constants";
-import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady, startMusic, stopMusic } from "./pongAudio";
+import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady } from "./pongAudio";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -32,7 +32,6 @@ function localGameLogic(pong: Pong, delta: number) {
       setTimeout(() => {
         pong.running = true;
         pong.startingRound = false;
-        stopMusic();
       }, GAME_CONSTANTS.ROUND_START_DELAY);
     }
     return;
@@ -298,6 +297,5 @@ function playerScore(pong: Pong, ball: Ball) {
 
   pong.running = false;
   pong.startingRound = false;
-  startMusic();
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
 }

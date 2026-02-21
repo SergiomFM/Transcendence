@@ -8,7 +8,7 @@ import { switchPlayerHandsPosition } from "./pongAnimations";
 import {
   sfxCollision, sfxScore, sfxLostRound, sfxVictory, sfxDefeat,
   sfxConnect, sfxDisconnect, sfxPromoted, sfxSeatAvailable,
-  sfxOpponentReady, sfxSpellSwitch, startMusic, stopMusic,
+  sfxOpponentReady, sfxSpellSwitch,
 } from "./pongAudio";
 
 export function connectToGameServer(
@@ -252,9 +252,7 @@ function handleGameStart(pong: Pong) {
     return;
   }
 
-  // Stop music for players during the match
-  stopMusic();
-
+  // Start the match
   pong.running = true;
   if (pong.GUI) {
     pong.GUI.startRoundUI();
@@ -270,11 +268,6 @@ function handleGameDisconnection(pong: Pong) {
   pong.player2.connected = false;
   pong.localReady = false;
   sfxDisconnect();
-
-  // Resume music — match interrupted
-  if (!pong.isSpectator) {
-    startMusic();
-  }
 
   if (pong.GUI) {
     if (pong.isSpectator) {
@@ -405,13 +398,11 @@ function handleGameScore(pong: Pong, message: any) {
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
       sfxLostRound();
-      startMusic();
     } else {
       pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
       sfxScore();
-      startMusic();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
@@ -437,11 +428,9 @@ function handleGameOver(pong: Pong, message: any) {
     } else if (message.won) {
       pong.GUI.matchWonUI(message.player1Score, message.player2Score);
       sfxVictory();
-      startMusic();
     } else {
       pong.GUI.matchLostUI(message.player1Score, message.player2Score);
       sfxDefeat();
-      startMusic();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
