@@ -10,6 +10,7 @@ import {
   sendPlayerDirection,
   sendBecomeSpectator,
 } from "./pongSocket";
+import { sfxReady } from "./pongAudio";
 
 enum PLAYER_KEYS {
   UP,
@@ -111,11 +112,13 @@ export namespace Events {
           pong.GUI.waitingForOpponentReadyUI();
         }
         sendPlayerReady(pong);
+        sfxReady();
 
         return;
       } else if (!pong.online) {
         pong.player1.ready = true;
         pong.player2.ready = true;
+        sfxReady();
       }
     } else if (pong.loaded && !pong.running) {
       waitingForStartEvents(key, pong);

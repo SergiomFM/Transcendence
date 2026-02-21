@@ -30,6 +30,7 @@ import {
   ANIMATION_FPS,
 } from "./pongAnimations";
 import { SPELL_CONSTANTS } from "@/shared/constants";
+import { sfxSpellOffensive, sfxSpellDefensive, sfxSpellReady, sfxSpellSwitch } from "./pongAudio";
 
 
 export abstract class Spell {
@@ -158,6 +159,9 @@ export abstract class Spell {
       );
     }, this.castingAnimation[3]);
 
+    // Play spell sound based on whether this is an offensive or counter spell
+    this.castingAnimation === OFFENSIVE_CASTING ? sfxSpellOffensive() : sfxSpellDefensive();
+
     this.changeArenaColor();
     this.resetSpell();
 
@@ -178,6 +182,7 @@ export abstract class Spell {
       if (this.cooldownElapsed >= this.cooldown) {
         this.ready = true;
         spellReadyVFX(this.pong.scene, this);
+        sfxSpellReady();
       }
     }
 
@@ -245,6 +250,7 @@ export class BallAngleSwitch extends Spell {
     this.stopParticles();
     let nextSpell = new BallShot(this.pong, this.player, this.name);
     this.player.offensiveSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {
@@ -282,6 +288,7 @@ class BallShot extends Spell {
     this.stopParticles();
     let nextSpell = new BallPortal(this.pong, this.player, this.name);
     this.player.offensiveSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {
@@ -325,6 +332,7 @@ class BallPortal extends Spell {
     this.stopParticles();
     let nextSpell = new BallAngleSwitch(this.pong, this.player, this.name);
     this.player.offensiveSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {
@@ -378,6 +386,7 @@ export class BallStop extends Spell {
     this.stopParticles();
     let nextSpell = new BallBack(this.pong, this.player, this.name);
     this.player.counterSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {
@@ -416,6 +425,7 @@ class BallBack extends Spell {
     this.stopParticles();
     let nextSpell = new BallIman(this.pong, this.player, this.name);
     this.player.counterSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {
@@ -448,6 +458,7 @@ class BallIman extends Spell {
     this.stopParticles();
     let nextSpell = new BallStop(this.pong, this.player, this.name);
     this.player.counterSpell = nextSpell;
+    sfxSpellSwitch();
   }
 
   useSpell(offensive: boolean) {

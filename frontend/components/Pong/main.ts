@@ -3,6 +3,7 @@ import { PongTranslations } from "./pongUI";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { gameLogic } from "./pongLogic";
 import { connectToGameServer, disconnectFromServer } from "./pongSocket";
+import { initAudio, startMusic, stopMusic, disposeAudio } from "./pongAudio";
 
 // Fetch game constants from backend
 async function fetchGameConstants(gameServerUrl: string) {
@@ -73,6 +74,10 @@ export const startPong = async (
     options.onPongReady(pong);
   }
 
+  // Initialize audio system and start background music
+  initAudio();
+  startMusic();
+
   let lastFrameTime = 0;
   let elapsedTime = 0;
   const frameDuration = 1000 / FPS;
@@ -95,6 +100,10 @@ export const startPong = async (
   // Return cleanup function
   return () => {
     isDisposed = true;
+
+    // Stop music and dispose audio
+    stopMusic();
+    disposeAudio();
 
     // Disconnect from server if online
     if (pong.online) {

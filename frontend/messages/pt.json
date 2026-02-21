@@ -156,7 +156,11 @@
     "spellMagnetDesc": "Curva a trajetória da bola em direção à tua raquete ao longo do tempo.",
     "tipsTitle": "Dicas",
     "tip1": "Troca os teus feitiços durante a fase de espera para preparar a tua estratégia.",
-    "tip2": "Combina feitiços ofensivos e defensivos para combos poderosos."
+    "tip2": "Combina feitiços ofensivos e defensivos para combos poderosos.",
+    "mute": "Silenciar",
+    "unmute": "Ativar som",
+    "muteMusic": "Silenciar Música",
+    "muteAll": "Silenciar Tudo"
   },
   "pong": {
     "welcomeWarlock": "Bem-vindo Feiticeiro",

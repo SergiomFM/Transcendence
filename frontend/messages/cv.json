@@ -156,7 +156,11 @@
     "spellMagnetDesc": "Kurva trajetória di bola na direson di bu rakete ao longu di tempu.",
     "tipsTitle": "Dikas",
     "tip1": "Troka bus feitisus durante fazi di spera pa prepara bu stratéjia.",
-    "tip2": "Kombina feitisus ofensivus i defensivus pa kombos poderozu."
+    "tip2": "Kombina feitisus ofensivus i defensivus pa kombos poderozu.",
+    "mute": "Silénsia",
+    "unmute": "Ativa son",
+    "muteMusic": "Silénsia Músika",
+    "muteAll": "Silénsia Tudu"
   },
   "pong": {
     "welcomeWarlock": "Ben Vindu Feitiseru",

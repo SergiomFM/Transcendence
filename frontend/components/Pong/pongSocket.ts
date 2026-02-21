@@ -5,6 +5,11 @@ import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
 import { GAME_WS_URL } from "@/lib/backend/config";
 import { switchPlayerHandsPosition } from "./pongAnimations";
+import {
+  sfxCollision, sfxScore, sfxLostRound, sfxVictory, sfxDefeat,
+  sfxConnect, sfxDisconnect, sfxPromoted, sfxSeatAvailable,
+  sfxOpponentReady, sfxSpellSwitch, startMusic, stopMusic,
+} from "./pongAudio";
 
 export function connectToGameServer(
   pong: Pong,
@@ -168,6 +173,8 @@ function handleSpellSwitched(pong: Pong, message: any) {
         player.counterSpell,
         message.spellName,
       ));
+
+  sfxSpellSwitch();
 }
 
 function handleGameReady(pong: Pong) {
@@ -179,6 +186,7 @@ function handleGameReady(pong: Pong) {
 
   if (!pong.player2.connected) {
     pong.player2.connected = true;
+    sfxConnect();
 
     if (pong.GUI) {
       pong.GUI.showReadyPrompt();
@@ -244,6 +252,9 @@ function handleGameStart(pong: Pong) {
     return;
   }
 
+  // Stop music for players during the match
+  stopMusic();
+
   pong.running = true;
   if (pong.GUI) {
     pong.GUI.startRoundUI();
@@ -258,6 +269,12 @@ function handleGameDisconnection(pong: Pong) {
   pong.running = false;
   pong.player2.connected = false;
   pong.localReady = false;
+  sfxDisconnect();
+
+  // Resume music — match interrupted
+  if (!pong.isSpectator) {
+    startMusic();
+  }
 
   if (pong.GUI) {
     if (pong.isSpectator) {
@@ -276,6 +293,9 @@ function handleSeatAvailable(pong: Pong, message: any) {
   if (pong.matchLostPending) {
     return;
   }
+  if (pong.isSpectator) {
+    sfxSeatAvailable();
+  }
   if (pong.isSpectator && pong.GUI) {
     pong.GUI.spectatorModeUI(pong.seatsAvailable);
   }
@@ -291,6 +311,7 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   pong.playerId = message.playerId ?? pong.playerId;
   pong.player1.connected = true;
   pong.player2.connected = true;
+  sfxPromoted();
   // Reset spell cooldowns so balls start small after promotion
   pong.player1.counterSpell.resetSpell();
   pong.player1.offensiveSpell.resetSpell();
@@ -339,6 +360,7 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
       pong.GUI.pressReadyUI();
     }
   } else if (message.ready) {
+    sfxOpponentReady();
     pong.GUI.showOtherPlayerReady();
   } else {
     pong.GUI.hideOtherPlayerReady();
@@ -382,10 +404,14 @@ function handleGameScore(pong: Pong, message: any) {
       pong.GUI.roundLostUI(true, message.player1Score, message.player2Score);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
+      sfxLostRound();
+      startMusic();
     } else {
       pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
+      sfxScore();
+      startMusic();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
@@ -410,8 +436,12 @@ function handleGameOver(pong: Pong, message: any) {
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
     } else if (message.won) {
       pong.GUI.matchWonUI(message.player1Score, message.player2Score);
+      sfxVictory();
+      startMusic();
     } else {
       pong.GUI.matchLostUI(message.player1Score, message.player2Score);
+      sfxDefeat();
+      startMusic();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
@@ -446,6 +476,7 @@ function handleCollision(pong: Pong, message: any) {
     message.angle,
     COLLISION_VFX,
   );
+  sfxCollision();
 }
 
 // Functions to send messages to the server

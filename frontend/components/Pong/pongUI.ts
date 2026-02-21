@@ -4,6 +4,7 @@ import { animateAttribute } from "./pongAnimations";
 import { FPS } from "./pong";
 import { GAME_CONSTANTS } from "@/shared/constants";
 import { text } from "stream/consumers";
+import { sfxCountdown, sfxFight } from "./pongAudio";
 
 export interface PongTranslations {
   welcomeWarlock: string;
@@ -390,10 +391,12 @@ export class GUI {
   startRoundUI() {
     this.resetTexts(this.GUI.getScene()!);
     this.textFadeIn("GET_READY", GAME_CONSTANTS.ROUND_START_DELAY / 2);
+    sfxCountdown();
     setTimeout(() => {
       this.textBlocks.get("FIGHT")!.alpha = 1;
       this.textBlocks.get("FIGHT")!.isVisible = true;
       this.textFadeOut("FIGHT");
+      sfxFight();
     }, GAME_CONSTANTS.ROUND_START_DELAY);
   }
 

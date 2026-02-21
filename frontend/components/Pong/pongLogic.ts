@@ -9,6 +9,7 @@ import {
 import { Ball, Player, Pong } from "./pong";
 import { Spell } from "./pongSpells";
 import { GAME_CONSTANTS } from "@/shared/constants";
+import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady, startMusic, stopMusic } from "./pongAudio";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -31,6 +32,7 @@ function localGameLogic(pong: Pong, delta: number) {
       setTimeout(() => {
         pong.running = true;
         pong.startingRound = false;
+        stopMusic();
       }, GAME_CONSTANTS.ROUND_START_DELAY);
     }
     return;
@@ -64,6 +66,7 @@ function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, p
   if (serverSpellData.spellReady && !spell.ready) {
     spell.ready = true;
     spellReadyVFX(scene, spell);
+    sfxSpellReady();
   } else if (!serverSpellData.spellReady) {
     spell.ready = false;
   }
@@ -165,6 +168,7 @@ function paddleCollision(
       -ball.angle,
       COLLISION_VFX,
     );
+    sfxPaddleHit();
   } else {
     paddle.failed = true;
   }
@@ -228,6 +232,7 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
       Tools.ToRadians(0 + 180 * Number(newX > 0)),
       COLLISION_VFX,
     );
+    sfxWallHit();
 
     // Changing the ball angle and x value to the amount it should reflect
     ball.x = Xlimit * sign - (newX - Xlimit * sign);
@@ -258,11 +263,13 @@ function playerScore(pong: Pong, ball: Ball) {
     pong.player2.score++;
     pong.GUI.roundLostUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(90));
+    sfxLostRound();
   } else {
     // Player 1 scored
     pong.player1.score++;
     pong.GUI.roundWonUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(-90));
+    sfxScore();
   }
 
   // Reseting attributes
@@ -291,5 +298,6 @@ function playerScore(pong: Pong, ball: Ball) {
 
   pong.running = false;
   pong.startingRound = false;
+  startMusic();
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
 }

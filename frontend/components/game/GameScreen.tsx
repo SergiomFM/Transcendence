@@ -4,9 +4,11 @@ import { useState, Suspense, lazy, useRef, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, Volume2, Volume1, VolumeX } from "lucide-react";
 import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/config";
 import { GameMode } from "./types";
+import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
+import type { VolumeState } from "@/components/Pong/pongAudio";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -19,6 +21,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(true);
+  const [muted, setMuted] = useState<VolumeState>(getVolumeState());
   const [rooms, setRooms] = useState<
     Array<{
       id: string;
@@ -33,6 +36,11 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const handleSessionReplaced = useCallback(() => setSelectedRoomId(null), []);
+
+  const handleToggleMute = useCallback(() => {
+    const newState = cycleVolume();
+    setMuted(newState);
+  }, []);
 
   // Detect whether the Fullscreen API is available (iOS Safari doesn't support it)
   useEffect(() => {
@@ -220,6 +228,31 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               </Button>
               )}
               <Button
+                onClick={handleToggleMute}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
+                  canFullscreen ? "right-14" : "right-4"
+                )}
+                onContextMenu={(event) => event.preventDefault()}
+                title={
+                  muted === "all-muted"
+                    ? t("game.unmute")
+                    : muted === "music-muted"
+                      ? t("game.muteAll")
+                      : t("game.muteMusic")
+                }
+              >
+                {muted === "all-muted" ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : muted === "music-muted" ? (
+                  <Volume1 className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
+                )}
+              </Button>
+              <Button
                 onClick={async () => {
                   await exitFullscreen();
                   setSelectedRoomId(null);
@@ -372,7 +405,8 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             onClick={toggleFullscreen}
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white"
+            className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+            onContextMenu={(event) => event.preventDefault()}
             title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
           >
             {isFullscreen ? (
@@ -382,6 +416,31 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             )}
           </Button>
           )}
+          <Button
+            onClick={handleToggleMute}
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
+              canFullscreen ? "right-14" : "right-4"
+            )}
+            onContextMenu={(event) => event.preventDefault()}
+            title={
+              muted === "all-muted"
+                ? t("game.unmute")
+                : muted === "music-muted"
+                  ? t("game.muteAll")
+                  : t("game.muteMusic")
+            }
+          >
+            {muted === "all-muted" ? (
+              <VolumeX className="w-5 h-5" />
+            ) : muted === "music-muted" ? (
+              <Volume1 className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </Button>
         </div>
       </div>
 
