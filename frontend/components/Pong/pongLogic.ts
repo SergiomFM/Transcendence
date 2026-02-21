@@ -1,5 +1,4 @@
 import { Vector3, Tools, Color4 } from "@babylonjs/core";
-import { Events } from "./pongEvents";
 import {
   splashEffect,
   COLLISION_VFX,
@@ -115,7 +114,6 @@ function applyServerState(pong: Pong, serverState: any) {
   }
 
   pong.running = serverState.running;
-  Events.emitRunningState(pong);
 }
 
 // Paddle collision check
@@ -273,8 +271,6 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.failed = false;
   pong.player2.ready = false;
 
-  Events.emitReadyState(pong);
-
   pong.player1.counterSpell.resetSpell();
   pong.player1.offensiveSpell.resetSpell();
 
@@ -287,5 +283,4 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.running = false;
   pong.startingRound = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
-  Events.emitRunningState(pong);
 }

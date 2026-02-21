@@ -27,6 +27,7 @@ export const startPong = async (
     roomId?: string;
     onSessionReplaced?: () => void;
     translations?: PongTranslations;
+    onPongReady?: (pong: Pong) => void;
   },
 ) => {
   const defaultTranslations: PongTranslations = {
@@ -66,6 +67,11 @@ export const startPong = async (
     pong.camera.instantSwitchCameraPOV();
   }
   switchPlayerHandsPosition(pong, pong.camera.topView, true);
+
+  // Notify React that the pong instance is ready
+  if (options?.onPongReady) {
+    options.onPongReady(pong);
+  }
 
   let lastFrameTime = 0;
   let elapsedTime = 0;

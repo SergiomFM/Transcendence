@@ -192,6 +192,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   gameServerUrl={GAME_HTTP_URL}
                   roomId={selectedRoomId}
                   onSessionReplaced={handleSessionReplaced}
+                  isFullscreen={isFullscreen}
                 />
               </Suspense>
 
@@ -352,6 +353,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               online={gameMode === "online"}
               serverUrl={GAME_WS_URL}
               gameServerUrl={GAME_HTTP_URL}
+              isFullscreen={isFullscreen}
             />
           </Suspense>
 
