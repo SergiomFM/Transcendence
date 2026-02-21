@@ -76,3 +76,5 @@ balance do jogo.
 
 por botao do perfil na navbar
 audio
+
+fix logged username
