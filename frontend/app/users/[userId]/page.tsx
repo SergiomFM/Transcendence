@@ -76,18 +76,18 @@ const UserProfilePage = () => {
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-8 sm:py-12">
-      <div className="w-full max-w-2xl space-y-6">
-        <Card>
+      <div className="w-full max-w-2xl space-y-6 animate-fade-up">
+        <Card className="border-glow">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-              <Avatar className="h-20 w-20 shrink-0">
+              <Avatar className="h-20 w-20 shrink-0 ring-2 ring-neon-muted shadow-[0_0_20px_var(--neon-muted)]">
                 <AvatarImage src={avatarUrl} alt={profile.display_name} />
                 <AvatarFallback className="text-xl">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-center sm:text-left w-full">
                 <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold truncate">
+                    <h1 className="text-xl sm:text-2xl font-bold truncate text-glow">
                       {profile.display_name}
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -115,34 +115,34 @@ const UserProfilePage = () => {
         </Card>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          <Card>
+          <Card className="border-neon-muted/30 hover:border-glow transition-all">
             <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.wins")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <p className="text-xl sm:text-2xl font-bold">—</p>
+              <p className="text-xl sm:text-2xl font-bold text-neon">—</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-neon-muted/30 hover:border-glow transition-all">
             <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.losses")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <p className="text-xl sm:text-2xl font-bold">—</p>
+              <p className="text-xl sm:text-2xl font-bold text-neon">—</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-neon-muted/30 hover:border-glow transition-all">
             <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.friends")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <p className="text-xl sm:text-2xl font-bold">—</p>
+              <p className="text-xl sm:text-2xl font-bold text-neon">—</p>
             </CardContent>
           </Card>
         </div>

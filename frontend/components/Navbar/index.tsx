@@ -34,22 +34,22 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between mx-auto px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-xl">
+          <Link href="/" className="font-['pongFont2'] text-xl sm:text-2xl tracking-wide text-primary text-glow transition-all hover:text-glow-strong">
             Transcendence
           </Link>
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
             >
               {t("navbar.home")}
             </Link>
             <Link
               href="/pong"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
             >
               {t("navbar.play")}
             </Link>
@@ -89,7 +89,7 @@ export function Navbar() {
                   variant="ghost"
                   className="relative h-8 w-8 rounded-full"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 ring-1 ring-neon-muted transition-shadow hover:ring-neon hover:shadow-[0_0_10px_var(--neon-muted)]">
                     {user.avatar ? (
                       <AvatarImage
                         src={user.avatar}
@@ -134,7 +134,7 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             <Link href="/auth">
-              <Button variant="default" size="sm">
+              <Button variant="default" size="sm" className="animate-pulse-glow">
                 {t("common.login")}
               </Button>
             </Link>

@@ -225,27 +225,26 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
 
           {!isFullscreen && (
             <div className="text-center p-4 flex-shrink-0">
-              <p className="text-sm text-gray-400">{t("game.multiplayerRooms")}</p>
+              <p className="text-sm text-muted-foreground">{t("game.multiplayerRooms")}</p>
             </div>
           )}
         </div>
       );
     }
     return (
-      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8">
+      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 animate-fade-up">
         <div className="text-center max-w-2xl">
-          <h1 className="text-2xl sm:text-3xl font-bold">{t("game.multiplayerRooms")}</h1>
-          <p className="text-sm text-gray-400 mt-2">
+          <h1 className="font-['pongFont2'] text-2xl sm:text-4xl text-primary text-glow-strong tracking-wide">{t("game.multiplayerRooms")}</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             {t("game.multiplayerRoomsSubtitle")}
           </p>
         </div>
-        <div className="w-full max-w-3xl border border-gray-700 rounded-xl p-3 sm:p-6 bg-black/40 text-white">
+        <div className="w-full max-w-3xl rounded-xl border-glow p-3 sm:p-6 bg-card/80 backdrop-blur-sm text-foreground">
           <div className="flex items-center justify-between gap-2 mb-4">
             <h2 className="text-base sm:text-lg font-semibold">{t("game.activeRooms")}</h2>
             <Button
               size="sm"
-              variant="secondary"
-              className="shrink-0"
+              className="shrink-0 animate-pulse-glow"
               onClick={async () => {
                 try {
                   const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
@@ -268,33 +267,36 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
           </div>
           <div className="space-y-3">
             {roomsLoading && (
-              <div className="text-sm text-gray-400">{t("game.loadingRooms")}</div>
+              <div className="text-sm text-muted-foreground">{t("game.loadingRooms")}</div>
             )}
             {roomsError && (
-              <div className="text-sm text-red-300">{roomsError}</div>
+              <div className="text-sm text-destructive">{roomsError}</div>
             )}
             {!roomsLoading && !roomsError && rooms.length === 0 && (
-              <div className="text-sm text-gray-400">{t("game.noActiveRooms")}</div>
+              <div className="text-sm text-muted-foreground">{t("game.noActiveRooms")}</div>
             )}
             {rooms.map((room) => (
               <div
                 key={room.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-lg border border-gray-700/70 px-3 sm:px-4 py-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-lg border border-neon-muted/30 px-3 sm:px-4 py-3 hover:border-glow transition-all"
               >
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold truncate">{room.id}</div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-muted-foreground">
                     {t("game.players")}: {room.players} · {t("game.spectators")}: {room.spectators}
                   </div>
                   {room.score && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {t("game.score")}: {room.score.player1} - {room.score.player2}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
-                  <div className="text-xs text-gray-300">
-                    {room.running ? t("game.inMatch") : t("game.waiting")}
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`inline-block w-2 h-2 rounded-full ${room.running ? "bg-neon animate-status-pulse" : "bg-muted-foreground"}`} />
+                    <span className="text-muted-foreground">
+                      {room.running ? t("game.inMatch") : t("game.waiting")}
+                    </span>
                   </div>
                   <Button
                     size="sm"
@@ -371,7 +373,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
 
       {!isFullscreen && (
         <div className="text-center p-4 flex-shrink-0">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {gameMode === "online"
               ? t("game.onlineMode")
               : t("game.localMode")}

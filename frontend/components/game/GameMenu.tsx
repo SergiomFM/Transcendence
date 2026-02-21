@@ -13,14 +13,14 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
   return (
     <div className="w-full min-h-[80dvh] flex flex-col overflow-y-auto">
-      <div className="flex-1 flex flex-col items-center gap-6 sm:gap-8 p-4 sm:p-10">
-        <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
+      <div className="flex-1 flex flex-col items-center gap-6 sm:gap-8 p-4 sm:p-10 animate-fade-up">
+        <h1 className="font-['pongFont2'] text-3xl sm:text-5xl text-primary text-glow-strong tracking-wide mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
 
         <div className="flex flex-col gap-4 w-full max-w-md">
           <Button
             size="lg"
             onClick={() => onSelectMode("local")}
-            className="text-lg py-6"
+            className="text-lg py-6 animate-pulse-glow"
           >
             {t("game.singlePlayer")}
           </Button>
@@ -28,7 +28,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
           <Button
             size="lg"
             onClick={() => onSelectMode("multiplayer")}
-            className="text-lg py-6"
+            className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all"
             variant="secondary"
           >
             {t("game.multiplayer")}
@@ -37,14 +37,14 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
         {/* Game Instructions */}
         <div className="w-full max-w-4xl mt-8 space-y-8">
-          <h2 className="text-2xl font-bold text-center">
+          <h2 className="font-['pongFont2'] text-2xl sm:text-3xl text-center text-glow tracking-wide">
             {t("game.instructionsTitle")}
           </h2>
 
           {/* Controls */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Player 1 Controls */}
-            <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-5 space-y-3">
+            <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
               <h3 className="text-lg font-semibold text-foreground/90">
                 {t("game.controlsP1")}
               </h3>
@@ -59,7 +59,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
             </div>
 
             {/* Player 2 Controls */}
-            <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-5 space-y-3">
+            <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
               <h3 className="text-lg font-semibold text-foreground/90">
                 {t("game.controlsP2")}
               </h3>
@@ -86,7 +86,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Offensive Spells */}
-              <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-5 space-y-3">
+              <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_theme(colors.red.500/50%)]" />
                   <h4 className="text-base font-semibold">
@@ -116,7 +116,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
               </div>
 
               {/* Defensive Spells */}
-              <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-5 space-y-3">
+              <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-cyan-500 shadow-[0_0_8px_theme(colors.cyan.500/50%)]" />
                   <h4 className="text-base font-semibold">
@@ -148,7 +148,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
           </div>
 
           {/* Tips */}
-          <div className="rounded-xl border border-border/60 bg-card/50 backdrop-blur-sm p-5 space-y-2">
+          <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-2 hover:border-glow transition-all">
             <h4 className="text-base font-semibold">{t("game.tipsTitle")}</h4>
             <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
               <li>{t("game.tip1")}</li>
@@ -168,7 +168,7 @@ function ControlRow({ keys, action }: { keys: string; action: string }) {
         {keys.split(" / ").map((key) => (
           <kbd
             key={key}
-            className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-border/80 bg-muted/60 px-1.5 text-[11px] font-mono font-medium text-foreground/80"
+            className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-neon-muted/40 bg-muted/60 px-1.5 text-[11px] font-mono font-medium text-neon"
           >
             {key}
           </kbd>
