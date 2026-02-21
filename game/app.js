@@ -15,7 +15,7 @@ module.exports = async function (fastify, opts) {
 
   // Register CORS for frontend communication
   fastify.register(require("@fastify/cors"), {
-    origin: true, // Allow all origins in development
+    origin: process.env.FRONTEND_URL || true,
     credentials: true,
   });
 

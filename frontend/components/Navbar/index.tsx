@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,15 +11,26 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User } from "lucide-react";
-import { Users } from "@/lib/backend";
+import { LogOut, Settings, User } from "lucide-react";
+
+const LOCALES = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "pt", label: "Português", flag: "🇧🇷" },
+  { code: "cv", label: "Kriolu", flag: "🇨🇻" },
+] as const;
 
 export function Navbar() {
   const t = useTranslations();
+  const locale = useLocale();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const switchLocale = (newLocale: string) => {
+    document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
+    window.location.reload();
   };
 
   return (
@@ -46,6 +57,29 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="gap-1.5">
+                <span>{LOCALES.find((l) => l.code === locale)?.flag}</span>
+                <span className="hidden sm:inline text-sm">
+                  {LOCALES.find((l) => l.code === locale)?.label}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {LOCALES.map((l) => (
+                <DropdownMenuItem
+                  key={l.code}
+                  onClick={() => switchLocale(l.code)}
+                  className={locale === l.code ? "font-semibold" : ""}
+                >
+                  <span className="mr-2">{l.flag}</span>
+                  {l.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {isLoading ? (
             <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
           ) : isAuthenticated && user ? (
@@ -56,10 +90,12 @@ export function Navbar() {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={Users.avatarUrl(user.id)}
-                      alt={user.alias || user.username}
-                    />
+                    {user.avatar ? (
+                      <AvatarImage
+                        src={user.avatar}
+                        alt={user.alias || user.username}
+                      />
+                    ) : null}
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>
@@ -75,6 +111,12 @@ export function Navbar() {
                     </p>
                   </div>
                 </div>
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t("common.settings")}
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer text-red-600 focus:text-red-600"
                   onClick={handleLogout}

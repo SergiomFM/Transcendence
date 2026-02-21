@@ -43,13 +43,14 @@ export async function generateRecoveryCodes(count = 8){
 //verify recovery codes
 export async function verifyRecoveryCode(code, storedCodes) {
 	for (const entry of storedCodes) {
-		if (entry.used) continue;
-
 		const valid = await argon2.verify(entry.code_hash, code);
-		if (valid) return {
-			id: entry.id,
-			hash: entry.code_hash
-		};
+		if (valid) {
+			if (entry.used) return { alreadyUsed: true };
+			return {
+				id: entry.id,
+				hash: entry.code_hash
+			};
+		}
 	}
 	return null;
 }

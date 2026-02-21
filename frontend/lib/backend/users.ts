@@ -27,7 +27,7 @@ export const Users = {
       (response) => response.data.user,
     ),
 
-  logout: () => Promise.resolve(),
+  logout: () => usersBackend("auth/logout", Method.GET),
 
   avatarUrl: (userId: string) =>
     userId ? `${USERS_BACKEND_URL}/users/${userId}/avatar` : "",
@@ -53,4 +53,10 @@ export const Users = {
 
   verify2FA: (token: string) =>
     usersBackend("auth/2fa/verify", Method.POST, { token }),
+
+  uploadAvatar: (avatar: string) =>
+    usersBackend<{ message: string }>("me/avatar", Method.POST, { avatar }),
+
+  deleteAvatar: () =>
+    usersBackend<{ message: string }>("me/avatar", Method.DELETE),
 };

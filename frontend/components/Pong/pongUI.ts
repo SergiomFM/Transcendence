@@ -5,249 +5,114 @@ import { FPS } from "./pong";
 import { GAME_CONSTANTS } from "@/shared/constants";
 import { text } from "stream/consumers";
 
+export interface PongTranslations {
+  welcomeWarlock: string;
+  pressSpaceReady: string;
+  youWon: string;
+  player1Wins: string;
+  youLost: string;
+  player2Wins: string;
+  waitingForOpponent: string;
+  getReady: string;
+  fight: string;
+  opponentDisconnected: string;
+  disconnectedFromServer: string;
+  opponentConnected: string;
+  waitingForOpponentReady: string;
+  spectating: string;
+  pressClaimSeat: string;
+  otherPlayerReady: string;
+  labelYou: string;
+  labelOpponent: string;
+}
+
 const BLINKING_TIME = 750;
 const FADING_TIME = 500;
 
-// Welcoming Game message
-const WELCOME = [
-  "WELCOME", // Name
-  "Welcome Warlock", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-40%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Game start prompt
-const PRESS_READY = [
-  "PRESS_READY", // Name
-  "(Press space when ready)", // Text
-  "white", // Color
-  "10%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "35%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Round Won message
-const YOU_WON = [
-  "YOU_WON", // Name
-  "You Won!", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Round Won message
-const PLAYER_1_WIN = [
-  "PLAYER_1_WIN", // Name
-  "Player 1 Wins!", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Round Lost message
-const YOU_LOST = [
-  "YOU_LOST", // Name
-  "You Lost!", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Round Won message
-const PLAYER_2_WIN = [
-  "PLAYER_2_WIN", // Name
-  "Player 2 Wins!", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Waiting for opponent
-const WAITING = [
-  "WAITING", // Name
-  "Waiting for opponent...", // Text
-  "white", // Color
-  "10%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "15%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Game ready
-const GET_READY = [
-  "GET_READY", // Name
-  "Get Ready...", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Fight message
-const FIGHT = [
-  "FIGHT", // Name
-  "FIGHT!", // Text
-  "white", // Color
-  "20%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Opponent disconnected
-const OPPONENT_LEFT = [
-  "OPPONENT_LEFT", // Name
-  "Opponent Disconnected", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: You disconnected
-const DISCONNECTED = [
-  "DISCONNECTED", // Name
-  "Disconnected from Server", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Multiplayer: Player 2 connected
-const PLAYER_2_CONNECTED = [
-  "PLAYER_2_CONNECTED", // Name
-  "Player 2 Connected", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "-20%", // Vertical deviation from center (vertical screen %)
-  "0%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Player 1 Score
-const PLAYER_1_SCORE = [
-  "PLAYER_1_SCORE", // Name
-  "0", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "0%", // Vertical deviation from center (vertical screen %)
-  "-20%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Player 1 Score description
-const PLAYER_1_SCORE_DESCRIPTION = [
-  "PLAYER_1_SCORE_DESCRIPTION", // Name
-  "(YOU)", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "10%", // Vertical deviation from center (vertical screen %)
-  "-20%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-
-// Player 2 Score
-const PLAYER_2_SCORE = [
-  "PLAYER_2_SCORE", // Name
-  "0", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "0%", // Vertical deviation from center (vertical screen %)
-  "20%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
-
-// Player 2 Score description
-const PLAYER_2_SCORE_DESCRIPTION = [
-  "PLAYER_2_SCORE_DESCRIPTION", // Name
-  "(HIM)", // Text
-  "white", // Color
-  "15%", // Size (vertical screen %)
-  "pongFont1", // Font
-  2, // Outline
-  "black", // Outline Color
-  "10%", // Vertical deviation from center (vertical screen %)
-  "20%", // Horizontal deviation from center (horizontal screen %)
-  Control.HORIZONTAL_ALIGNMENT_CENTER, // Horizontal alignment type
-  Control.VERTICAL_ALIGNMENT_CENTER, // Vertical alignment type
-];
+function buildTextConfig(t: PongTranslations) {
+  return {
+    WELCOME: [
+      "WELCOME", t.welcomeWarlock, "white", "20%", "pongFont1", 2, "black", "-40%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PRESS_READY: [
+      "PRESS_READY", t.pressSpaceReady, "white", "10%", "pongFont1", 2, "black", "35%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    YOU_WON: [
+      "YOU_WON", t.youWon, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PLAYER_1_WIN: [
+      "PLAYER_1_WIN", t.player1Wins, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    YOU_LOST: [
+      "YOU_LOST", t.youLost, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PLAYER_2_WIN: [
+      "PLAYER_2_WIN", t.player2Wins, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    WAITING: [
+      "WAITING", t.waitingForOpponent, "white", "10%", "pongFont1", 2, "black", "15%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    GET_READY: [
+      "GET_READY", t.getReady, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    FIGHT: [
+      "FIGHT", t.fight, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    OPPONENT_LEFT: [
+      "OPPONENT_LEFT", t.opponentDisconnected, "white", "15%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    DISCONNECTED: [
+      "DISCONNECTED", t.disconnectedFromServer, "white", "15%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    OPPONENT_CONNECTED: [
+      "OPPONENT_CONNECTED", t.opponentConnected, "white", "15%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    WAITING_FOR_READY: [
+      "WAITING_FOR_READY", t.waitingForOpponentReady, "white", "10%", "pongFont1", 2, "black", "35%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    SPECTATING: [
+      "SPECTATING", t.spectating, "white", "15%", "pongFont1", 2, "black", "35%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    SPECTATOR_SEAT_PROMPT: [
+      "SPECTATOR_SEAT_PROMPT", t.pressClaimSeat, "white", "10%", "pongFont1", 2, "black", "15%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    OTHER_PLAYER_READY: [
+      "OTHER_PLAYER_READY", t.otherPlayerReady, "white", "6%", "pongFont1", 2, "black", "10%", "5%",
+      Control.HORIZONTAL_ALIGNMENT_LEFT, Control.VERTICAL_ALIGNMENT_TOP,
+    ],
+    PLAYER_1_SCORE: [
+      "PLAYER_1_SCORE", "0", "white", "15%", "pongFont1", 2, "black", "0%", "-20%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PLAYER_1_SCORE_DESCRIPTION: [
+      "PLAYER_1_SCORE_DESCRIPTION", t.labelYou, "white", "6%", "pongFont1", 2, "black", "10%", "-20%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PLAYER_2_SCORE: [
+      "PLAYER_2_SCORE", "0", "white", "15%", "pongFont1", 2, "black", "0%", "20%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    PLAYER_2_SCORE_DESCRIPTION: [
+      "PLAYER_2_SCORE_DESCRIPTION", t.labelOpponent, "white", "6%", "pongFont1", 2, "black", "10%", "20%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+  };
+}
 class UIElement extends TextBlock {
   blinking = false;
   private lastUpdate = 0;
@@ -295,28 +160,35 @@ class UIElement extends TextBlock {
 export class GUI {
   GUI: AdvancedDynamicTexture;
   textBlocks: Map<string, UIElement>; // Text Blocks Map
+  translations: PongTranslations;
 
-  constructor() {
+  constructor(translations: PongTranslations) {
     this.GUI = AdvancedDynamicTexture.CreateFullscreenUI("UI");
     this.textBlocks = new Map();
+    this.translations = translations;
 
-    this.createNewText(WELCOME);
-    this.createNewText(PRESS_READY);
-    this.createNewText(YOU_WON);
-    this.createNewText(YOU_LOST);
-    this.createNewText(PLAYER_1_WIN);
-    this.createNewText(PLAYER_2_WIN);
-    this.createNewText(WAITING);
-    this.createNewText(GET_READY);
-    this.createNewText(PRESS_READY);
-    this.createNewText(FIGHT);
-    this.createNewText(OPPONENT_LEFT);
-    this.createNewText(DISCONNECTED);
-    this.createNewText(PLAYER_2_CONNECTED);
-    this.createNewText(PLAYER_1_SCORE);
-    this.createNewText(PLAYER_1_SCORE_DESCRIPTION);
-    this.createNewText(PLAYER_2_SCORE);
-    this.createNewText(PLAYER_2_SCORE_DESCRIPTION);
+    const configs = buildTextConfig(translations);
+    this.createNewText(configs.WELCOME);
+    this.createNewText(configs.PRESS_READY);
+    this.createNewText(configs.YOU_WON);
+    this.createNewText(configs.YOU_LOST);
+    this.createNewText(configs.PLAYER_1_WIN);
+    this.createNewText(configs.PLAYER_2_WIN);
+    this.createNewText(configs.WAITING);
+    this.createNewText(configs.GET_READY);
+    this.createNewText(configs.PRESS_READY);
+    this.createNewText(configs.FIGHT);
+    this.createNewText(configs.OPPONENT_LEFT);
+    this.createNewText(configs.DISCONNECTED);
+    this.createNewText(configs.OPPONENT_CONNECTED);
+    this.createNewText(configs.WAITING_FOR_READY);
+    this.createNewText(configs.SPECTATING);
+    this.createNewText(configs.SPECTATOR_SEAT_PROMPT);
+    this.createNewText(configs.OTHER_PLAYER_READY);
+    this.createNewText(configs.PLAYER_1_SCORE);
+    this.createNewText(configs.PLAYER_1_SCORE_DESCRIPTION);
+    this.createNewText(configs.PLAYER_2_SCORE);
+    this.createNewText(configs.PLAYER_2_SCORE_DESCRIPTION);
   }
 
   createNewText(attributes: any) {
@@ -435,6 +307,48 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
   }
 
+  showReadyPrompt() {
+    const scene = this.GUI.getScene()!;
+    const text = this.textBlocks.get("PRESS_READY");
+    if (!text) {
+      return;
+    }
+    const waitingText = this.textBlocks.get("WAITING");
+    if (waitingText?.blinking) {
+      this.toggleTextBlink(scene, "WAITING");
+    }
+    this.textFadeOut("WAITING");
+    this.textFadeIn("OPPONENT_CONNECTED", 2000);
+    this.textFadeIn("PRESS_READY");
+    if (!text.blinking) {
+      this.toggleTextBlink(scene, "PRESS_READY");
+    }
+  }
+
+  waitingForOpponentReadyUI() {
+    const scene = this.GUI.getScene()!;
+    const readyText = this.textBlocks.get("PRESS_READY");
+    if (readyText?.blinking) {
+      this.toggleTextBlink(scene, "PRESS_READY");
+    }
+    this.textFadeOut("PRESS_READY");
+    this.textFadeIn("WAITING_FOR_READY");
+  }
+
+  showOtherPlayerReady() {
+    this.textFadeIn("OTHER_PLAYER_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "OTHER_PLAYER_READY");
+  }
+
+  hideOtherPlayerReady() {
+    const scene = this.GUI.getScene()!;
+    const text = this.textBlocks.get("OTHER_PLAYER_READY");
+    if (text?.blinking) {
+      this.toggleTextBlink(scene, "OTHER_PLAYER_READY");
+    }
+    this.textFadeOut("OTHER_PLAYER_READY");
+  }
+
   startRoundUI() {
     this.resetTexts(this.GUI.getScene()!);
     this.textFadeIn("GET_READY", GAME_CONSTANTS.ROUND_START_DELAY / 2);
@@ -452,6 +366,18 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
   }
 
+  spectatorModeUI(seatsAvailable: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("SPECTATING");
+    this.toggleTextBlink(this.GUI.getScene()!, "SPECTATING");
+    this.textFadeIn("PLAYER_1_SCORE");
+    this.textFadeIn("PLAYER_2_SCORE");
+    if (seatsAvailable > 0) {
+      this.textFadeIn("SPECTATOR_SEAT_PROMPT");
+      this.toggleTextBlink(this.GUI.getScene()!, "SPECTATOR_SEAT_PROMPT");
+    }
+  }
+
   showScores(online: boolean, score1: number, score2: number) {
     this.textBlocks.get("PLAYER_1_SCORE")!.text = score1.toString();
     this.textBlocks.get("PLAYER_2_SCORE")!.text = score2.toString();
@@ -462,4 +388,32 @@ export class GUI {
       this.textFadeIn("PLAYER_2_SCORE_DESCRIPTION");
     }
   }
-}  
+
+  updateScores(score1: number, score2: number) {
+    const player1Score = this.textBlocks.get("PLAYER_1_SCORE");
+    const player2Score = this.textBlocks.get("PLAYER_2_SCORE");
+    if (player1Score) {
+      player1Score.text = score1.toString();
+    }
+    if (player2Score) {
+      player2Score.text = score2.toString();
+    }
+  }
+
+  updatePlayerLabels(player1Name?: string | null, player2Name?: string | null) {
+    const MAX_NAME_LENGTH = 14;
+    const truncate = (name: string) =>
+      name.length > MAX_NAME_LENGTH ? name.slice(0, MAX_NAME_LENGTH - 1) + "…" : name;
+
+    const player1Label = this.textBlocks.get("PLAYER_1_SCORE_DESCRIPTION");
+    const player2Label = this.textBlocks.get("PLAYER_2_SCORE_DESCRIPTION");
+    if (player1Label) {
+      const name = player1Name ? player1Name : this.translations.labelYou;
+      player1Label.text = truncate(name);
+    }
+    if (player2Label) {
+      const name = player2Name ? player2Name : this.translations.labelOpponent;
+      player2Label.text = truncate(name);
+    }
+  }
+}

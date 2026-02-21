@@ -2,6 +2,8 @@ import fastifyPassport from '@fastify/passport'
 
 export default async function (fastify){
 
+	const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 	//GOOGLE LOGIN START
 	fastify.get(
 	
@@ -13,26 +15,33 @@ export default async function (fastify){
 	
 	//GOOGLE CALLBACK
 	fastify.get(
+		'/auth/google/callback',
+		{
+			preValidation: fastifyPassport.authenticate('google', {
+				failureRedirect: '/login'
+			})
+		},
+		async (req, reply) => {
+			const user = req.user;
+		
+		if (!user) {
+			return reply.redirect('/login');
+		}
 	
-		'/auth/google/callback', async (req, reply) => {
-		fastifyPassport.authenticate('google', async (err, user) => {
-			if (err || !user) {
-				return reply.redirect('/login');
-			}
+		if (!user.is_active) {
+			return reply.code(403).send({ error: "Account disabled" });
+		}
+	
+		if (user.two_factor_enabled) {
+			req.session.pending2FA = user.id;
+			return reply.redirect(`${FRONTEND_URL}/auth?2fa=true`);
+		}
+	
+		await req.logIn(user);
+		return reply.redirect(FRONTEND_URL);
+		}
+	);
 
-			if (!user.is_active) {
-				return reply.code(403).send({ error: "Account is disabled." });
-			}
-
-			if (user.two_factor_enabled) {
-				req.session.pending2FA = user.id;
-				return reply.redirect('http://localhost:3000/2fa');
-			}
-
-			await req.logIn(req.user);
-			reply.redirect('http://localhost:3000/dashboard');
-		})
-	});
 	
 	// PROTECTED ROUTE (REASON FOR EXISTENCE: DEMONSTRATE AUTHORIZATION)
 	
@@ -48,15 +57,18 @@ export default async function (fastify){
 			return reply.redirect('/login');
 		}
 
-		return { message: 'Welcome to our server.', 
-			user: {
-				id: req.user.id,
-				email: req.user.email,
-				username: req.user.username,
-				alias: req.user.alias,
-				role: req.user.role
-			}
-		}	
+	return { message: 'Welcome to our server.', 
+		user: {
+			id: req.user.id,
+			email: req.user.email,
+			username: req.user.username,
+			alias: req.user.alias,
+			role: req.user.role,
+			avatar: req.user.avatar || null,
+			google_id: req.user.google_id || null,
+			two_factor_enabled: req.user.two_factor_enabled || 0
+		}
+	}
 	});
 }
 

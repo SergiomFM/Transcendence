@@ -1,24 +1,11 @@
-const isLocalhost =
-  typeof window !== "undefined" && window.location.hostname === "localhost";
+const isBrowser = typeof window !== "undefined";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const fallbackHost = new URL(siteUrl).host;
+const host = isBrowser ? window.location.host : fallbackHost;
+const httpProtocol = isBrowser ? window.location.protocol : new URL(siteUrl).protocol;
+const wsProtocol = isBrowser && window.location.protocol === "https:" ? "wss:" : "ws:";
 
-const getHostname = () => {
-  if (typeof window === "undefined") return "localhost";
-  return window.location.hostname;
-};
-
-const getWsProtocol = () => {
-  if (typeof window === "undefined") return "ws";
-  return window.location.protocol === "https:" ? "wss" : "ws";
-};
-
-export const USERS_BACKEND_URL = isLocalhost
-  ? "http://localhost:3001"
-  : "/api/users";
-
-export const GAME_BACKEND_URL = isLocalhost
-  ? "http://localhost:3002"
-  : "/api/game";
-
-export const GAME_WS_URL = `${getWsProtocol()}://${getHostname()}:3002/pong`;
-
-export const GAME_HTTP_URL = `${typeof window !== "undefined" ? window.location.protocol : "http:"}//${getHostname()}:3002`;
+export const USERS_BACKEND_URL = `${httpProtocol}//${host}/api/users`;
+export const GAME_BACKEND_URL = `${httpProtocol}//${host}/api/game`;
+export const GAME_WS_URL = `${wsProtocol}//${host}/ws/pong`;
+export const GAME_HTTP_URL = `${httpProtocol}//${host}/api/game`;
