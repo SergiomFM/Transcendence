@@ -18,6 +18,7 @@ interface GameScreenProps {
 export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(true);
   const [rooms, setRooms] = useState<
     Array<{
       id: string;
@@ -32,6 +33,11 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const handleSessionReplaced = useCallback(() => setSelectedRoomId(null), []);
+
+  // Detect whether the Fullscreen API is available (iOS Safari doesn't support it)
+  useEffect(() => {
+    setCanFullscreen(typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled);
+  }, []);
 
   const isMobileViewport = () =>
     typeof window !== "undefined" &&
@@ -110,6 +116,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   }, []);
 
   useEffect(() => {
+    if (!canFullscreen) return;
     if (gameMode !== "multiplayer" || !selectedRoomId) return;
     if (!isMobileViewport()) return;
     const raf = requestAnimationFrame(() => {
@@ -196,6 +203,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 />
               </Suspense>
 
+              {canFullscreen && (
               <Button
                 onClick={toggleFullscreen}
                 variant="ghost"
@@ -210,6 +218,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   <Maximize className="w-5 h-5" />
                 )}
               </Button>
+              )}
               <Button
                 onClick={async () => {
                   await exitFullscreen();
@@ -358,6 +367,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             />
           </Suspense>
 
+          {canFullscreen && (
           <Button
             onClick={toggleFullscreen}
             variant="ghost"
@@ -371,6 +381,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               <Maximize className="w-5 h-5" />
             )}
           </Button>
+          )}
         </div>
       </div>
 
