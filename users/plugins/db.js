@@ -31,6 +31,7 @@ async function dbPlugin(fastify){
 		username TEXT UNIQUE,
 		email TEXT UNIQUE NOT NULL,
 		alias TEXT,
+		avatar TEXT,
 		google_id TEXT UNIQUE,
 		password_hash TEXT,
 		two_factor_enabled INTEGER DEFAULT 0,
@@ -40,6 +41,13 @@ async function dbPlugin(fastify){
 		is_active INTEGER DEFAULT 1,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run()
+
+	// Migration: add avatar column if it doesn't exist yet
+	const columns = db.prepare(`PRAGMA table_info(users)`).all()
+	if (!columns.find(c => c.name === 'avatar')) {
+		db.prepare(`ALTER TABLE users ADD COLUMN avatar TEXT`).run()
+		fastify.log.info('Added avatar column to users table')
+	}
 	
 	db.prepare(` CREATE TABLE IF NOT EXISTS recovery_codes (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -134,10 +142,15 @@ async function dbPlugin(fastify){
 				UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 			`),
 
-			//update display name
-			updateAlias: db.prepare(`
-				UPDATE users SET alias = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
-			`),
+		//update display name
+		updateAlias: db.prepare(`
+			UPDATE users SET alias = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+		`),
+
+		//update avatar (base64 webp)
+		updateAvatar: db.prepare(`
+			UPDATE users SET avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+		`),
 
 			
 			//RECOVERY CODES

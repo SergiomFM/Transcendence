@@ -6,6 +6,7 @@ import { CheckCircle, Copy, Lock, Shield } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Users } from "@/lib/backend/users";
 import { isRequestError } from "@/lib/backend";
+import { AvatarUploadSection } from "@/components/settings/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -324,6 +325,15 @@ const SettingsPage = () => {
           <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("settings.subtitle")}</p>
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("settings.avatar")}</CardTitle>
+            <CardDescription>{t("settings.avatarDesc")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AvatarUploadSection />
+          </CardContent>
+        </Card>
         {!user.google_id && <ChangePasswordSection />}
         <TwoFASection />
       </div>

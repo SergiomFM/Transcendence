@@ -57,17 +57,18 @@ export default async function (fastify){
 			return reply.redirect('/login');
 		}
 
-		return { message: 'Welcome to our server.', 
-			user: {
-				id: req.user.id,
-				email: req.user.email,
-				username: req.user.username,
-				alias: req.user.alias,
-				role: req.user.role,
-				google_id: req.user.google_id || null,
-				two_factor_enabled: req.user.two_factor_enabled || 0
-			}
-		}	
+	return { message: 'Welcome to our server.', 
+		user: {
+			id: req.user.id,
+			email: req.user.email,
+			username: req.user.username,
+			alias: req.user.alias,
+			role: req.user.role,
+			avatar: req.user.avatar || null,
+			google_id: req.user.google_id || null,
+			two_factor_enabled: req.user.two_factor_enabled || 0
+		}
+	}
 	});
 }
 

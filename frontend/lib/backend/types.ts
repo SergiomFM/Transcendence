@@ -4,6 +4,7 @@ export type User = {
   email: string;
   alias: string;
   role: string;
+  avatar?: string | null;
   two_factor_enabled?: number;
   google_id?: string | null;
 };

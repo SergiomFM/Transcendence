@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Settings, User } from "lucide-react";
-import { Users } from "@/lib/backend";
 
 const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -91,10 +90,12 @@ export function Navbar() {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={Users.avatarUrl(user.id)}
-                      alt={user.alias || user.username}
-                    />
+                    {user.avatar ? (
+                      <AvatarImage
+                        src={user.avatar}
+                        alt={user.alias || user.username}
+                      />
+                    ) : null}
                     <AvatarFallback>
                       <User className="h-4 w-4" />
                     </AvatarFallback>

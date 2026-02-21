@@ -59,16 +59,16 @@ Developers - Todos
 | WORK |
 
 Paulo:
-Spectators and inventar (done)
+
 
 Lourenço:
-Vibe coding and auth fix
+
 
 Sergio:
 Websockets do chat, frontend do chat, configurar prisma nos users
 
 Afonso:
-chatbot, user profile, frontend integrations and game sreen fix
+
 
 Tiago:
-Polir o frontend do jogo, spectator UI, balance do jogo.
+balance do jogo.
