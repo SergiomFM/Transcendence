@@ -75,6 +75,4 @@ balance do jogo.
 
 
 por botao do perfil na navbar
-pwa
 audio
-chat

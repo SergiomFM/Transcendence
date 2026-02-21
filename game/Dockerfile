@@ -12,6 +12,5 @@ COPY frontend/public/models/ ./public/models/
 ENV NODE_ENV=production
 
 EXPOSE 3000
-EXPOSE 3001
 
 CMD ["fastify", "start", "-l", "warn", "-a", "0.0.0.0", "app.js"]

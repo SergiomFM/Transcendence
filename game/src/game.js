@@ -222,7 +222,6 @@ class GameRoom {
 			currSpeed: 0,
 			currDirection: 0,
 			maxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
-			originalMaxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
 			drag: GAME_CONSTANTS.PADDLE_DRAG,
 			direction: 0,
 			inputDirection: 0,
@@ -376,7 +375,6 @@ class GameRoom {
 		player.currSpeed = 0;
 		player.currDirection = 0;
 		player.maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
-		player.originalMaxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
 		player.drag = GAME_CONSTANTS.PADDLE_DRAG;
 		player.direction = 0;
 		player.inputDirection = 0;

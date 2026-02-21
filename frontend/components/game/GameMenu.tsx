@@ -152,7 +152,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
             <h4 className="text-base font-semibold">{t("game.tipsTitle")}</h4>
             <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
               <li>{t("game.tip1")}</li>
-              <li>{t("game.tip3")}</li>
+              <li>{t("game.tip2")}</li>
             </ul>
           </div>
         </div>

@@ -37,7 +37,6 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_SITE_URL: https://transcendence.pvcordeiro.dev
-      NEXT_PUBLIC_GAME_WS_PORT: 3004
     profiles:
       - prod
 
@@ -49,7 +48,6 @@ services:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
-      NEXT_PUBLIC_GAME_WS_PORT: 3004
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
@@ -134,12 +132,10 @@ services:
       dockerfile: game/Dockerfile
     ports:
       - "3002:3000"
-      - "3004:3001"
     environment:
       NODE_ENV: production
       USERS_BACKEND_URL: http://users:3000
       FRONTEND_URL: https://transcendence.pvcordeiro.dev
-      GAME_WS_PORT: 3001
     profiles:
       - prod
 
@@ -149,12 +145,10 @@ services:
     command: sh -c "bun install && bun run dev"
     ports:
       - "3002:3000"
-      - "3004:3001"
     environment:
       NODE_ENV: development
       USERS_BACKEND_URL: http://users-dev:3000
       FRONTEND_URL: http://localhost:3000
-      GAME_WS_PORT: 3001
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached

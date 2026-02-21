@@ -112,6 +112,12 @@ export function Navbar() {
                   </div>
                 </div>
                 <DropdownMenuItem asChild>
+                  <Link href={`/users/${user.id}`} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    {t("navbar.profile")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/settings" className="cursor-pointer">
                     <Settings className="mr-2 h-4 w-4" />
                     {t("common.settings")}

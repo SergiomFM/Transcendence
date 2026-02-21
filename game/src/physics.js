@@ -194,7 +194,6 @@ class Physics {
 			paddle.x = -limit;
 		}
 	}
-
 }
 
 module.exports = Physics;
