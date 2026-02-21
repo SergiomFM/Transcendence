@@ -13,7 +13,8 @@
     "loading": "Ta karrega...",
     "error": "Éru",
     "success": "Susesu",
-    "close": "Fitxa"
+    "close": "Fitxa",
+    "cancel": "Kansela"
   },
   "auth": {
     "loginTitle": "Ben Vindu di Volta",
@@ -70,6 +71,8 @@
     "twoFADisabled": "Autentikason di dois fatoris ka sta ativu",
     "twoFAActivated": "Autentikason di dois fatoris foi ativadu",
     "enable2FA": "Ativa 2FA",
+    "disable2FA": "Dezativa 2FA",
+    "disable2FADesc": "Põi kódigu di 6 dígitus di bu aplikason di autentikason pa konfirma dezativason di 2FA",
     "scanQR": "Lê es kódigu QR ku bu aplikason di autentikason (ex: Google Authenticator)",
     "enterCode": "Põi kódigu di 6 dígitus di bu aplikason",
     "verify": "Verifika",
@@ -139,7 +142,6 @@
     "ctrlMoveRight": "Move rakete pa direita",
     "ctrlDefense": "Feitisu defensivu (lansa / troka)",
     "ctrlAttack": "Feitisu ofensivu (lansa / troka)",
-    "ctrlDash": "Dash",
     "ctrlReady": "Prontu / Inisia",
     "ctrlCamera": "Kâmara / Okupa lugar",
     "spellsTitle": "Feitisus & Poderis",
@@ -160,7 +162,6 @@
     "spellMagnetDesc": "Kurva trajetória di bola na direson di bu rakete ao longu di tempu.",
     "tipsTitle": "Dikas",
     "tip1": "Troka bus feitisus durante fazi di spera pa prepara bu stratéjia.",
-    "tip2": "Dash ta konsumi tempu di rekarga — uza-l pa alkansa bolas difísil, ka pa spamma.",
     "tip3": "Kombina feitisus ofensivus i defensivus pa kombos poderozu."
   },
   "pong": {

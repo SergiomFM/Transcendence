@@ -11,9 +11,6 @@ export interface GameConstants {
   PADDLE_MAX_SPEED: number;
   PADDLE_DRAG: number;
   PADDLE_MAX_DEVIATION_ANGLE: number;
-  DASH_COOLDOWN: number;
-  DASH_DURATION: number;
-  DASH_POWER: number;
   TICK_RATE: number;
   PLAYER1_Z: number | null;
   PLAYER2_Z: number | null;

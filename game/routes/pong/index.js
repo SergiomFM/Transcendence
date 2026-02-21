@@ -290,13 +290,6 @@ module.exports = async function (fastify, opts) {
 						}
 						break;
 
-					case "USE_DASH":
-						// Handle dash activation
-						if (currentRoom && player && player.dashReady) {
-							player.dashActive = true;
-						}
-						break;
-
 					case "USE_SPELL":
 						// Handle spell activation
 						if (currentRoom && player) {

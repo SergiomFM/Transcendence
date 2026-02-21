@@ -435,16 +435,6 @@ export function sendPlayerDirection(pong: Pong, direction: number) {
   }
 }
 
-export function sendUseDash(pong: Pong) {
-  if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
-    pong.socket.send(
-      JSON.stringify({
-        type: "USE_DASH",
-      }),
-    );
-  }
-}
-
 export function sendPlayerReady(pong: Pong) {
   if (pong.socket && pong.socket.readyState === WebSocket.OPEN) {
     pong.socket.send(

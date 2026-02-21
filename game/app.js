@@ -2,6 +2,7 @@
 
 const path = require("node:path");
 const AutoLoad = require("@fastify/autoload");
+const Fastify = require("fastify");
 
 // Pass --options via CLI arguments in command to enable these options.
 const options = {};
@@ -19,9 +20,6 @@ module.exports = async function (fastify, opts) {
     credentials: true,
   });
 
-  // Register WebSocket support for multiplayer Pong
-  fastify.register(require("@fastify/websocket"));
-
   // Do not touch the following lines
 
   // This loads all plugins defined in plugins
@@ -34,9 +32,34 @@ module.exports = async function (fastify, opts) {
 
   // This loads all plugins defined in routes
   // define your routes in one of these
+  // (excludes pong/ which is handled by the WS server)
   fastify.register(AutoLoad, {
     dir: path.join(__dirname, "routes"),
+    ignorePattern: /pong/,
     options: Object.assign({}, opts),
+  });
+
+  // Start the separate WebSocket server for Pong
+  const wsPort = parseInt(process.env.GAME_WS_PORT || "3001", 10);
+  const wsServer = Fastify({ logger: { level: "warn" } });
+
+  wsServer.register(require("@fastify/cors"), {
+    origin: process.env.FRONTEND_URL || true,
+    credentials: true,
+  });
+
+  wsServer.register(require("@fastify/websocket"));
+
+  // Load pong routes on the WS server
+  wsServer.register(require("./routes/pong/index.js"), { prefix: "/" });
+
+  fastify.addHook("onReady", async () => {
+    await wsServer.listen({ port: wsPort, host: "0.0.0.0" });
+    fastify.log.info(`Game WebSocket server listening on port ${wsPort}`);
+  });
+
+  fastify.addHook("onClose", async () => {
+    await wsServer.close();
   });
 };
 

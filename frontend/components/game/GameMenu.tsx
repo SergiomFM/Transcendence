@@ -53,7 +53,6 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
                 <ControlRow keys="S / D" action={t("game.ctrlMoveRight")} />
                 <ControlRow keys="Q" action={t("game.ctrlDefense")} />
                 <ControlRow keys="E" action={t("game.ctrlAttack")} />
-                <ControlRow keys="Shift" action={t("game.ctrlDash")} />
                 <ControlRow keys="Space" action={t("game.ctrlReady")} />
                 <ControlRow keys="C" action={t("game.ctrlCamera")} />
               </div>
@@ -69,7 +68,6 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
                 <ControlRow keys="↓ / →" action={t("game.ctrlMoveRight")} />
                 <ControlRow keys="K" action={t("game.ctrlDefense")} />
                 <ControlRow keys="L" action={t("game.ctrlAttack")} />
-                <ControlRow keys="." action={t("game.ctrlDash")} />
               </div>
               <p className="text-xs text-muted-foreground pt-1 italic">
                 {t("game.controlsP2Hint")}
@@ -154,7 +152,6 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
             <h4 className="text-base font-semibold">{t("game.tipsTitle")}</h4>
             <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
               <li>{t("game.tip1")}</li>
-              <li>{t("game.tip2")}</li>
               <li>{t("game.tip3")}</li>
             </ul>
           </div>

@@ -128,7 +128,7 @@ const ChangePasswordSection = () => {
   );
 };
 
-type TwoFAStep = "idle" | "setup" | "done";
+type TwoFAStep = "idle" | "setup" | "done" | "disabling";
 
 const TwoFASection = () => {
   const t = useTranslations();
@@ -174,6 +174,31 @@ const TwoFASection = () => {
       const res = await Users.confirm2FA(token);
       setRecoveryCodes(res.data.recovery_codes);
       setStep("done");
+      await refreshUser();
+    } catch (err) {
+      if (isRequestError(err)) {
+        const data = err.data as { error?: string } | undefined;
+        setError(data?.error || t("common.error"));
+      } else {
+        setError(t("common.error"));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDisable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!token) {
+      setError(t("settings.tokenRequired"));
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await Users.disable2FA(token);
+      setStep("idle");
+      setToken("");
       await refreshUser();
     } catch (err) {
       if (isRequestError(err)) {
@@ -254,6 +279,48 @@ const TwoFASection = () => {
           </div>
         )}
 
+        {step === "disabling" && (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {t("settings.disable2FADesc")}
+            </p>
+            <form onSubmit={handleDisable} className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="totp-disable-token">
+                  {t("settings.enterCode")}
+                </Label>
+                <Input
+                  id="totp-disable-token"
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={token}
+                  onChange={(e) => setToken(e.target.value.replace(/\D/g, ""))}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" variant="destructive" disabled={isLoading}>
+                  {isLoading ? t("common.loading") : t("settings.disable2FA")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setStep("idle");
+                    setToken("");
+                    setError("");
+                  }}
+                  disabled={isLoading}
+                >
+                  {t("common.cancel")}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {step === "done" && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 rounded-md bg-green-500/15 p-3 text-sm text-green-600 dark:text-green-400">
@@ -285,6 +352,22 @@ const TwoFASection = () => {
         <CardFooter className="pt-4">
           <Button onClick={handleSetup} disabled={isLoading}>
             {isLoading ? t("common.loading") : t("settings.enable2FA")}
+          </Button>
+        </CardFooter>
+      )}
+
+      {is2FAEnabled && step === "idle" && (
+        <CardFooter className="pt-4">
+          <Button
+            variant="destructive"
+            onClick={() => {
+              setStep("disabling");
+              setToken("");
+              setError("");
+            }}
+            disabled={isLoading}
+          >
+            {t("settings.disable2FA")}
           </Button>
         </CardFooter>
       )}

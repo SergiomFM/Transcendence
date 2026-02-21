@@ -13,7 +13,8 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "close": "Close"
+    "close": "Close",
+    "cancel": "Cancel"
   },
   "auth": {
     "loginTitle": "Welcome Back",
@@ -70,6 +71,8 @@
     "twoFADisabled": "Two-factor authentication is not enabled",
     "twoFAActivated": "Two-factor authentication has been enabled",
     "enable2FA": "Enable 2FA",
+    "disable2FA": "Disable 2FA",
+    "disable2FADesc": "Enter the 6-digit code from your authenticator app to confirm disabling 2FA",
     "scanQR": "Scan this QR code with your authenticator app (e.g. Google Authenticator)",
     "enterCode": "Enter the 6-digit code from your app",
     "verify": "Verify",
@@ -139,7 +142,6 @@
     "ctrlMoveRight": "Move paddle right",
     "ctrlDefense": "Defensive spell (cast / switch)",
     "ctrlAttack": "Offensive spell (cast / switch)",
-    "ctrlDash": "Dash",
     "ctrlReady": "Ready / Start",
     "ctrlCamera": "Camera / Claim seat",
     "spellsTitle": "Spells & Powers",
@@ -160,7 +162,6 @@
     "spellMagnetDesc": "Curves the ball's trajectory toward your paddle over time.",
     "tipsTitle": "Tips",
     "tip1": "Switch your spells during the waiting phase to prepare your strategy.",
-    "tip2": "Dash consumes cooldown — use it to reach tough shots, not spam it.",
     "tip3": "Combine offensive and defensive spells for powerful combos."
   },
   "pong": {

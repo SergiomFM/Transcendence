@@ -231,14 +231,6 @@ class GameRoom {
 			size: GAME_CONSTANTS.PADDLE_SIZE,
 			score: 0,
 
-			// Dash
-			dashActive: false,
-			dashReady: false,
-			dashCooldown: GAME_CONSTANTS.DASH_COOLDOWN,
-			dashElapsedCooldown: 0,
-			dashDuration: GAME_CONSTANTS.DASH_DURATION,
-			dashElapsedActive: 0,
-
 			// Current spells
 			currentOffensiveSpell: "ballAngleSwitch",
 			currentCounterSpell: "ballStop",
@@ -392,13 +384,6 @@ class GameRoom {
 		player.ready = false;
 		player.size = GAME_CONSTANTS.PADDLE_SIZE;
 		player.score = 0;
-
-		player.dashActive = false;
-		player.dashReady = false;
-		player.dashElapsedCooldown = 0;
-		player.dashElapsedActive = 0;
-		player.dashCooldown = GAME_CONSTANTS.DASH_COOLDOWN;
-		player.dashDuration = GAME_CONSTANTS.DASH_DURATION;
 
 		player.currentOffensiveSpell = "ballAngleSwitch";
 		player.currentCounterSpell = "ballStop";
