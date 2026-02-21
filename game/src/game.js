@@ -996,7 +996,33 @@ class GameRoomManager {
 	}
 
 	generateRoomId() {
-		return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const adjectives = [
+			"ancient", "blazing", "cosmic", "dark", "epic", "fierce", "golden",
+			"hidden", "iron", "jade", "keen", "lunar", "mystic", "neon", "obsidian",
+			"phantom", "quantum", "rogue", "shadow", "thunder", "ultra", "venom",
+			"wicked", "xenon", "yonder", "zero", "arcane", "brave", "chrome",
+			"dire", "ember", "frozen", "grim", "hollow", "ivory", "jolly",
+			"knightly", "lost", "molten", "noble", "onyx", "primal", "quick",
+			"radiant", "steel", "toxic", "undying", "vivid", "wild", "astral",
+		];
+		const nouns = [
+			"arena", "blade", "comet", "dragon", "forge", "ghost", "hawk",
+			"inferno", "knight", "lion", "meteor", "nexus", "oracle", "phoenix",
+			"quest", "raven", "storm", "titan", "vortex", "wolf", "archer",
+			"bastion", "cipher", "dagger", "eclipse", "falcon", "golem", "hydra",
+			"imp", "jester", "kraken", "lancer", "mantis", "nomad", "ogre",
+			"panda", "quasar", "reaper", "serpent", "thorn", "umbra", "valkyrie",
+			"warden", "wyrm", "yeti", "zenith", "bolt", "claw", "drift",
+		];
+		const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+		const noun = nouns[Math.floor(Math.random() * nouns.length)];
+		const num = Math.floor(Math.random() * 100);
+		const id = `${adj}-${noun}-${num}`;
+		// Ensure uniqueness
+		if (this.rooms.has(id)) {
+			return this.generateRoomId();
+		}
+		return id;
 	}
 
 	getRoomForConnection(connection) {

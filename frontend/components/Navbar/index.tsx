@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
 import { LogOut, User } from "lucide-react";
 
 const LOCALES = [
@@ -23,7 +23,7 @@ const LOCALES = [
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
-  const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -51,11 +51,13 @@ export function Navbar() {
             </Link>
             <Link
               href="/pong"
-              onClick={(e) => {
-                e.preventDefault();
-                router.push(`/pong?t=${Date.now()}`);
-              }}
               className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
+              onClick={(e) => {
+                if (pathname === "/pong") {
+                  e.preventDefault();
+                  window.dispatchEvent(new Event("pong:back-to-menu"));
+                }
+              }}
             >
               {t("navbar.play")}
             </Link>

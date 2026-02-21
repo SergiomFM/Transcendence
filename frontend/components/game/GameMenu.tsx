@@ -85,36 +85,6 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Offensive Spells */}
-              <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_theme(colors.red.500/50%)]" />
-                  <h4 className="text-base font-semibold">
-                    {t("game.offensiveSpells")}
-                  </h4>
-                  <span className="ml-auto text-xs text-muted-foreground font-mono">
-                    E / L
-                  </span>
-                </div>
-                <div className="space-y-2.5">
-                  <SpellRow
-                    color="bg-blue-500"
-                    name={t("game.spellAngleSwitch")}
-                    desc={t("game.spellAngleSwitchDesc")}
-                  />
-                  <SpellRow
-                    color="bg-green-500"
-                    name={t("game.spellShot")}
-                    desc={t("game.spellShotDesc")}
-                  />
-                  <SpellRow
-                    color="bg-red-500"
-                    name={t("game.spellPortal")}
-                    desc={t("game.spellPortalDesc")}
-                  />
-                </div>
-              </div>
-
               {/* Defensive Spells */}
               <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
                 <div className="flex items-center gap-2">
@@ -141,6 +111,36 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
                     color="bg-fuchsia-500"
                     name={t("game.spellMagnet")}
                     desc={t("game.spellMagnetDesc")}
+                  />
+                </div>
+              </div>
+
+              {/* Offensive Spells */}
+              <div className="rounded-xl border border-neon-muted/30 bg-card/50 backdrop-blur-sm p-5 space-y-3 hover:border-glow transition-all">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_theme(colors.red.500/50%)]" />
+                  <h4 className="text-base font-semibold">
+                    {t("game.offensiveSpells")}
+                  </h4>
+                  <span className="ml-auto text-xs text-muted-foreground font-mono">
+                    E / L
+                  </span>
+                </div>
+                <div className="space-y-2.5">
+                  <SpellRow
+                    color="bg-blue-500"
+                    name={t("game.spellAngleSwitch")}
+                    desc={t("game.spellAngleSwitchDesc")}
+                  />
+                  <SpellRow
+                    color="bg-green-500"
+                    name={t("game.spellShot")}
+                    desc={t("game.spellShotDesc")}
+                  />
+                  <SpellRow
+                    color="bg-red-500"
+                    name={t("game.spellPortal")}
+                    desc={t("game.spellPortalDesc")}
                   />
                 </div>
               </div>

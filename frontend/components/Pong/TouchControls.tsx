@@ -50,6 +50,7 @@ function TouchButton({
       if (!pressedRef.current) {
         pressedRef.current = true;
         setPressed(true);
+        navigator.vibrate?.(15);
         onPressStartRef.current();
       }
     };

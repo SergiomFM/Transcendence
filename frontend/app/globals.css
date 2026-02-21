@@ -201,6 +201,17 @@ canvas {
     box-shadow: none !important;
   }
 
+  .game-shell *:focus,
+  .game-shell *:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .game-shell canvas {
+    border-color: transparent !important;
+    outline: none !important;
+  }
+
   /* Subtle noise grain overlay */
   .grain::before {
     content: "";

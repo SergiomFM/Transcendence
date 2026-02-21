@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { GameMenu, GameScreen, GameMode } from "@/components/game";
 
 export default function PongPage() {
-  const searchParams = useSearchParams();
-  const key = searchParams.get("t") ?? "";
-  return <PongContent key={key} />;
-}
-
-function PongContent() {
   const [gameMode, setGameMode] = useState<GameMode>("menu");
+
+  useEffect(() => {
+    const handleReset = () => setGameMode("menu");
+    window.addEventListener("pong:back-to-menu", handleReset);
+    return () => window.removeEventListener("pong:back-to-menu", handleReset);
+  }, []);
 
   if (gameMode === "menu") {
     return <GameMenu onSelectMode={setGameMode} />;

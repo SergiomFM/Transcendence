@@ -92,8 +92,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     }
   };
 
-  const handleBackToMenu = async () => {
-    await exitFullscreen();
+  const handleBackToMenu = () => {
     onBackToMenu();
   };
 
@@ -175,8 +174,9 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 "game-frame relative",
                 isFullscreen
                   ? "w-full h-full"
-                  : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                  : "w-full max-h-full border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
               )}
+              style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
             >
               <Suspense
                 fallback={
@@ -338,8 +338,9 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "game-frame relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-full max-h-full border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
           )}
+          style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
         >
           <Suspense
             fallback={

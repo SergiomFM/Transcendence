@@ -29,6 +29,7 @@ const Pong = ({
 }: PongProps) => {
   const t = useTranslations();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameWrapperRef = useRef<HTMLDivElement>(null);
   const [pongInstance, setPongInstance] = useState<PongInstance | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
@@ -38,6 +39,43 @@ const Pong = ({
       "ontouchstart" in window ||
       navigator.maxTouchPoints > 0;
     setIsTouchDevice(hasTouch);
+  }, []);
+
+  // Maintain 16:9 aspect ratio and scale canvas within parent container
+  useEffect(() => {
+    const wrapper = gameWrapperRef.current;
+    if (!wrapper) return;
+    const parent = wrapper.parentElement;
+    if (!parent) return;
+
+    const BASE_W = 854;
+    const BASE_H = 480;
+
+    const fitToParent = () => {
+      const pw = parent.clientWidth;
+      const ph = parent.clientHeight;
+      const targetRatio = BASE_W / BASE_H;
+      const parentRatio = pw / ph;
+
+      let scale: number;
+      if (parentRatio > targetRatio) {
+        // Parent is wider — height-limited (pillarbox)
+        scale = ph / BASE_H;
+      } else {
+        // Parent is taller — width-limited (letterbox)
+        scale = pw / BASE_W;
+      }
+
+      wrapper.style.width = BASE_W + "px";
+      wrapper.style.height = BASE_H + "px";
+      wrapper.style.transform = `scale(${scale})`;
+      wrapper.style.transformOrigin = "center center";
+    };
+
+    fitToParent();
+    const ro = new ResizeObserver(fitToParent);
+    ro.observe(parent);
+    return () => ro.disconnect();
   }, []);
 
   const handlePongReady = useCallback((pong: PongInstance) => {
@@ -97,16 +135,16 @@ const Pong = ({
 
   return (
     <div className={cn("relative w-full h-full", className)}>
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="w-full h-full flex items-center justify-center bg-black">
         <div
-          className="h-full w-auto max-w-full max-h-full relative"
-          style={{ aspectRatio: "16 / 9" }}
+          ref={gameWrapperRef}
+          className="relative"
           onContextMenu={(e) => e.preventDefault()}
         >
           <canvas
             ref={canvasRef}
-            style={{ width: "100%", height: "100%" }}
             className="block"
+            style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />
           {isTouchDevice && isFullscreen && <TouchControls pong={pongInstance} />}
