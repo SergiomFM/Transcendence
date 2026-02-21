@@ -100,7 +100,7 @@ function buildTextConfig(t: PongTranslations) {
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
     PLAYER_1_SCORE_DESCRIPTION: [
-      "PLAYER_1_SCORE_DESCRIPTION", t.labelYou, "white", "15%", "pongFont1", 2, "black", "10%", "-20%",
+      "PLAYER_1_SCORE_DESCRIPTION", t.labelYou, "white", "6%", "pongFont1", 2, "black", "10%", "-20%",
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
     PLAYER_2_SCORE: [
@@ -108,7 +108,7 @@ function buildTextConfig(t: PongTranslations) {
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
     PLAYER_2_SCORE_DESCRIPTION: [
-      "PLAYER_2_SCORE_DESCRIPTION", t.labelOpponent, "white", "15%", "pongFont1", 2, "black", "10%", "20%",
+      "PLAYER_2_SCORE_DESCRIPTION", t.labelOpponent, "white", "6%", "pongFont1", 2, "black", "10%", "20%",
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
   };
@@ -401,13 +401,19 @@ export class GUI {
   }
 
   updatePlayerLabels(player1Name?: string | null, player2Name?: string | null) {
+    const MAX_NAME_LENGTH = 14;
+    const truncate = (name: string) =>
+      name.length > MAX_NAME_LENGTH ? name.slice(0, MAX_NAME_LENGTH - 1) + "…" : name;
+
     const player1Label = this.textBlocks.get("PLAYER_1_SCORE_DESCRIPTION");
     const player2Label = this.textBlocks.get("PLAYER_2_SCORE_DESCRIPTION");
     if (player1Label) {
-      player1Label.text = player1Name ? player1Name : this.translations.labelYou;
+      const name = player1Name ? player1Name : this.translations.labelYou;
+      player1Label.text = truncate(name);
     }
     if (player2Label) {
-      player2Label.text = player2Name ? player2Name : this.translations.labelOpponent;
+      const name = player2Name ? player2Name : this.translations.labelOpponent;
+      player2Label.text = truncate(name);
     }
   }
 }

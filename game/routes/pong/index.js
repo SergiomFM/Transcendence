@@ -188,14 +188,19 @@ module.exports = async function (fastify, opts) {
 						}
 
 						// Send confirmation to client
+						const isPlayer1 = assignedPlayerId === 1;
 						connection.send(
 							JSON.stringify({
 								type: "GAME_JOINED",
 								roomId: currentRoom.roomId,
 								role: role,
 								playerId: assignedPlayerId,
-								playerName: currentRoom.player1?.name || null,
-								opponentName: currentRoom.player2?.name || null,
+								playerName: isPlayer1
+									? (currentRoom.player1?.name || null)
+									: (currentRoom.player2?.name || null),
+								opponentName: isPlayer1
+									? (currentRoom.player2?.name || null)
+									: (currentRoom.player1?.name || null),
 								seatsAvailable: getSeatsAvailable(currentRoom),
 								alone: !isRoomFull(currentRoom),
 								sessionReplaced: kickedPreviousSession,

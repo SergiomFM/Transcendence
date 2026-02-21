@@ -1,6 +1,6 @@
 MANDATORY WORK (validate in the end)
 
-Terms of service / Privacy policy (Mano GPT) - N/a 
+Terms of service / Privacy policy - N/a 
 Containerization (Docker) - Sergio / Paulo
 Frontend (Tailwind / shadcn / Next.js / React) - Afonso
 Auth (API keys, env var, User Management, ..)(Fastify) - Lourenco
