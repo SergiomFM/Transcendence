@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 import { LogOut, User } from "lucide-react";
 
 const LOCALES = [
@@ -22,6 +23,7 @@ const LOCALES = [
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
+  const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
 
   const handleLogout = async () => {
@@ -49,6 +51,10 @@ export function Navbar() {
             </Link>
             <Link
               href="/pong"
+              onClick={(e) => {
+                e.preventDefault();
+                router.push(`/pong?t=${Date.now()}`);
+              }}
               className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
             >
               {t("navbar.play")}

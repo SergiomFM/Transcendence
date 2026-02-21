@@ -53,7 +53,13 @@ function onlineGameLogic(pong: Pong) {
   }
 }
 
-function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any) {
+function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, pong: Pong) {
+  // Don't apply cooldown state while spectating or when game is not running
+  if (pong.isSpectator || !pong.running) {
+    spell.cooldownElapsed = 0;
+    spell.ready = false;
+    return;
+  }
   spell.cooldownElapsed = serverSpellData.cooldownElapsed;
   if (serverSpellData.spellReady && !spell.ready) {
     spell.ready = true;
@@ -67,6 +73,7 @@ function updatePlayerFromServer(
   player: Player,
   serverPlayerData: any,
   scene: any,
+  pong: Pong,
 ) {
   player.x = serverPlayerData.x;
   if (serverPlayerData.name !== undefined) {
@@ -79,6 +86,7 @@ function updatePlayerFromServer(
       spellReady: serverPlayerData.offensiveSpellReady,
     },
     scene,
+    pong,
   );
   updateSpellFromServer(
     player.counterSpell,
@@ -87,6 +95,7 @@ function updatePlayerFromServer(
       spellReady: serverPlayerData.counterSpellReady,
     },
     scene,
+    pong,
   );
 }
 
@@ -95,8 +104,8 @@ function applyServerState(pong: Pong, serverState: any) {
   pong.ball.z = serverState.ball.z;
   pong.ball.setAngle(serverState.ball.angle);
 
-  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
-  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
+  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene, pong);
+  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene, pong);
 
   if (pong.GUI) {
     if (typeof serverState.player1.score === "number") {

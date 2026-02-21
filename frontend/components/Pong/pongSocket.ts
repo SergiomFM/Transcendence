@@ -291,6 +291,11 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   pong.playerId = message.playerId ?? pong.playerId;
   pong.player1.connected = true;
   pong.player2.connected = true;
+  // Reset spell cooldowns so balls start small after promotion
+  pong.player1.counterSpell.resetSpell();
+  pong.player1.offensiveSpell.resetSpell();
+  pong.player2.counterSpell.resetSpell();
+  pong.player2.offensiveSpell.resetSpell();
   // Update names from server to fix perspective after promotion
   pong.player1.name = message.playerName ?? null;
   pong.player2.name = message.opponentName ?? null;
