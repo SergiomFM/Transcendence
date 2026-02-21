@@ -33,7 +33,6 @@ export function connectToGameServer(
       JSON.stringify({
         type: "JOIN_GAME",
         playerData: {
-          name: "Player",
           timestamp: Date.now(),
         },
       }),
@@ -87,6 +86,10 @@ function handleServerMessage(
 
     case "GAME_SCORE":
       handleGameScore(pong, message);
+      break;
+
+    case "GAME_OVER":
+      handleGameOver(pong, message);
       break;
 
     case "PLAYER_SEAT_AVAILABLE":
@@ -208,6 +211,7 @@ function handleGameJoined(pong: Pong, message: any) {
   }
 
   if (pong.GUI) {
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
     if (pong.isSpectator) {
       pong.GUI.spectatorModeUI(pong.seatsAvailable);
     } else if (message.alone) {
@@ -215,7 +219,6 @@ function handleGameJoined(pong: Pong, message: any) {
     } else {
       pong.GUI.pressReadyUI();
     }
-    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
     if (pong.isSpectator) {
       pong.GUI.textFadeIn("WELCOME", 1500);
     } else {
@@ -276,6 +279,10 @@ function handleGameDisconnection(pong: Pong) {
 
 function handleSeatAvailable(pong: Pong, message: any) {
   pong.seatsAvailable = message.seatsAvailable ?? 0;
+  // Skip spectator UI transition while "MATCH LOST!" is still being shown
+  if (pong.matchLostPending) {
+    return;
+  }
   if (pong.isSpectator && pong.GUI) {
     pong.GUI.spectatorModeUI(pong.seatsAvailable);
   }
@@ -292,6 +299,9 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   pong.playerId = message.playerId ?? pong.playerId;
   pong.player1.connected = true;
   pong.player2.connected = true;
+  // Update names from server to fix perspective after promotion
+  pong.player1.name = message.playerName ?? null;
+  pong.player2.name = message.opponentName ?? null;
   if (pong.GUI) {
     pong.GUI.pressReadyUI();
     pong.GUI.hideOtherPlayerReady();
@@ -386,6 +396,55 @@ function handleGameScore(pong: Pong, message: any) {
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
+  Events.emitReadyState(pong);
+  Events.emitRunningState(pong);
+  resetRoundColor(pong);
+}
+
+function handleGameOver(pong: Pong, message: any) {
+  console.log("Game Over!", message);
+
+  if (typeof message.player1Score === "number") {
+    pong.player1.score = message.player1Score;
+  }
+  if (typeof message.player2Score === "number") {
+    pong.player2.score = message.player2Score;
+  }
+
+  pong.running = false;
+  pong.localReady = false;
+
+  if (pong.GUI) {
+    if (pong.isSpectator) {
+      pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+    } else if (message.won) {
+      pong.GUI.matchWonUI(message.player1Score, message.player2Score);
+    } else {
+      pong.GUI.matchLostUI(message.player1Score, message.player2Score);
+    }
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
+  }
+
+  // Loser gets demoted to spectator by the server — the PLAYER_SEAT_AVAILABLE
+  // message will handle the spectator UI transition via handleSeatAvailable.
+  // But if we lost, update local state immediately so inputs don't fire.
+  if (!pong.isSpectator && message.won === false) {
+    pong.isSpectator = true;
+    // Delay the spectator UI so the player can see "MATCH LOST!" for a few seconds
+    pong.matchLostPending = true;
+    setTimeout(() => {
+      pong.matchLostPending = false;
+      if (pong.isSpectator && pong.GUI) {
+        pong.GUI.spectatorModeUI(pong.seatsAvailable);
+      }
+      if (pong.isSpectator && pong.camera) {
+        pong.camera.setView(true, true);
+        switchPlayerHandsPosition(pong, pong.camera.topView, false);
+      }
+    }, 1500);
+    Events.emitSpectatorState(pong);
+  }
+
   Events.emitReadyState(pong);
   Events.emitRunningState(pong);
   resetRoundColor(pong);

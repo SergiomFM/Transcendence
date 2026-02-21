@@ -70,7 +70,7 @@ function updatePlayerFromServer(
   scene: any,
 ) {
   player.x = serverPlayerData.x;
-  if (serverPlayerData.name) {
+  if (serverPlayerData.name !== undefined) {
     player.name = serverPlayerData.name;
   }
   updateSpellFromServer(
@@ -107,6 +107,11 @@ function applyServerState(pong: Pong, serverState: any) {
       pong.player2.score = serverState.player2.score;
     }
     pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+
+    if (pong.isSpectator) {
+      pong.GUI.updateSpectatorNames(pong.player1.name, pong.player2.name);
+      pong.GUI.showSpectatorNames();
+    }
   }
 
   pong.running = serverState.running;

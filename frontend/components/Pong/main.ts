@@ -36,6 +36,8 @@ export const startPong = async (
     player1Wins: "Player 1 Wins!",
     youLost: "You Lost!",
     player2Wins: "Player 2 Wins!",
+    matchWon: "MATCH WON!",
+    matchLost: "MATCH LOST!",
     waitingForOpponent: "Waiting for opponent...",
     getReady: "Get Ready...",
     fight: "FIGHT!",

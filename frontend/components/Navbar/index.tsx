@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 
 const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -115,12 +115,6 @@ export function Navbar() {
                   <Link href={`/users/${user.id}`} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     {t("navbar.profile")}
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    {t("common.settings")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem

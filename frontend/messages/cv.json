@@ -183,6 +183,8 @@
     "pressClaimSeat": "Aperta C pa okupa un lugar",
     "otherPlayerReady": "Otru djugador prontu",
     "labelYou": "(BO)",
-    "labelOpponent": "(EL)"
+    "labelOpponent": "(EL)",
+    "matchWon": "PARTIDA GANHADU!",
+    "matchLost": "PARTIDA PERDIDU!"
   }
 }

@@ -159,6 +159,7 @@ export class Pong {
   playerId: number | null = null;
   localReady = false;
   pendingWelcome = false;
+  matchLostPending = false;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;

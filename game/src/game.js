@@ -251,7 +251,10 @@ class GameRoom {
 			connection.playerId = 1;
 			connection.role = "player";
 			this.player1.name = connection.userName || playerData?.name || null;
+			// Reset scores for a fresh match when both seats are filled
 			if (this.player2.connection) {
+				this.player1.score = 0;
+				this.player2.score = 0;
 				this.loaded = true;
 				this.startGameLoop();
 			}
@@ -264,7 +267,10 @@ class GameRoom {
 			connection.playerId = 2;
 			connection.role = "player";
 			this.player2.name = connection.userName || playerData?.name || null;
+			// Reset scores for a fresh match when both seats are filled
 			if (this.player1.connection) {
+				this.player1.score = 0;
+				this.player2.score = 0;
 				this.loaded = true;
 				this.startGameLoop();
 			}
@@ -370,6 +376,11 @@ class GameRoom {
 	}
 
 	resetPlayerState(player, zPosition) {
+		this.resetPlayerPositions(player, zPosition);
+		player.score = 0;
+	}
+
+	resetPlayerPositions(player, zPosition) {
 		player.x = 0;
 		player.z = zPosition;
 		player.currSpeed = 0;
@@ -381,7 +392,6 @@ class GameRoom {
 		player.failed = false;
 		player.ready = false;
 		player.size = GAME_CONSTANTS.PADDLE_SIZE;
-		player.score = 0;
 
 		player.currentOffensiveSpell = "ballAngleSwitch";
 		player.currentCounterSpell = "ballStop";
@@ -540,6 +550,28 @@ class GameRoom {
 				this.running = false;
 				this.resetSpells();
 				this.handleScoreEvent(event, true);
+
+				// Check for game over
+				if (this.player1.score >= GAME_CONSTANTS.MAX_ROUNDS || this.player2.score >= GAME_CONSTANTS.MAX_ROUNDS) {
+					const player1Wins = this.player1.score >= GAME_CONSTANTS.MAX_ROUNDS;
+					console.log(`[GAME OVER] Player1: ${this.player1.score}, Player2: ${this.player2.score}, MAX_ROUNDS: ${GAME_CONSTANTS.MAX_ROUNDS}, Winner: ${player1Wins ? 'Player1' : 'Player2'}`);
+
+					// Report match result BEFORE demotion (needs userId from connection)
+					this.reportMatchResult(player1Wins);
+
+					// Send per-player GAME_OVER messages with scores
+					this.handleGameOverEvent(player1Wins);
+
+					// Reset player positions and spells but KEEP scores
+					// so the winner and spectators can still see the final result.
+					// Scores will be reset when a new player takes the seat.
+					this.running = false;
+					this.player1.ready = false;
+					this.player2.ready = false;
+					this.resetPlayerPositions(this.player1, GAME_CONSTANTS.PLAYER1_Z);
+					this.resetPlayerPositions(this.player2, GAME_CONSTANTS.PLAYER2_Z);
+					this.initializeBall();
+				}
 			} else {
 				this.handleCollisionEvent(event, true);
 			}
@@ -589,6 +621,70 @@ class GameRoom {
 		}
 		if (!isPlayer1) return;
 		this.handleScoreEvent(scoreEvent, false);
+	}
+
+	handleGameOverEvent(player1Wins) {
+		// Send per-player GAME_OVER messages with flipped scores (like handleScoreEvent)
+		const sendToPlayer = (isPlayer1) => {
+			const player = isPlayer1 ? this.player1 : this.player2;
+			const won = isPlayer1 ? player1Wins : !player1Wins;
+			if (player.connection) {
+				try {
+					player.connection.send(
+						JSON.stringify({
+							type: "GAME_OVER",
+							won: won,
+							winner: player1Wins ? 1 : 2,
+							player1Score: isPlayer1 ? this.player1.score : this.player2.score,
+							player2Score: isPlayer1 ? this.player2.score : this.player1.score,
+						}),
+					);
+				} catch (error) {
+					console.error("Error sending GAME_OVER to player:", error);
+				}
+			}
+		};
+
+		sendToPlayer(true);
+		sendToPlayer(false);
+
+		// Also notify spectators
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(
+					JSON.stringify({
+						type: "GAME_OVER",
+						won: null,
+						winner: player1Wins ? 1 : 2,
+						player1Score: this.player1.score,
+						player2Score: this.player2.score,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending GAME_OVER to spectator:", error);
+			}
+		}
+
+		// Demote the loser to spectator (lightweight: just move connection, don't reset game)
+		const loserPlayer = player1Wins ? this.player2 : this.player1;
+		const loserConnection = loserPlayer.connection;
+		if (loserConnection) {
+			// Move connection from player slot to spectators
+			loserPlayer.connection = null;
+			loserPlayer.ready = false;
+			loserPlayer.name = null;
+			loserConnection.playerId = null;
+			loserConnection.role = "spectator";
+			this.spectators.add(loserConnection);
+			this.sendStateToConnection(loserConnection);
+
+			// Notify about seat availability
+			this.broadcastEvent({
+				type: "PLAYER_SEAT_AVAILABLE",
+				seatsAvailable:
+					(this.player1.connection ? 0 : 1) + (this.player2.connection ? 0 : 1),
+			});
+		}
 	}
 
 	getStateForPlayer(isPlayer1) {
@@ -741,6 +837,56 @@ class GameRoom {
 			this.gameLoopTimeout = null;
 		}
 	}
+
+	async reportMatchResult(player1Wins) {
+		const player1UserId = this.player1.connection?.userId;
+		const player2UserId = this.player2.connection?.userId;
+		const p1Score = this.player1.score;
+		const p2Score = this.player2.score;
+
+		console.log(`[MATCH REPORT] Attempting to report match: p1=${player1UserId} (${p1Score}) vs p2=${player2UserId} (${p2Score}), winner=${player1Wins ? 'p1' : 'p2'}`);
+
+		// At least one player must be authenticated to record the match
+		if (!player1UserId && !player2UserId) {
+			console.log("[MATCH REPORT] Skipping: no players are authenticated");
+			return;
+		}
+
+		const USERS_BACKEND_URL = process.env.USERS_BACKEND_URL;
+		if (!USERS_BACKEND_URL) {
+			console.error("[MATCH REPORT] USERS_BACKEND_URL not configured");
+			return;
+		}
+
+		const winnerId = player1Wins ? player1UserId : player2UserId;
+
+		const body = {
+			player1_id: player1UserId || null,
+			player2_id: player2UserId || null,
+			player1_score: p1Score,
+			player2_score: p2Score,
+			winner_id: winnerId || null,
+		};
+		console.log("[MATCH REPORT] Sending:", JSON.stringify(body));
+
+		try {
+			const response = await fetch(`${USERS_BACKEND_URL}/matches`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+
+			if (!response.ok) {
+				const text = await response.text();
+				console.error(`[MATCH REPORT] Failed: ${response.status} ${text}`);
+			} else {
+				console.log("[MATCH REPORT] Match result reported successfully");
+			}
+		} catch (error) {
+			console.error("[MATCH REPORT] Error:", error);
+		}
+	}
+
 	resetSpells() {
 		const now = performance.now();
 		this.player1.spells.offensive.cooldown =

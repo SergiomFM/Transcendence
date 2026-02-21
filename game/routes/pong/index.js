@@ -235,13 +235,20 @@ module.exports = async function (fastify, opts) {
 											: currentRoom.player2;
 									promotedPlayer.ready = false;
 									connection.role = "player";
-									connection.send(
-										JSON.stringify({
-											type: "PLAYER_PROMOTED",
-											playerId: promotion.playerId,
-											roomId: currentRoom.roomId,
-										}),
-									);
+								const isPromotedPlayer1 = promotion.playerId === 1;
+								connection.send(
+									JSON.stringify({
+										type: "PLAYER_PROMOTED",
+										playerId: promotion.playerId,
+										roomId: currentRoom.roomId,
+										playerName: isPromotedPlayer1
+											? (currentRoom.player1?.name || null)
+											: (currentRoom.player2?.name || null),
+										opponentName: isPromotedPlayer1
+											? (currentRoom.player2?.name || null)
+											: (currentRoom.player1?.name || null),
+									}),
+								);
 									currentRoom.sendStateToConnection(connection);
 									sendReadyStatusToConnection(currentRoom, connection);
 									broadcastReadyStatus(currentRoom);

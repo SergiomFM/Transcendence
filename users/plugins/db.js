@@ -67,6 +67,37 @@ async function dbPlugin(fastify){
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
 
+	db.prepare(`CREATE TABLE IF NOT EXISTS match_history (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		player1_id TEXT,
+		player2_id TEXT,
+		player1_score INTEGER NOT NULL,
+		player2_score INTEGER NOT NULL,
+		winner_id TEXT,
+		played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (player1_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (player2_id) REFERENCES users(id) ON DELETE CASCADE,
+		FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
+
+	// Migration: recreate match_history if columns are NOT NULL (old schema)
+	const matchCols = db.prepare(`PRAGMA table_info(match_history)`).all()
+	const player1Col = matchCols.find(c => c.name === 'player1_id')
+	if (player1Col && player1Col.notnull === 1) {
+		db.prepare(`DROP TABLE match_history`).run()
+		db.prepare(`CREATE TABLE match_history (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			player1_id TEXT,
+			player2_id TEXT,
+			player1_score INTEGER NOT NULL,
+			player2_score INTEGER NOT NULL,
+			winner_id TEXT,
+			played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (player1_id) REFERENCES users(id) ON DELETE CASCADE,
+			FOREIGN KEY (player2_id) REFERENCES users(id) ON DELETE CASCADE,
+			FOREIGN KEY (winner_id) REFERENCES users(id) ON DELETE CASCADE)`).run()
+		fastify.log.info('Migrated match_history table to allow guest players')
+	}
+
 	db.prepare(`CREATE TABLE IF NOT EXISTS friend_requests (
 		id TEXT PRIMARY KEY,
 		sender_id TEXT NOT NULL,
@@ -205,8 +236,25 @@ async function dbPlugin(fastify){
 				`)
 			})
 
-			//FRIENDS AND FRIENDS LIST
-		fastify.decorate('friends', {
+		//MATCH HISTORY
+	fastify.decorate('matches', {
+		insert: db.prepare(`
+			INSERT INTO match_history (player1_id, player2_id, player1_score, player2_score, winner_id)
+			VALUES (?, ?, ?, ?, ?)
+			`),
+
+		countWins: db.prepare(`
+			SELECT COUNT(*) as wins FROM match_history WHERE winner_id = ?
+			`),
+
+		countLosses: db.prepare(`
+			SELECT COUNT(*) as losses FROM match_history
+			WHERE (player1_id = ? OR player2_id = ?) AND (winner_id IS NULL OR winner_id != ?)
+			`),
+		})
+
+		//FRIENDS AND FRIENDS LIST
+	fastify.decorate('friends', {
 			sendRequest: db.prepare(`
 				INSERT INTO friend_requests (id, sender_id, receiver_id)
 				VALUES (?, ?, ?)

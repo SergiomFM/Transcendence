@@ -45,6 +45,8 @@ const Pong = ({
     player1Wins: t("pong.player1Wins"),
     youLost: t("pong.youLost"),
     player2Wins: t("pong.player2Wins"),
+    matchWon: t("pong.matchWon"),
+    matchLost: t("pong.matchLost"),
     waitingForOpponent: t("pong.waitingForOpponent"),
     getReady: t("pong.getReady"),
     fight: t("pong.fight"),

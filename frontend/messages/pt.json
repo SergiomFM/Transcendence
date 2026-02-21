@@ -183,6 +183,8 @@
     "pressClaimSeat": "Pressiona C para ocupar um lugar",
     "otherPlayerReady": "Outro jogador pronto",
     "labelYou": "(TU)",
-    "labelOpponent": "(ELE)"
+    "labelOpponent": "(ELE)",
+    "matchWon": "PARTIDA GANHA!",
+    "matchLost": "PARTIDA PERDIDA!"
   }
 }

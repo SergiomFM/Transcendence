@@ -183,6 +183,8 @@
     "pressClaimSeat": "Press C to claim a seat",
     "otherPlayerReady": "Other player ready",
     "labelYou": "(YOU)",
-    "labelOpponent": "(HIM)"
+    "labelOpponent": "(HIM)",
+    "matchWon": "MATCH WON!",
+    "matchLost": "MATCH LOST!"
   }
 }
