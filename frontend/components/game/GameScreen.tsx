@@ -232,36 +232,37 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
       );
     }
     return (
-      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-6 p-8">
+      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8">
         <div className="text-center max-w-2xl">
-          <h1 className="text-3xl font-bold">{t("game.multiplayerRooms")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">{t("game.multiplayerRooms")}</h1>
           <p className="text-sm text-gray-400 mt-2">
             {t("game.multiplayerRoomsSubtitle")}
           </p>
         </div>
-        <div className="w-full max-w-3xl border border-gray-700 rounded-xl p-6 bg-black/40 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{t("game.activeRooms")}</h2>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
-                        method: "POST",
-                      });
+        <div className="w-full max-w-3xl border border-gray-700 rounded-xl p-3 sm:p-6 bg-black/40 text-white">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold">{t("game.activeRooms")}</h2>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="shrink-0"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
+                    method: "POST",
+                  });
                   if (!response.ok) {
                     throw new Error(t("game.failedToCreateRoom"));
                   }
                   const data = await response.json();
-                      if (data?.id) {
-                        setSelectedRoomId(data.id);
-                      }
-                    } catch (error) {
-                      setRoomsError(t("game.unableToCreateRoom"));
-                    }
-                  }}
-                >
+                  if (data?.id) {
+                    setSelectedRoomId(data.id);
+                  }
+                } catch (error) {
+                  setRoomsError(t("game.unableToCreateRoom"));
+                }
+              }}
+            >
               {t("game.createRoom")}
             </Button>
           </div>
@@ -278,10 +279,10 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             {rooms.map((room) => (
               <div
                 key={room.id}
-                className="flex items-center justify-between rounded-lg border border-gray-700/70 px-4 py-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-lg border border-gray-700/70 px-3 sm:px-4 py-3"
               >
-                <div>
-                  <div className="text-sm font-semibold">{room.id}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold truncate">{room.id}</div>
                   <div className="text-xs text-gray-400">
                     {t("game.players")}: {room.players} · {t("game.spectators")}: {room.spectators}
                   </div>
@@ -291,16 +292,19 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-gray-300">
-                  {room.running ? t("game.inMatch") : t("game.waiting")}
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                  <div className="text-xs text-gray-300">
+                    {room.running ? t("game.inMatch") : t("game.waiting")}
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => setSelectedRoomId(room.id)}
+                  >
+                    {t("game.join")}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedRoomId(room.id)}
-                >
-                  {t("game.join")}
-                </Button>
               </div>
             ))}
           </div>

@@ -13,8 +13,8 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
   return (
     <div className="w-full min-h-[80dvh] flex flex-col overflow-y-auto">
-      <div className="flex-1 flex flex-col items-center gap-8 p-10">
-        <h1 className="text-4xl font-bold mb-4">{t("game.selectMode")}</h1>
+      <div className="flex-1 flex flex-col items-center gap-6 sm:gap-8 p-4 sm:p-10">
+        <h1 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
 
         <div className="flex flex-col gap-4 w-full max-w-md">
           <Button

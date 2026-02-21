@@ -75,19 +75,19 @@ const UserProfilePage = () => {
     .slice(0, 2);
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-12">
+    <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-2xl space-y-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-start gap-6">
-              <Avatar className="h-20 w-20">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
+              <Avatar className="h-20 w-20 shrink-0">
                 <AvatarImage src={avatarUrl} alt={profile.display_name} />
                 <AvatarFallback className="text-xl">{initials}</AvatarFallback>
               </Avatar>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <h1 className="text-2xl font-bold truncate">
+              <div className="flex-1 min-w-0 text-center sm:text-left w-full">
+                <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <h1 className="text-xl sm:text-2xl font-bold truncate">
                       {profile.display_name}
                     </h1>
                     <p className="text-sm text-muted-foreground">
@@ -96,7 +96,7 @@ const UserProfilePage = () => {
                     </p>
                   </div>
                   {isOwnProfile && (
-                    <Link href="/settings">
+                    <Link href="/settings" className="shrink-0">
                       <Button variant="outline" size="sm">
                         <Settings className="mr-2 h-4 w-4" />
                         {t("profile.editProfile")}
@@ -114,35 +114,35 @@ const UserProfilePage = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.wins")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">—</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <p className="text-xl sm:text-2xl font-bold">—</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.losses")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">—</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <p className="text-xl sm:text-2xl font-bold">—</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
                 {t("profile.friends")}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">—</p>
+            <CardContent className="p-3 sm:p-6 pt-0">
+              <p className="text-xl sm:text-2xl font-bold">—</p>
             </CardContent>
           </Card>
         </div>
