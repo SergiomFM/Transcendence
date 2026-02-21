@@ -115,25 +115,25 @@ const UserProfilePage = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <Card className="border-neon-muted/30 hover:border-glow transition-all">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+          <Card className="border-neon-muted/30 hover:border-glow transition-all text-center">
             <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-lg sm:text-xl font-medium text-muted-foreground">
                 {t("profile.wins")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <p className="text-xl sm:text-2xl font-bold text-neon">{profile.wins ?? 0}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-neon">{profile.wins ?? 0}</p>
             </CardContent>
           </Card>
-          <Card className="border-neon-muted/30 hover:border-glow transition-all">
+          <Card className="border-neon-muted/30 hover:border-glow transition-all text-center">
             <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+              <CardTitle className="text-lg sm:text-xl font-medium text-muted-foreground">
                 {t("profile.losses")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-6 pt-0">
-              <p className="text-xl sm:text-2xl font-bold text-neon">{profile.losses ?? 0}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-neon">{profile.losses ?? 0}</p>
             </CardContent>
           </Card>
         </div>

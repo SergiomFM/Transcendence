@@ -15,7 +15,7 @@ export default async function Home() {
           <p className="text-sm sm:text-base uppercase tracking-[0.3em] text-muted-foreground">
             {t("home.welcomeTo")}
           </p>
-          <h1 className="font-['pongFont2'] text-4xl sm:text-6xl md:text-7xl text-primary text-glow-strong tracking-wide">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl text-primary text-glow-strong tracking-wide">
             Transcendence
           </h1>
         </div>

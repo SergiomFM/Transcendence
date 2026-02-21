@@ -235,7 +235,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     return (
       <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 animate-fade-up">
         <div className="text-center max-w-2xl">
-          <h1 className="font-['pongFont2'] text-2xl sm:text-4xl text-primary text-glow-strong tracking-wide">{t("game.multiplayerRooms")}</h1>
+          <h1 className="text-2xl sm:text-4xl text-primary text-glow-strong tracking-wide">{t("game.multiplayerRooms")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
             {t("game.multiplayerRoomsSubtitle")}
           </p>

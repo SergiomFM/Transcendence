@@ -37,7 +37,7 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between mx-auto px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-['pongFont2'] text-xl sm:text-2xl tracking-wide text-primary text-glow transition-all hover:text-glow-strong">
+          <Link href="/" className="text-xl sm:text-2xl tracking-wide text-primary text-glow transition-all hover:text-glow-strong">
             Transcendence
           </Link>
           <div className="hidden md:flex items-center gap-4">

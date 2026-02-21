@@ -14,7 +14,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
   return (
     <div className="w-full min-h-[80dvh] flex flex-col overflow-y-auto">
       <div className="flex-1 flex flex-col items-center gap-6 sm:gap-8 p-4 sm:p-10 animate-fade-up">
-        <h1 className="font-['pongFont2'] text-3xl sm:text-5xl text-primary text-glow-strong tracking-wide mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
+        <h1 className="text-3xl sm:text-5xl text-primary text-glow-strong tracking-wide mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
 
         <div className="flex flex-col gap-4 w-full max-w-md">
           <Button
@@ -37,7 +37,7 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
 
         {/* Game Instructions */}
         <div className="w-full max-w-4xl mt-8 space-y-8">
-          <h2 className="font-['pongFont2'] text-2xl sm:text-3xl text-center text-glow tracking-wide">
+          <h2 className="text-2xl sm:text-3xl text-center text-glow tracking-wide">
             {t("game.instructionsTitle")}
           </h2>
 
@@ -168,7 +168,7 @@ function ControlRow({ keys, action }: { keys: string; action: string }) {
         {keys.split(" / ").map((key) => (
           <kbd
             key={key}
-            className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-neon-muted/40 bg-muted/60 px-1.5 text-[11px] font-mono font-medium text-neon"
+            className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-neon-muted/40 bg-muted/60 px-1.5 text-xs font-mono font-medium text-neon"
           >
             {key}
           </kbd>
