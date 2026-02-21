@@ -6,8 +6,6 @@ FRONTEND
         USE_SPELL #TODO backend
             offensive : boolean 
 
-        USE_DASH (**) #TODO
-
         PLAYER_READY (**) #DONE
 
         PLAYER_DIRECTION #DONE

@@ -160,8 +160,6 @@ function paddleCollision(
 
 // Paddle movement function
 function movePadle(pong: Pong, delta: number, player: Player) {
-  player.playerDashLogic(delta * 1000, player.direction);
-
   // Refreshing the paddle movement when there is input
   if (player.direction) {
     player.currSpeed = player.maxSpeed;

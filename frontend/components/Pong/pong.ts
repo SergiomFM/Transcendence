@@ -63,16 +63,6 @@ export class Player {
   readonly maxDeviationAngle = GAME_CONSTANTS.PADDLE_MAX_DEVIATION_ANGLE;
   readonly size: number;
 
-  dashActive = false;
-  dashReady = false;
-
-  readonly dashCooldown = GAME_CONSTANTS.DASH_COOLDOWN;
-  readonly dashDuration = GAME_CONSTANTS.DASH_DURATION;
-  readonly dashPower = GAME_CONSTANTS.DASH_POWER;
-  dashElapsedCooldown = 0;
-  dashElapsedActive = 0;
-  originalMaxSpeed = this.maxSpeed;
-
   connected = false;
   name: string | null = null;
 
@@ -136,34 +126,6 @@ export class Player {
         lastUpdate = now;
       }
     });
-  }
-
-  playerDashLogic(timeElapsed: number, direction: number) {
-    // Updating cooldown timer
-    if (!this.dashReady) {
-      this.dashElapsedCooldown += timeElapsed;
-      if (this.dashElapsedCooldown > this.dashCooldown) this.dashReady = true;
-    }
-
-    if (direction == 0) {
-      this.dashActive = false;
-      this.dashElapsedActive = 0;
-      this.maxSpeed = this.originalMaxSpeed;
-      return;
-    }
-
-    if (this.dashActive) {
-      this.dashElapsedActive += timeElapsed;
-      this.maxSpeed = this.originalMaxSpeed * this.dashPower;
-
-      if (this.dashElapsedActive > this.dashDuration) {
-        this.maxSpeed = this.originalMaxSpeed;
-        this.dashActive = false;
-        this.dashElapsedCooldown = 0;
-        this.dashElapsedActive = 0;
-        this.dashReady = false;
-      }
-    }
   }
 }
 

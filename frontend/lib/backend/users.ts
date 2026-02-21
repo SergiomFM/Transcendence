@@ -54,6 +54,11 @@ export const Users = {
   verify2FA: (token: string) =>
     usersBackend("auth/2fa/verify", Method.POST, { token }),
 
+  disable2FA: (token: string) =>
+    usersBackend<{ message: string }>("auth/2fa/disable", Method.POST, {
+      token,
+    }),
+
   uploadAvatar: (avatar: string) =>
     usersBackend<{ message: string }>("me/avatar", Method.POST, { avatar }),
 

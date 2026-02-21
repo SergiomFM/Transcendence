@@ -2,10 +2,6 @@ FROM oven/bun:1 AS deps
 
 WORKDIR /app
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
-
 COPY chat/package.json chat/bun.lockb* ./
 RUN bun install --frozen-lockfile
 

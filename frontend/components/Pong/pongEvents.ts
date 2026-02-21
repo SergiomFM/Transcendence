@@ -5,7 +5,6 @@ import { Ball, Player, Pong } from "./pong";
 import {
   sendPlayerReady,
   sendBecomePlayer,
-  sendUseDash,
   sendSwitchSpell,
   sendUseSpell,
   sendPlayerDirection,
@@ -19,7 +18,6 @@ enum PLAYER_KEYS {
   RIGHT,
   COUNTER_SPELL,
   OFFENSIVE_SPELL,
-  DASH,
 }
 
 let player1Keys = [
@@ -29,7 +27,6 @@ let player1Keys = [
   "d", // RIGHT
   "q", // COUNTER SPELL
   "e", // OFFENSIVE SPELL
-  "Shift", // DASH
 ];
 
 let player2Keys = [
@@ -39,7 +36,6 @@ let player2Keys = [
   "arrowright", // RIGHT
   "k", // COUNTER SPELL
   "l", // OFFENSIVE SPELL
-  ".", // DASH
 ];
 
 enum MENU_KEY {
@@ -92,10 +88,7 @@ export namespace Events {
     camera: PongCamera,
     event: ActionEvent,
   ) {
-    let key = event.sourceEvent.key;
-    if (key !== "Shift") {
-      key = key.toLowerCase();
-    }
+    let key = event.sourceEvent.key.toLowerCase();
     if (key in keyStatus && keyStatus[key] != true) {
       PlayerDirectionEvent(key, pong, true);
     } else if (key == menuKeys[MENU_KEY.ACTION]) {
@@ -149,7 +142,6 @@ export namespace Events {
       waitingForStartEvents(key, pong);
     } else if (pong.loaded && pong.running) {
       playerUseSpellEvent(key, pong);
-      playerDashEvent(key, pong);
     }
   }
 
@@ -253,29 +245,9 @@ export namespace Events {
     }
   }
 
-  function playerDashEvent(key: any, pong: Pong) {
-    if (pong.online && pong.isSpectator) {
-      return;
-    }
-    if (key == player1Keys[PLAYER_KEYS.DASH]) {
-      if (pong.player1.dashReady) {
-        pong.player1.dashActive = true;
-      }
-      if (pong.online) {
-        sendUseDash(pong);
-      }
-    }
-    if (key == player2Keys[PLAYER_KEYS.DASH]) {
-      if (pong.player2.dashReady) pong.player2.dashActive = true;
-    }
-  }
-
   // Key release input
   export function keyReleaseEvent(pong: Pong, event: ActionEvent) {
-    let key = event.sourceEvent.key;
-    if (key !== "Shift") {
-      key = key.toLowerCase();
-    }
+    let key = event.sourceEvent.key.toLowerCase();
     if (key in keyStatus && keyStatus[key] != false) {
       PlayerDirectionEvent(key, pong, false);
     }

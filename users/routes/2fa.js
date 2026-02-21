@@ -115,4 +115,49 @@ export default async function twoFARoutes(fastify, opts){
 
 		reply.send({ message: "2FA verification successful!"});
 	})
+
+	// Disable 2FA (requires valid OTP or recovery code to confirm)
+	fastify.post("/auth/2fa/disable", async (req, reply) => {
+		if (!req.isAuthenticated()) {
+			return reply.code(401).send({ error: "Unauthorized" });
+		}
+
+		const user = req.user;
+
+		if (!user.two_factor_enabled) {
+			return reply.code(400).send({ error: "2FA is not enabled." });
+		}
+
+		const { token } = req.body;
+		if (!token) {
+			return reply.code(400).send({ error: "Missing authentication code." });
+		}
+
+		const row = fastify.users.get2FASecret.get(user.id);
+		if (!row || !row.two_factor_secret) {
+			return reply.code(400).send({ error: "No 2FA secret found." });
+		}
+
+		const recovery = fastify.users.recovery.findByUser.all(user.id);
+
+		let valid = verify2FA(token, row.two_factor_secret);
+		let usedRecovery = null;
+
+		if (!valid) {
+			usedRecovery = await verifyRecoveryCode(token, recovery);
+
+			if (!usedRecovery) {
+				return reply.code(401).send({ error: "Invalid authentication code." });
+			}
+
+			if (usedRecovery.alreadyUsed) {
+				return reply.code(401).send({ error: "This recovery code has already been used." });
+			}
+		}
+
+		fastify.users.disable2FA.run(user.id);
+		fastify.users.recovery.deleteByUser.run(user.id);
+
+		reply.send({ message: "Two-factor authentication has been disabled." });
+	});
 }

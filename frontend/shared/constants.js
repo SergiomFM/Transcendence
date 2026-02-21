@@ -12,9 +12,6 @@
  * @property {number} PADDLE_MAX_SPEED - Maximum paddle movement speed
  * @property {number} PADDLE_DRAG - Paddle drag coefficient
  * @property {number} PADDLE_MAX_DEVIATION_ANGLE - Max angle deviation
- * @property {number} DASH_COOLDOWN - Cooldown time in ms
- * @property {number} DASH_DURATION - Duration in ms
- * @property {number} DASH_POWER - Power multiplier
  * @property {number} TICK_RATE - Physics tick rate in ms
  * @property {number|null} PLAYER1_Z - Player 1 Z position (loaded from GLB)
  * @property {number|null} PLAYER2_Z - Player 2 Z position (loaded from GLB)
@@ -39,11 +36,6 @@ const GAME_CONSTANTS = {
 	PADDLE_MAX_SPEED: 1,
 	PADDLE_DRAG: 7.5,
 	PADDLE_MAX_DEVIATION_ANGLE: 70,
-
-	// Dash properties
-	DASH_COOLDOWN: 1000, // ms
-	DASH_DURATION: 200, // ms
-	DASH_POWER: 2,
 
 	// Game physics
 	TICK_RATE: 1000 / 480, // ms per tick

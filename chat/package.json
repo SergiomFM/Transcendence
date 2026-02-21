@@ -13,13 +13,11 @@
   "dependencies": {
     "@fastify/websocket": "^11.2.0",
     "@libsql/client": "^0.17.0",
-    "@prisma/adapter-better-sqlite3": "^7.3.0",
     "@prisma/adapter-d1": "^7.3.0",
     "@prisma/adapter-libsql": "^7.3.0",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^6",
     "@prisma/internals": "^7.3.0",
-    "better-sqlite3": "^12.6.2",
     "fastify": "^5.7.4",
     "libsql": "^0.5.22",
     "prisma": "^6"

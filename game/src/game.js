@@ -222,7 +222,6 @@ class GameRoom {
 			currSpeed: 0,
 			currDirection: 0,
 			maxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
-			originalMaxSpeed: GAME_CONSTANTS.PADDLE_MAX_SPEED,
 			drag: GAME_CONSTANTS.PADDLE_DRAG,
 			direction: 0,
 			inputDirection: 0,
@@ -230,14 +229,6 @@ class GameRoom {
 			ready: false,
 			size: GAME_CONSTANTS.PADDLE_SIZE,
 			score: 0,
-
-			// Dash
-			dashActive: false,
-			dashReady: false,
-			dashCooldown: GAME_CONSTANTS.DASH_COOLDOWN,
-			dashElapsedCooldown: 0,
-			dashDuration: GAME_CONSTANTS.DASH_DURATION,
-			dashElapsedActive: 0,
 
 			// Current spells
 			currentOffensiveSpell: "ballAngleSwitch",
@@ -384,7 +375,6 @@ class GameRoom {
 		player.currSpeed = 0;
 		player.currDirection = 0;
 		player.maxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
-		player.originalMaxSpeed = GAME_CONSTANTS.PADDLE_MAX_SPEED;
 		player.drag = GAME_CONSTANTS.PADDLE_DRAG;
 		player.direction = 0;
 		player.inputDirection = 0;
@@ -392,13 +382,6 @@ class GameRoom {
 		player.ready = false;
 		player.size = GAME_CONSTANTS.PADDLE_SIZE;
 		player.score = 0;
-
-		player.dashActive = false;
-		player.dashReady = false;
-		player.dashElapsedCooldown = 0;
-		player.dashElapsedActive = 0;
-		player.dashCooldown = GAME_CONSTANTS.DASH_COOLDOWN;
-		player.dashDuration = GAME_CONSTANTS.DASH_DURATION;
 
 		player.currentOffensiveSpell = "ballAngleSwitch";
 		player.currentCounterSpell = "ballStop";

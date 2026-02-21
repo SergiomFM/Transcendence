@@ -31,8 +31,8 @@ Game Customization - Settings / PowerUps (1) - Tiago
 Spectator - Top view of the game / Game Chat (1) - Paulo
 
 | SOCIAL |
-Profile Management - Profile Information / Avatar (Default Pictures) / Friends (2) - Sergio
-Users interaction - Chat / Profile / Friends (2) - Lourenço / Sergio
+Profile Management - Profile Information / Avatar (Default Pictures)(2) - Sergio
+Users interaction - Chat / Profile (2) - Lourenço / Sergio
 
 | ACCESSIBILITY |
 Aditional Browsers - Edge / Firefox / Chrome (1) - N/A
@@ -72,3 +72,9 @@ Afonso:
 
 Tiago:
 balance do jogo.
+
+
+por botao do perfil na navbar
+audio
+
+fix logged username

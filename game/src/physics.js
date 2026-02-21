@@ -171,9 +171,6 @@ class Physics {
 	updatePaddle(paddle, delta) {
 		const direction = paddle.inputDirection;
 
-		// Dash logic
-		this.updateDash(paddle, delta * 1000, direction);
-
 		// Update speed based on input
 		if (direction) {
 			paddle.currSpeed = paddle.maxSpeed;
@@ -195,36 +192,6 @@ class Physics {
 			paddle.x = limit;
 		} else if (paddle.x < -limit) {
 			paddle.x = -limit;
-		}
-	}
-
-	updateDash(paddle, timeElapsed, direction) {
-		// Update cooldown
-		if (!paddle.dashReady) {
-			paddle.dashElapsedCooldown += timeElapsed;
-			if (paddle.dashElapsedCooldown > GAME_CONSTANTS.DASH_COOLDOWN) {
-				paddle.dashReady = true;
-			}
-		}
-
-		if (direction === 0) {
-			paddle.dashActive = false;
-			paddle.dashElapsedActive = 0;
-			paddle.maxSpeed = paddle.originalMaxSpeed;
-			return;
-		}
-
-		if (paddle.dashActive) {
-			paddle.dashElapsedActive += timeElapsed;
-			paddle.maxSpeed = paddle.originalMaxSpeed * GAME_CONSTANTS.DASH_POWER;
-
-			if (paddle.dashElapsedActive > GAME_CONSTANTS.DASH_DURATION) {
-				paddle.maxSpeed = paddle.originalMaxSpeed;
-				paddle.dashActive = false;
-				paddle.dashElapsedCooldown = 0;
-				paddle.dashElapsedActive = 0;
-				paddle.dashReady = false;
-			}
 		}
 	}
 }
