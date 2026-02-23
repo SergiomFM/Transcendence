@@ -47,4 +47,20 @@ export default async function playerProfileRoutes(fastify){
 		fastify.profiles.updateBio.run(req.body.bio, req.user.id)
 		return{ message: "Updated" }
 	})
+
+	// Search players by display name
+	// GET /players/search?q=<query>
+	// Requires authentication. Excludes the requesting user from results.
+	fastify.get("/players/search", async (req, reply) => {
+		if (!req.isAuthenticated())
+			return reply.code(401).send({ error: "Unauthorized" })
+
+		const q = req.query.q?.trim()
+		if (!q || q.length < 1)
+			return reply.code(400).send({ error: "Query parameter 'q' is required" })
+
+		const pattern = `%${q}%`
+		const players = fastify.profiles.searchByDisplayName.all(pattern, req.user.id)
+		return { players }
+	})
 }

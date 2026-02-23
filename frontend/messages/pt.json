@@ -37,12 +37,18 @@
     "placeholderUsername": "johndoe",
     "placeholderEmail": "email@exemplo.com",
     "placeholderAlias": "João Silva",
-    "placeholderRecoveryCode": "xxxxxxxx"
+    "placeholderRecoveryCode": "xxxxxxxx",
+    "termsAgreement": "Li e concordo com os",
+    "termsLink": "Termos de Serviço",
+    "andThe": "e a",
+    "privacyLink": "Política de Privacidade",
+    "termsRequired": "Deves aceitar os termos e a política de privacidade para te registares"
   },
   "navbar": {
     "home": "Início",
     "play": "Jogar",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "friends": "Amigos"
   },
   "home": {
     "welcomeTo": "Bem-vindo ao",
@@ -54,7 +60,30 @@
     "editProfile": "Editar Perfil",
     "wins": "Vitórias",
     "losses": "Derrotas",
-    "friends": "Amigos"
+    "friends": "Amigos",
+    "matchHistory": "Histórico de Partidas",
+    "noMatches": "Ainda não foram jogadas partidas.",
+    "matchWon": "VIT",
+    "matchLost": "DER",
+    "matchDraw": "EMP",
+    "guest": "Convidado"
+  },
+  "friends": {
+    "addFriend": "Adicionar Amigo",
+    "removeFriend": "Remover Amigo",
+    "requestPending": "Pedido Enviado",
+    "pendingRequests": "Pedidos de Amizade",
+    "noRequests": "Sem pedidos de amizade pendentes.",
+    "noFriends": "Sem amigos ainda. Pesquisa jogadores acima para os adicionar.",
+    "accept": "Aceitar",
+    "reject": "Recusar",
+    "cancelRequest": "Cancelar Pedido",
+    "acceptRequest": "Aceitar Pedido",
+    "alreadyFriends": "Já são amigos",
+    "notAuthenticated": "Tens de iniciar sessão para ver os teus amigos.",
+    "searchPlaceholder": "Pesquisar jogadores pelo nome...",
+    "searchResults": "Resultados da Pesquisa",
+    "noSearchResults": "Nenhum jogador encontrado."
   },
   "settings": {
     "title": "Definições",
@@ -171,6 +200,57 @@
     "connectedPlayers": "Conectados",
     "player": "Jogador",
     "spectator": "Espectador"
+  },
+  "footer": {
+    "rights": "Todos os direitos reservados.",
+    "privacy": "Política de Privacidade",
+    "terms": "Termos de Serviço"
+  },
+  "privacy": {
+    "title": "Política de Privacidade",
+    "lastUpdated": "Última atualização: fevereiro de 2026",
+    "intro": "Esta Política de Privacidade descreve como a Transcendence (\"nós\") recolhe, utiliza e protege as tuas informações pessoais quando utilizas a nossa plataforma de Pong multijogador.",
+    "s1Title": "1. Informações que Recolhemos",
+    "s1Body": "Recolhemos as informações que forneces ao criar uma conta, incluindo o teu nome de utilizador, endereço de email e alcunha opcional. Se optares por iniciar sessão com o Google OAuth, recebemos o teu nome e email do Google. Também recolhemos estatísticas de jogo como vitórias e derrotas, e as fotos de perfil que escolhas carregar.",
+    "s2Title": "2. Como Utilizamos as Tuas Informações",
+    "s2Body": "Utilizamos as tuas informações para operar e manter a plataforma, autenticar a tua identidade, exibir o teu perfil e estatísticas a outros jogadores, permitir o jogo multijogador em tempo real e melhorar a aplicação. Não vendemos os teus dados pessoais a terceiros.",
+    "s3Title": "3. Armazenamento e Segurança de Dados",
+    "s3Body": "Os teus dados são armazenados de forma segura nos nossos servidores. As palavras-passe são cifradas e nunca armazenadas em texto simples. As imagens de perfil são armazenadas em armazenamento de objetos isolado. Implementamos medidas de segurança padrão da indústria, incluindo suporte para autenticação de dois fatores (2FA).",
+    "s4Title": "4. Cookies",
+    "s4Body": "Utilizamos cookies exclusivamente para gestão de sessão e armazenamento de preferências de idioma. Não são utilizados cookies de rastreamento ou publicidade. Podes desativar os cookies nas definições do teu navegador, mas isso pode afetar a funcionalidade da plataforma.",
+    "s5Title": "5. Serviços de Terceiros",
+    "s5Body": "Integramos o Google OAuth para início de sessão opcional. Quando utilizas esta funcionalidade, a política de privacidade do Google também se aplica. Não partilhamos os teus dados com quaisquer outros terceiros.",
+    "s6Title": "6. Os Teus Direitos",
+    "s6Body": "Tens o direito de aceder, corrigir ou eliminar os teus dados pessoais a qualquer momento. Podes atualizar as informações do teu perfil na página de Definições. Para solicitar a eliminação completa da conta, contacta os administradores da plataforma.",
+    "s7Title": "7. Alterações a Esta Política",
+    "s7Body": "Podemos atualizar esta Política de Privacidade ocasionalmente. Quaisquer alterações serão refletidas pela atualização da data no topo desta página. O uso continuado da plataforma após as alterações constitui aceitação da política atualizada.",
+    "s8Title": "8. Contacto",
+    "s8Body": "Se tiveres dúvidas sobre esta Política de Privacidade, abre uma questão no nosso repositório do projeto."
+  },
+  "terms": {
+    "title": "Termos de Serviço",
+    "lastUpdated": "Última atualização: fevereiro de 2026",
+    "intro": "Ao aceder ou utilizar a Transcendence (\"a Plataforma\"), concordas com estes Termos de Serviço. Por favor, lê-os atentamente antes de utilizar a Plataforma.",
+    "s1Title": "1. Aceitação dos Termos",
+    "s1Body": "Ao criar uma conta ou utilizar qualquer parte da Plataforma, confirmas que tens pelo menos 13 anos e concordas com estes Termos de Serviço. Se não concordares, não podes utilizar a Plataforma.",
+    "s2Title": "2. Contas de Utilizador",
+    "s2Body": "És responsável por manter a confidencialidade das credenciais da tua conta. Deves fornecer informações precisas durante o registo. Não podes fazer-te passar por outros utilizadores nem criar contas para fins fraudulentos. Reservamo-nos o direito de suspender ou terminar contas que violem estes termos.",
+    "s3Title": "3. Uso Aceitável",
+    "s3Body": "Concordas em utilizar a Plataforma de forma justa e desportiva. Não podes tentar fazer batota, explorar mecânicas de jogo, perturbar a experiência de outros jogadores, fazer engenharia reversa da Plataforma ou utilizar ferramentas automatizadas (bots) para jogar. Qualquer forma de assédio a outros utilizadores é estritamente proibida.",
+    "s4Title": "4. Conteúdo do Utilizador",
+    "s4Body": "Manténs a propriedade do conteúdo que carregas (como fotos de perfil). Ao carregar conteúdo, concedes-nos uma licença para o exibir na Plataforma. Não deves carregar conteúdo ilegal, ofensivo ou que infrinja direitos de terceiros. Reservamo-nos o direito de remover qualquer conteúdo que viole estes termos.",
+    "s5Title": "5. Propriedade Intelectual",
+    "s5Body": "A Plataforma, o seu design, gráficos, motor de jogo e código subjacente são propriedade intelectual da equipa de desenvolvimento. Não podes copiar, modificar ou distribuir qualquer parte da Plataforma sem permissão escrita explícita.",
+    "s6Title": "6. Exclusão de Garantias",
+    "s6Body": "A Plataforma é fornecida \"tal como está\", sem garantias de qualquer tipo. Não garantimos que o serviço será ininterrupto, sem erros ou que todas as funcionalidades estarão sempre disponíveis. A Plataforma é um projeto estudantil e pode estar sujeita a interrupções ou alterações.",
+    "s7Title": "7. Limitação de Responsabilidade",
+    "s7Body": "Na medida máxima permitida por lei, não seremos responsáveis por quaisquer danos indiretos, incidentais ou consequentes resultantes da tua utilização da Plataforma.",
+    "s8Title": "8. Alterações aos Termos",
+    "s8Body": "Reservamo-nos o direito de modificar estes Termos de Serviço a qualquer momento. As alterações entram em vigor após publicação. O uso continuado da Plataforma após as alterações constitui a tua aceitação dos novos termos.",
+    "s9Title": "9. Lei Aplicável",
+    "s9Body": "Estes Termos são regidos pela lei aplicável. Quaisquer disputas serão resolvidas através de negociação de boa-fé entre as partes.",
+    "s10Title": "10. Contacto",
+    "s10Body": "Para questões sobre estes Termos de Serviço, abre uma questão no nosso repositório do projeto."
   },
   "pong": {
     "welcomeWarlock": "Bem-vindo Feiticeiro",

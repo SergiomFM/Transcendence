@@ -233,6 +233,14 @@ async function dbPlugin(fastify){
 				UPDATE player_profiles
 				SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP
 				WHERE user_id = ?
+				`),
+
+			// Search profiles by display_name (case-insensitive, partial match), excluding self
+			searchByDisplayName: db.prepare(`
+				SELECT * FROM player_profiles
+				WHERE display_name LIKE ? AND user_id != ?
+				ORDER BY display_name ASC
+				LIMIT 20
 				`)
 			})
 
@@ -251,6 +259,28 @@ async function dbPlugin(fastify){
 			SELECT COUNT(*) as losses FROM match_history
 			WHERE (player1_id = ? OR player2_id = ?) AND (winner_id IS NULL OR winner_id != ?)
 			`),
+
+		// Returns all matches for a given user, joined with opponent profile info, newest first
+		getByUserId: db.prepare(`
+			SELECT
+				mh.id,
+				mh.player1_id,
+				mh.player2_id,
+				mh.player1_score,
+				mh.player2_score,
+				mh.winner_id,
+				mh.played_at,
+				p1.display_name AS player1_display_name,
+				p1.avatar_url   AS player1_avatar_url,
+				p2.display_name AS player2_display_name,
+				p2.avatar_url   AS player2_avatar_url
+			FROM match_history mh
+			LEFT JOIN player_profiles p1 ON p1.user_id = mh.player1_id
+			LEFT JOIN player_profiles p2 ON p2.user_id = mh.player2_id
+			WHERE mh.player1_id = ? OR mh.player2_id = ?
+			ORDER BY mh.played_at DESC
+			LIMIT 50
+			`),
 		})
 
 		//FRIENDS AND FRIENDS LIST
@@ -260,6 +290,19 @@ async function dbPlugin(fastify){
 				VALUES (?, ?, ?)
 				`),
 
+			// Fetch a request by its id
+			getRequestById: db.prepare(`
+				SELECT * FROM friend_requests WHERE id = ?
+				`),
+
+			// Fetch a request between two users in either direction (for duplicate check)
+			getRequestBetween: db.prepare(`
+				SELECT * FROM friend_requests
+				WHERE (sender_id = ? AND receiver_id = ?)
+				   OR (sender_id = ? AND receiver_id = ?)
+				`),
+
+			// Legacy: kept for backwards compatibility (sender -> receiver)
 			getRequest: db.prepare(`
 				SELECT * FROM friend_requests
 				WHERE sender_id = ? AND receiver_id = ?
@@ -270,6 +313,19 @@ async function dbPlugin(fastify){
 				FROM friend_requests r
 				JOIN player_profiles p ON p.user_id = r.sender_id
 				WHERE r.receiver_id = ? AND r.status = 'pending'
+				`),
+
+			getSentRequests: db.prepare(`
+				SELECT r.*, p.display_name, p.avatar_url
+				FROM friend_requests r
+				JOIN player_profiles p ON p.user_id = r.receiver_id
+				WHERE r.sender_id = ? AND r.status = 'pending'
+				`),
+
+			// Get sent request to a specific receiver (for cancel)
+			getSentRequestTo: db.prepare(`
+				SELECT * FROM friend_requests
+				WHERE sender_id = ? AND receiver_id = ? AND status = 'pending'
 				`),
 
 			updateRequestStatus: db.prepare(`
@@ -287,6 +343,11 @@ async function dbPlugin(fastify){
 
 			removeFriend: db.prepare(`
 				DELETE FROM friends WHERE user_id = ? AND friend_id = ?
+				`),
+
+			// Check if two users are already friends
+			isFriend: db.prepare(`
+				SELECT 1 FROM friends WHERE user_id = ? AND friend_id = ?
 				`),
 
 			listFriends: db.prepare(`

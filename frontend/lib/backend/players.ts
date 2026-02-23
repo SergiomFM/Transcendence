@@ -1,5 +1,5 @@
 import { usersBackend, Method } from "./request";
-import type { PlayerProfile } from "./types";
+import type { MatchRecord, PlayerProfile, PlayerSearchResult } from "./types";
 
 export const Players = {
   getByUserId: (userId: string) =>
@@ -13,4 +13,16 @@ export const Players = {
 
   updateBio: (bio: string) =>
     usersBackend("me/profile/bio", Method.POST, { bio }),
+
+  /** Search players by display name (partial, case-insensitive). Excludes self. */
+  search: (q: string) =>
+    usersBackend<{ players: PlayerSearchResult[] }>("players/search", Method.GET, { q }),
+
+  /** Get match history for a specific player (public). */
+  getMatchHistory: (userId: string) =>
+    usersBackend<{ matches: MatchRecord[] }>(`player/${userId}/matches`, Method.GET),
+
+  /** Get own match history (requires authentication). */
+  getMyMatchHistory: () =>
+    usersBackend<{ matches: MatchRecord[] }>("me/matches", Method.GET),
 };

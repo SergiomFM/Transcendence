@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Sun, Moon } from "lucide-react";
+import { LogOut, User, Sun, Moon, Users } from "lucide-react";
 
 const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -63,6 +63,14 @@ export function Navbar() {
             >
               {t("navbar.play")}
             </Link>
+            {isAuthenticated && (
+              <Link
+                href="/friends"
+                className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
+              >
+                {t("navbar.friends")}
+              </Link>
+            )}
           </div>
         </div>
 
@@ -135,6 +143,12 @@ export function Navbar() {
                   <Link href={`/users/${user.id}`} className="cursor-pointer">
                     <User className="mr-2 h-4 w-4" />
                     {t("navbar.profile")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/friends" className="cursor-pointer">
+                    <Users className="mr-2 h-4 w-4" />
+                    {t("navbar.friends")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem

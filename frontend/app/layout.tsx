@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { ServiceWorkerRegistration } from "@/components/sw-registration";
 
 export const viewport: Viewport = {
@@ -34,12 +35,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className="antialiased grain"
+        className="antialiased grain flex flex-col min-h-screen"
       >
         <Providers>
           <ServiceWorkerRegistration />
           <Navbar />
-          <main>{children}</main>
+          <main className="flex-1">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>

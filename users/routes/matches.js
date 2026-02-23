@@ -32,4 +32,38 @@ export default async function matchRoutes(fastify) {
 			return reply.code(500).send({ error: "Failed to record match" })
 		}
 	})
+
+	// GET /me/matches — returns the authenticated user's match history
+	fastify.get("/me/matches", async (req, reply) => {
+		if (!req.isAuthenticated()) {
+			return reply.code(401).send({ error: "Unauthorized" })
+		}
+
+		try {
+			const matches = fastify.matches.getByUserId.all(req.user.id, req.user.id)
+			return { matches }
+		} catch (err) {
+			fastify.log.error("Error fetching match history:", err)
+			return reply.code(500).send({ error: "Failed to fetch match history" })
+		}
+	})
+
+	// GET /player/:userId/matches — returns a player's match history (public)
+	fastify.get("/player/:userId/matches", async (req, reply) => {
+		const { userId } = req.params
+
+		// Check the player exists
+		const profile = fastify.profiles.findByUserId.get(userId)
+		if (!profile) {
+			return reply.code(404).send({ error: "Player not found" })
+		}
+
+		try {
+			const matches = fastify.matches.getByUserId.all(userId, userId)
+			return { matches }
+		} catch (err) {
+			fastify.log.error("Error fetching match history:", err)
+			return reply.code(500).send({ error: "Failed to fetch match history" })
+		}
+	})
 }

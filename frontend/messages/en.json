@@ -37,12 +37,18 @@
     "placeholderUsername": "johndoe",
     "placeholderEmail": "email@example.com",
     "placeholderAlias": "John Doe",
-    "placeholderRecoveryCode": "xxxxxxxx"
+    "placeholderRecoveryCode": "xxxxxxxx",
+    "termsAgreement": "I have read and agree to the",
+    "termsLink": "Terms of Service",
+    "andThe": "and the",
+    "privacyLink": "Privacy Policy",
+    "termsRequired": "You must accept the terms and privacy policy to register"
   },
   "navbar": {
     "home": "Home",
     "play": "Play",
-    "profile": "Profile"
+    "profile": "Profile",
+    "friends": "Friends"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -54,7 +60,30 @@
     "editProfile": "Edit Profile",
     "wins": "Wins",
     "losses": "Losses",
-    "friends": "Friends"
+    "friends": "Friends",
+    "matchHistory": "Match History",
+    "noMatches": "No matches played yet.",
+    "matchWon": "WIN",
+    "matchLost": "LOSS",
+    "matchDraw": "DRAW",
+    "guest": "Guest"
+  },
+  "friends": {
+    "addFriend": "Add Friend",
+    "removeFriend": "Remove Friend",
+    "requestPending": "Request Sent",
+    "pendingRequests": "Friend Requests",
+    "noRequests": "No pending friend requests.",
+    "noFriends": "No friends yet. Search for players above to add them.",
+    "accept": "Accept",
+    "reject": "Decline",
+    "cancelRequest": "Cancel Request",
+    "acceptRequest": "Accept Request",
+    "alreadyFriends": "Already Friends",
+    "notAuthenticated": "You must be logged in to view your friends.",
+    "searchPlaceholder": "Search players by name...",
+    "searchResults": "Search Results",
+    "noSearchResults": "No players found."
   },
   "settings": {
     "title": "Settings",
@@ -171,6 +200,57 @@
     "connectedPlayers": "Connected",
     "player": "Player",
     "spectator": "Spectator"
+  },
+  "footer": {
+    "rights": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: February 2026",
+    "intro": "This Privacy Policy describes how Transcendence (\"we\", \"us\", or \"our\") collects, uses, and protects your personal information when you use our multiplayer Pong game platform.",
+    "s1Title": "1. Information We Collect",
+    "s1Body": "We collect information you provide directly when creating an account, including your username, email address, and optional display alias. If you choose to sign in with Google OAuth, we receive your name and email from Google. We also collect gameplay statistics such as wins and losses, and profile pictures you choose to upload.",
+    "s2Title": "2. How We Use Your Information",
+    "s2Body": "We use your information to operate and maintain the platform, authenticate your identity, display your profile and statistics to other players, enable real-time multiplayer gameplay, and improve the application. We do not sell your personal data to third parties.",
+    "s3Title": "3. Data Storage and Security",
+    "s3Body": "Your data is stored securely on our servers. Passwords are hashed and never stored in plain text. Profile images are stored in isolated object storage. We implement industry-standard security measures including two-factor authentication (2FA) support to protect your account.",
+    "s4Title": "4. Cookies",
+    "s4Body": "We use cookies solely for session management and language preference storage. No tracking or advertising cookies are used. You can disable cookies in your browser settings, but doing so may affect the functionality of the platform.",
+    "s5Title": "5. Third-Party Services",
+    "s5Body": "We integrate Google OAuth for optional sign-in. When you use this feature, Google's privacy policy also applies. We do not share your data with any other third parties.",
+    "s6Title": "6. Your Rights",
+    "s6Body": "You have the right to access, correct, or delete your personal data at any time. You can update your profile information in the Settings page. To request complete account deletion, please contact the platform administrators.",
+    "s7Title": "7. Changes to This Policy",
+    "s7Body": "We may update this Privacy Policy from time to time. Any changes will be reflected by updating the date at the top of this page. Continued use of the platform after changes constitutes acceptance of the updated policy.",
+    "s8Title": "8. Contact",
+    "s8Body": "If you have questions about this Privacy Policy, please open an issue on our project repository."
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: February 2026",
+    "intro": "By accessing or using Transcendence (\"the Platform\"), you agree to be bound by these Terms of Service. Please read them carefully before using the Platform.",
+    "s1Title": "1. Acceptance of Terms",
+    "s1Body": "By creating an account or using any part of the Platform, you confirm that you are at least 13 years old and agree to these Terms of Service. If you do not agree, you may not use the Platform.",
+    "s2Title": "2. User Accounts",
+    "s2Body": "You are responsible for maintaining the confidentiality of your account credentials. You must provide accurate information during registration. You may not impersonate other users or create accounts for fraudulent purposes. We reserve the right to suspend or terminate accounts that violate these terms.",
+    "s3Title": "3. Acceptable Use",
+    "s3Body": "You agree to use the Platform in a fair and sportsmanlike manner. You may not attempt to cheat, exploit game mechanics, disrupt other players' experience, reverse engineer the Platform, or use automated tools (bots) to play. Any form of harassment toward other users is strictly prohibited.",
+    "s4Title": "4. User Content",
+    "s4Body": "You retain ownership of content you upload (such as profile pictures). By uploading content, you grant us a license to display it on the Platform. You must not upload content that is illegal, offensive, or infringes on the rights of others. We reserve the right to remove any content that violates these terms.",
+    "s5Title": "5. Intellectual Property",
+    "s5Body": "The Platform, its design, graphics, game engine, and underlying code are the intellectual property of the development team. You may not copy, modify, or distribute any part of the Platform without explicit written permission.",
+    "s6Title": "6. Disclaimer of Warranties",
+    "s6Body": "The Platform is provided \"as is\" without warranties of any kind. We do not guarantee that the service will be uninterrupted, error-free, or that all features will be available at all times. The Platform is a student project and may be subject to downtime or changes.",
+    "s7Title": "7. Limitation of Liability",
+    "s7Body": "To the maximum extent permitted by law, we shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Platform.",
+    "s8Title": "8. Changes to Terms",
+    "s8Body": "We reserve the right to modify these Terms of Service at any time. Changes become effective upon posting. Continued use of the Platform after changes constitutes your acceptance of the new terms.",
+    "s9Title": "9. Governing Law",
+    "s9Body": "These Terms are governed by applicable laws. Any disputes shall be resolved through good-faith negotiation between the parties.",
+    "s10Title": "10. Contact",
+    "s10Body": "For questions about these Terms of Service, please open an issue on our project repository."
   },
   "pong": {
     "welcomeWarlock": "Welcome Warlock",

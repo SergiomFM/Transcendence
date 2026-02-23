@@ -7,6 +7,7 @@ import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -61,6 +62,7 @@ export default function AuthPage() {
   const [alias, setAlias] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     const oauthMessage = searchParams.get("oauthMessage");
@@ -155,6 +157,10 @@ export default function AuthPage() {
     }
     if (signupPassword !== confirmPassword) {
       setError(t("auth.passwordMismatch"));
+      return;
+    }
+    if (!acceptedTerms) {
+      setError(t("auth.termsRequired"));
       return;
     }
 
@@ -278,9 +284,27 @@ export default function AuthPage() {
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                   onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
                 />
+              </div>
+              <div className="flex items-start space-x-2 pt-2">
+                <Checkbox
+                  id="acceptTerms"
+                  checked={acceptedTerms}
+                  onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                  disabled={isLoading}
+                  className="shrink-0 mt-0.5"
+                />
+                <label
+                  htmlFor="acceptTerms"
+                  className="text-sm font-normal leading-snug cursor-pointer"
+                >
+                  {t("auth.termsAgreement")}{" "}
+                  <a href="/terms" target="_blank" className="underline hover:text-primary">{t("auth.termsLink")}</a>
+                  {" "}{t("auth.andThe")}{" "}
+                  <a href="/privacy" target="_blank" className="underline hover:text-primary">{t("auth.privacyLink")}</a>
+                </label>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-3 pt-4">

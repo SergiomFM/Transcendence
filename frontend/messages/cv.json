@@ -37,12 +37,18 @@
     "placeholderUsername": "johndoe",
     "placeholderEmail": "email@exenplu.com",
     "placeholderAlias": "João Silva",
-    "placeholderRecoveryCode": "xxxxxxxx"
+    "placeholderRecoveryCode": "xxxxxxxx",
+    "termsAgreement": "N le i konkorda ku",
+    "termsLink": "Termus di Servisu",
+    "andThe": "i ku",
+    "privacyLink": "Polítika di Privasidadi",
+    "termsRequired": "Bo ten ki aseitá termus i polítika di privasidadi pa rejista"
   },
   "navbar": {
     "home": "Inísiu",
     "play": "Djuga",
-    "profile": "Perfil"
+    "profile": "Perfil",
+    "friends": "Amigus"
   },
   "home": {
     "welcomeTo": "Ben vindu na",
@@ -54,7 +60,30 @@
     "editProfile": "Edita Perfil",
     "wins": "Vitórias",
     "losses": "Derrotas",
-    "friends": "Amigus"
+    "friends": "Amigus",
+    "matchHistory": "Históriku di Partidas",
+    "noMatches": "Ainda ka djogadu ninhun partida.",
+    "matchWon": "GAN",
+    "matchLost": "PER",
+    "matchDraw": "EMP",
+    "guest": "Konvidu"
+  },
+  "friends": {
+    "addFriend": "Djunta Amigu",
+    "removeFriend": "Tira Amigu",
+    "requestPending": "Pididu Mandadu",
+    "pendingRequests": "Pididus di Amizadi",
+    "noRequests": "Sem pididus di amizadi pendentis.",
+    "noFriends": "Sem amigus ainda. Piskiza djogadoris atxima pa djuntá-s.",
+    "accept": "Aseita",
+    "reject": "Rikusá",
+    "cancelRequest": "Kansela Pididu",
+    "acceptRequest": "Aseita Pididu",
+    "alreadyFriends": "Ja é amigus",
+    "notAuthenticated": "Bu tem ki entra pa odja bus amigus.",
+    "searchPlaceholder": "Piskiza djogadoris pur nomi...",
+    "searchResults": "Rezultadus di Piskiza",
+    "noSearchResults": "Nixun djogador nkontradu."
   },
   "settings": {
     "title": "Definisons",
@@ -171,6 +200,57 @@
     "connectedPlayers": "Konetadu",
     "player": "Jogador",
     "spectator": "Espetador"
+  },
+  "footer": {
+    "rights": "Tudu direitus reservadus.",
+    "privacy": "Polítika di Privasidadi",
+    "terms": "Termus di Serviçu"
+  },
+  "privacy": {
+    "title": "Polítika di Privasidadi",
+    "lastUpdated": "Última atualización: fevereiro di 2026",
+    "intro": "Es Polítika di Privasidadi ta deskrevi manera Transcendence ta rekolhi, uza i proteje bus informasons pessoais kantu bu ta uza nosa plataforma di Pong multijogador.",
+    "s1Title": "1. Informasons ki Nu Ta Rekolhi",
+    "s1Body": "Nu ta rekolhi informasons ki bu ta dá kantu bu ta kria un konta, inkluindu bu nomi di utilizador, endereçu di email i alkunha opsional. Si bu ta skolji entra ku Google OAuth, nu ta resebi bu nomi i email di Google. Nu ta rekolhi tanbê estatístikas di djugu manera vitórias i derrotas, i fotos di perfil ki bu ta karrega.",
+    "s2Title": "2. Manera ku Nu Ta Uza Bus Informasons",
+    "s2Body": "Nu ta uza bus informasons pa opera i mantê plataforma, autentika bu identidadi, mostra bu perfil i estatístikas pa otrus djugadoris, permite djugu multijogador na tenpu real i melhora aplikason. Nu ka ta vendi bus dadus pessoais pa terseirus.",
+    "s3Title": "3. Armazenamentu i Seguransa di Dadus",
+    "s3Body": "Bus dadus ta armazenadu di forma siguru na nosos servidoris. Palavra-pasis ta sifradus i nunka armazenadu na testu simples. Imajens di perfil ta armazenadu na armazenamentu di objetus isoladu. Nu ta implementa medidas di seguransa padron di indústria, inkluindu suportu pa autentikason di dois fatoris (2FA).",
+    "s4Title": "4. Cookies",
+    "s4Body": "Nu ta uza cookies só pa jestón di sessón i armazenamentu di preferénsias di língua. Ka ta uzadu cookies di rastreamentu o publisidadi. Bu podi dezativa cookies nas definisons di bu navegador, mas es podi afeta funsionalidadi di plataforma.",
+    "s5Title": "5. Servisus di Terseirus",
+    "s5Body": "Nu ta integra Google OAuth pa inísiu di sessón opsional. Kantu bu ta uza es funsionalidadi, polítika di privasidadi di Google tanbê ta aplika. Nu ka ta partilha bus dadus ku ninhun otru terseiru.",
+    "s6Title": "6. Bus Direitus",
+    "s6Body": "Bu tem direitu pa asede, koriji o elimina bus dadus pessoais na kalkér momentu. Bu podi atualiza informasons di bu perfil na pájna di Definisons. Pa pedi eliminason kompletu di konta, kontata administradoris di plataforma.",
+    "s7Title": "7. Mudansas na Es Polítika",
+    "s7Body": "Nu podi atualiza es Polítika di Privasidadi oksazionalmente. Kalkér mudansa ta refletidu pela atualizason di data na topu di es pájna. Uzu kontinuadu di plataforma dipós mudansas ta konstitui aseitason di polítika atualizada.",
+    "s8Title": "8. Kontatu",
+    "s8Body": "Si bu tem dúvidas sobri es Polítika di Privasidadi, abre un questón na noso repositóriu di projetu."
+  },
+  "terms": {
+    "title": "Termus di Serviçu",
+    "lastUpdated": "Última atualización: fevereiro di 2026",
+    "intro": "Pa asede o uza Transcendence (\"Plataforma\"), bu ta konkorda ku es Termus di Serviçu. Pur favor lei-us atentamenti antis di uza Plataforma.",
+    "s1Title": "1. Aseitason di Termus",
+    "s1Body": "Pa kria un konta o uza kalkér parti di Plataforma, bu ta konfirma ki bu tem menus 13 anus i ta konkorda ku es Termus di Serviçu. Si bu ka ta konkorda, bu ka podi uza Plataforma.",
+    "s2Title": "2. Kontas di Utilizador",
+    "s2Body": "Bu é responsável pa mantê konfidensialidadi di kredensiais di bu konta. Bu debi fornese informasons presiozas durante rejistu. Bu ka podi fazi-bu passa pur otrus utilizadoris nen kria kontas pa fins fraudulentos. Nu ta rezerva direitu di suspende o termina kontas ki ta viola es termus.",
+    "s3Title": "3. Uzu Aseitável",
+    "s3Body": "Bu ta konkorda pa uza Plataforma di forma justa i desportiva. Bu ka podi tenta fazi batota, explora mekanicas di djugu, perturba speriénsia di otrus djugadoris, fazi enjenharia inversa di Plataforma o uza ferramentas automatizadas (bots) pa djuga. Kalkér forma di assédiu a otrus utilizadoris é estritamenti proibidu.",
+    "s4Title": "4. Konteúdu di Utilizador",
+    "s4Body": "Bu ta mantê propriedadi di konteúdu ki bu ta karrega (manera fotos di perfil). Pa karrega konteúdu, bu ta dá-nu un lisensa pa mostrá-l na Plataforma. Bu ka debi karrega konteúdu ilegal, ofensivo o ki ta infringi direitus di terseirus. Nu ta rezerva direitu di remove kalkér konteúdu ki ta viola es termus.",
+    "s5Title": "5. Propriedadi Inteletual",
+    "s5Body": "Plataforma, seu dizain, gráfikos, motor di djugu i kódigu subjasentu é propriedadi inteletual di ekipa di dezenvolvimentu. Bu ka podi kopia, modifika o distribui kalkér parti di Plataforma sin permison skrita eplísita.",
+    "s6Title": "6. Ekskluson di Garantias",
+    "s6Body": "Plataforma é forneside 'tal komo sta', sin garantias di ninhun tipu. Nu ka ta garantia ki serviçu ta ser ininterruptu, sin érus o ki tudu funsionalidadis ta star sempre disponívels. Plataforma é un projetu estudantil i podi star sujeitu a interrupsons o mudansas.",
+    "s7Title": "7. Limitason di Responsabilidadi",
+    "s7Body": "Na medida máksima permitida pla lei, nu ka ta ser responsável pur kalkér danus indiretus, insidentais o konsekuentes rezultanti di bu uzu di Plataforma.",
+    "s8Title": "8. Mudansas na Termus",
+    "s8Body": "Nu ta rezerva direitu di modifika es Termus di Serviçu na kalkér momentu. Mudansas ta entra na vigor dipós publikason. Uzu kontinuadu di Plataforma dipós mudansas ta konstitui bu aseitason di novu termus.",
+    "s9Title": "9. Lei Aplikável",
+    "s9Body": "Es Termus é reguladu pla lei aplikável. Kalkér disputa ta ser rezolvida atraves di negusason di boa-fé enti as partes.",
+    "s10Title": "10. Kontatu",
+    "s10Body": "Pa questons sobri es Termus di Serviçu, abre un questón na noso repositóriu di projetu."
   },
   "pong": {
     "welcomeWarlock": "Ben Vindu Feitiseru",
