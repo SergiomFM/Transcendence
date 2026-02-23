@@ -129,6 +129,10 @@ function handleServerMessage(
       handleSpellSwitched(pong, message);
       break;
 
+    case "SPELL_ENDED":
+      handleSpellEnded(pong);
+      break;
+
     case "COLLISION":
       handleCollision(pong, message);
       break;
@@ -178,6 +182,10 @@ function handleSpellSwitched(pong: Pong, message: any) {
   if (!pong.isSpectator && !message.enemy) {
     sfxSpellSwitch();
   }
+}
+
+function handleSpellEnded(pong: Pong) {
+  resetRoundColor(pong);
 }
 
 function handleGameReady(pong: Pong) {
@@ -268,6 +276,8 @@ function handleGameDisconnection(pong: Pong) {
   pong.running = false;
   pong.localReady = false;
   sfxDisconnect();
+  // Reset arena color so spell colors don't persist after disconnection
+  resetRoundColor(pong);
 
   if (!pong.isSpectator) {
     pong.player2.connected = false;
@@ -314,6 +324,8 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   pong.player1.offensiveSpell.resetSpell();
   pong.player2.counterSpell.resetSpell();
   pong.player2.offensiveSpell.resetSpell();
+  // Reset arena color to default so new player doesn't inherit stale spell colors
+  resetRoundColor(pong);
   // Update names from server to fix perspective after promotion
   pong.player1.name = message.playerName ?? null;
   pong.player2.name = message.opponentName ?? null;

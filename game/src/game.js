@@ -29,6 +29,9 @@ class GameRoom {
 		this.physics = new Physics(this);
 		this.events = new EventEmitter();
 
+		// Initialize all spell state flags and durations
+		this.resetSpellState();
+
 		// Event to handle spell related player Inputs
 		this.createSpellUsedEvent();
 
@@ -465,27 +468,30 @@ class GameRoom {
 
 		// SPELL: BallAngleSwitch (reverse ball direction once)
 		if (this._angleActive) {
-			this._angleDuration += delta * 1000;
+			this._angleDuration = (this._angleDuration || 0) + delta * 1000;
 			if (this._angleDuration >= 500) {
 				this._angleActive = false;
 				this._angleDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 		// SPELL: BallShot (speed boost with duration)
 		if (this._shotActive) {
-			this._shotDuration += delta * 1000;
+			this._shotDuration = (this._shotDuration || 0) + delta * 1000;
 			if (this._shotDuration >= 500) {
 				this._shotActive = false;
 				this._shotDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
 		// SPELL: BallBack (reverse ball direction once)
 		if (this._backActive) {
-			this._backDuration += delta * 1000;
+			this._backDuration = (this._backDuration || 0) + delta * 1000;
 			if (this._backDuration >= 500) {
 				this._backActive = false;
 				this._backDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -500,6 +506,7 @@ class GameRoom {
 				// 2s duration
 				this._stopActive = false;
 				this._stopDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -524,6 +531,7 @@ class GameRoom {
 				this._imanActive = false;
 				this._imanDuration = 0;
 				this._imanPlayer = null;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -536,6 +544,7 @@ class GameRoom {
 				this.ball.x *= -1;
 				this.physics.setBallAngle(Math.PI - this.ball.angle);
 				this._portalActive = false;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 			this._portalLastXDir = Math.sign(this.ball.cos);
 			this._portalLastZDir = Math.sign(this.ball.sin);
@@ -544,6 +553,7 @@ class GameRoom {
 				this._portalActive = false;
 				this._portalDuration = 0;
 				this._portalPlayer = null;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -965,6 +975,23 @@ class GameRoom {
 		this._portalLastXDir = 0;
 		this._portalLastZDir = 0;
 		this._stopOriginalPosition = null;
+	}
+
+	isAnySpellActive() {
+		return (
+			this._angleActive ||
+			this._shotActive ||
+			this._backActive ||
+			this._stopActive ||
+			this._imanActive ||
+			this._portalActive
+		);
+	}
+
+	broadcastSpellEndedIfNoneActive() {
+		if (!this.isAnySpellActive()) {
+			this.broadcastEvent({ type: "SPELL_ENDED" });
+		}
 	}
 }
 

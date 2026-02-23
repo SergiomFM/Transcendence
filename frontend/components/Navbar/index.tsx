@@ -89,13 +89,13 @@ export function Navbar() {
           </DropdownMenu>
 
           {isLoading ? (
-            <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
+            <div className="h-8 w-8 animate-pulse pixel-corners-sm bg-muted" />
           ) : isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-8 w-8 rounded-full"
+                  className="relative h-8 w-8 pixel-corners-sm"
                 >
                   <Avatar className="h-8 w-8 ring-1 ring-neon-muted transition-shadow hover:ring-neon hover:shadow-[0_0_10px_var(--neon-muted)]">
                     {user.avatar ? (

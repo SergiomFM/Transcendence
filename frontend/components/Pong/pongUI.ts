@@ -3,7 +3,6 @@ import { Scene } from "@babylonjs/core";
 import { animateAttribute } from "./pongAnimations";
 import { FPS } from "./pong";
 import { GAME_CONSTANTS } from "@/shared/constants";
-import { text } from "stream/consumers";
 import { sfxCountdown, sfxFight } from "./pongAudio";
 
 export interface PongTranslations {

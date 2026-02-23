@@ -221,6 +221,23 @@ export abstract class Spell {
     light.diffuse.set(0, 0, 0);
   }
 
+  isAnySpellActive(): boolean {
+    const p1 = this.pong.player1;
+    const p2 = this.pong.player2;
+    return (
+      p1.offensiveSpell.active ||
+      p1.counterSpell.active ||
+      p2.offensiveSpell.active ||
+      p2.counterSpell.active
+    );
+  }
+
+  resetArenaColorIfNoneActive() {
+    if (!this.isAnySpellActive()) {
+      this.resetArenaColor();
+    }
+  }
+
   changeArenaColor() {
     // Changing the ball Particle to change every element of the arena
     updateArena(this.pong.scene, this.color, this.pong.ball);
@@ -267,6 +284,7 @@ export class BallAngleSwitch extends Spell {
     this.activeElapsed += elapsedTime;
     if (this.activeElapsed >= this.duration) {
       this.active = false;
+      this.resetArenaColorIfNoneActive();
     }
   }
 }
@@ -310,6 +328,7 @@ class BallShot extends Spell {
     if (this.activeElapsed >= this.duration) {
       this.active = false;
       this.pong.ball.speed = this.originalSpeed;
+      this.resetArenaColorIfNoneActive();
     }
   }
 }
@@ -355,13 +374,17 @@ class BallPortal extends Spell {
       this.pong.ball.x *= -1;
       this.pong.ball.setAngle(Math.PI - this.pong.ball.angle);
       this.active = false;
+      this.resetArenaColorIfNoneActive();
     }
     this.lastXDir = Math.sign(this.pong.ball.cos);
     this.lastZDir = Math.sign(this.pong.ball.sin);
 
     // Making the spell available for a time window
     this.activeElapsed += elapsedTime;
-    if (this.activeElapsed >= this.duration) this.active = false;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+      this.resetArenaColorIfNoneActive();
+    }
   }
 }
 
@@ -407,13 +430,17 @@ export class BallStop extends Spell {
     );
 
     this.activeElapsed += elapsedTime;
-    if (this.activeElapsed >= this.duration) this.active = false;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+      this.resetArenaColorIfNoneActive();
+    }
   }
 }
 
 // Makes the Ball go backwards
 class BallBack extends Spell {
   readonly cooldown = SPELL_CONSTANTS.ballBack;
+  readonly duration = SPELL_CONSTANTS.ballBackDuration;
   readonly color = new Color4(1, 1, 0, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -439,6 +466,11 @@ class BallBack extends Spell {
   }
 
   loopAddon(elapsedTime: number) {
+    this.activeElapsed += elapsedTime;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+      this.resetArenaColorIfNoneActive();
+    }
   }
 }
 
@@ -489,7 +521,10 @@ class BallIman extends Spell {
     this.pong.ball.setAngle(this.pong.ball.angle + deviation);
 
     this.activeElapsed += elapsedTime;
-    if (this.activeElapsed >= this.duration) this.active = false;
+    if (this.activeElapsed >= this.duration) {
+      this.active = false;
+      this.resetArenaColorIfNoneActive();
+    }
   }
 }
 
