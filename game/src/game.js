@@ -532,10 +532,12 @@ class GameRoom {
 			if (
 				this.ball.angle - ballToPaddleAngle <
 				ballToPaddleAngle - this.ball.angle
-			)
+			) {
 				direction = 1;
-			let deviation = degreesToRadians(90) * delta * direction;
-			this.physics.setBallAngle(this.ball.angle + deviation);
+			}
+			let deviation = degreesToRadians() * delta * direction;
+			let newAngle = this.ball.angle + deviation;
+			this.physics.setBallAngle(newAngle);
 			this._imanDuration = (this._imanDuration || 0) + delta * 1000;
 			if (this._imanDuration >= 1000) {
 				// 1s duration

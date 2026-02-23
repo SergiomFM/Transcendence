@@ -25,17 +25,17 @@
 /** @type {GameConstants} */
 const GAME_CONSTANTS = {
 	// Ball properties
-	BALL_MAX_SPEED: 1.0,
-	BALL_INITIAL_SPEED: 0.4,
-	BALL_SPEED_INCREMENT: 0.05,
+	BALL_MAX_SPEED: 0.6,
+	BALL_INITIAL_SPEED: 0.35,
+	BALL_SPEED_INCREMENT: 0.025,
 	BALL_RADIUS: 0.015,
 	BALL_Y: null, // Will be set from GLB at startup
 	BALL_INITIAL_ANGLE_DEG: 90,
 
 	// Paddle properties
-	PADDLE_MAX_SPEED: 1,
-	PADDLE_DRAG: 7.5,
-	PADDLE_MAX_DEVIATION_ANGLE: 70,
+	PADDLE_MAX_SPEED: 0.8,
+	PADDLE_DRAG: 5,
+	PADDLE_MAX_DEVIATION_ANGLE: 60,
 
 	// Game physics
 	TICK_RATE: 1000 / 480, // ms per tick
@@ -71,24 +71,26 @@ const spellCycles = {
 };
 
 const SPELL_CONSTANTS = {
-	ballAngleSwitch: 3000,
-	ballAngleDuration: 500,
+	ballAngleSwitch: 5000,
+	ballAngleDuration: 1000,
 
 	ballShot: 4000,
-	ballShotDuration: 500,
-	ballShotSpeedBoost: 2,
+	ballShotDuration: 1000,
+	ballShotSpeedBoost: 1.30, // Speed multiplier
 
-	ballPortal: 5000,
-	ballPortalDuration: 500,
+	ballPortal: 6000,
+	ballPortalDuration: 750, // Time window to execute the spell
 
 	ballStop: 5000,
 	ballStopDuration: 2000,
 
-	ballBack: 4000,
-	ballBackDuration: 500,
+	ballBack: 7000,
+	ballBackDuration: 1000,
 
-	ballIman: 1000,
-	ballImanDuration: 1000,
+	ballIman: 5000,
+	ballImanDuration: 1200,
+	ballImanStrenght: 70, // Degrees changed per second
+	ballImanMaxAngle: 20, // Max angle steepness
 };
 
 // Helper functions

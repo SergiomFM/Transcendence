@@ -478,7 +478,7 @@ class BallBack extends Spell {
 class BallIman extends Spell {
   readonly cooldown = SPELL_CONSTANTS.ballIman;
   readonly duration = SPELL_CONSTANTS.ballImanDuration;
-  readonly strenght = Tools.ToRadians(90); // Radians changed per second
+  readonly strenght = Tools.ToRadians(SPELL_CONSTANTS.ballImanStrenght);
   readonly color = new Color4(1, 0, 1, 1);
 
   constructor(pong: Pong, player: Player, hand: string) {
@@ -510,15 +510,16 @@ class BallIman extends Spell {
     );
 
     let direction = -1;
-    if (
-      this.pong.ball.angle - ballToPaddleAngle <
+    if (this.pong.ball.angle - ballToPaddleAngle <
       ballToPaddleAngle - this.pong.ball.angle
-    )
-      direction = 1;
+    ) {
+		direction = 1;
+	}
 
     let deviation = this.strenght * delta * direction;
 
-    this.pong.ball.setAngle(this.pong.ball.angle + deviation);
+	let newAngle = this.pong.ball.angle + deviation;
+    this.pong.ball.setAngle(newAngle);
 
     this.activeElapsed += elapsedTime;
     if (this.activeElapsed >= this.duration) {

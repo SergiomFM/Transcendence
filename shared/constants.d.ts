@@ -51,6 +51,8 @@ export interface SpellConstants {
   ballBackDuration: number;
   ballIman: number;
   ballImanDuration: number;
+  ballImanStrenght: number;
+  ballImanMaxAngle: number;
 }
 
 export const GAME_CONSTANTS: GameConstants;
