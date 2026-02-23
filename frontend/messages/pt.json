@@ -48,7 +48,8 @@
     "home": "Início",
     "play": "Jogar",
     "profile": "Perfil",
-    "friends": "Amigos"
+    "friends": "Amigos",
+    "chat": "Chat"
   },
   "home": {
     "welcomeTo": "Bem-vindo ao",
@@ -200,6 +201,17 @@
     "connectedPlayers": "Conectados",
     "player": "Jogador",
     "spectator": "Espectador"
+  },
+  "chat": {
+    "title": "Mensagens",
+    "notAuthenticated": "Tens de iniciar sessão para usar o chat.",
+    "noFriends": "Adiciona amigos para começar a conversar.",
+    "noMessages": "Sem mensagens ainda. Diz olá!",
+    "online": "Online",
+    "offline": "Offline",
+    "selectFriend": "Seleciona um amigo para começar a conversar",
+    "inputPlaceholder": "Escreve uma mensagem...",
+    "sendMessage": "Enviar"
   },
   "footer": {
     "rights": "Todos os direitos reservados.",

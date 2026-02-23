@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Sun, Moon, Users } from "lucide-react";
+import { LogOut, User, Sun, Moon, Users, MessageSquare } from "lucide-react";
 
 const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -69,6 +69,14 @@ export function Navbar() {
                 className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
               >
                 {t("navbar.friends")}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                href="/chat"
+                className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
+              >
+                {t("navbar.chat")}
               </Link>
             )}
           </div>
@@ -149,6 +157,12 @@ export function Navbar() {
                   <Link href="/friends" className="cursor-pointer">
                     <Users className="mr-2 h-4 w-4" />
                     {t("navbar.friends")}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/chat" className="cursor-pointer">
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    {t("navbar.chat")}
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem

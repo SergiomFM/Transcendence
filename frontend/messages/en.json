@@ -48,7 +48,8 @@
     "home": "Home",
     "play": "Play",
     "profile": "Profile",
-    "friends": "Friends"
+    "friends": "Friends",
+    "chat": "Chat"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -200,6 +201,17 @@
     "connectedPlayers": "Connected",
     "player": "Player",
     "spectator": "Spectator"
+  },
+  "chat": {
+    "title": "Messages",
+    "notAuthenticated": "You must be logged in to use the chat.",
+    "noFriends": "Add friends to start chatting.",
+    "noMessages": "No messages yet. Say hello!",
+    "online": "Online",
+    "offline": "Offline",
+    "selectFriend": "Select a friend to start chatting",
+    "inputPlaceholder": "Type a message...",
+    "sendMessage": "Send"
   },
   "footer": {
     "rights": "All rights reserved.",

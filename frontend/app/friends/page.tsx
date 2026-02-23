@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck } from "lucide-react";
+import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck, MessageSquare } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Friends } from "@/lib/backend/friends";
 import { Players } from "@/lib/backend/players";
@@ -472,20 +472,32 @@ const FriendsPage = () => {
                           <p className="text-sm font-medium truncate">{friend.display_name}</p>
                         </div>
                       </Link>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 w-8 p-0 border-destructive/30 hover:border-destructive hover:text-destructive shrink-0"
-                        onClick={() => handleRemove(friend.user_id)}
-                        disabled={actionLoadingId === friend.user_id}
-                        title={t("friends.removeFriend")}
-                      >
-                        {actionLoadingId === friend.user_id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <UserX className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <div className="flex gap-2 shrink-0">
+                        <Link href={`/chat?with=${encodeURIComponent(friend.display_name)}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 w-8 p-0 border-neon/30 hover:border-neon hover:text-neon"
+                            title={t("chat.sendMessage")}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 border-destructive/30 hover:border-destructive hover:text-destructive"
+                          onClick={() => handleRemove(friend.user_id)}
+                          disabled={actionLoadingId === friend.user_id}
+                          title={t("friends.removeFriend")}
+                        >
+                          {actionLoadingId === friend.user_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <UserX className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

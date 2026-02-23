@@ -48,7 +48,8 @@
     "home": "Inísiu",
     "play": "Djuga",
     "profile": "Perfil",
-    "friends": "Amigus"
+    "friends": "Amigus",
+    "chat": "Chat"
   },
   "home": {
     "welcomeTo": "Ben vindu na",
@@ -200,6 +201,17 @@
     "connectedPlayers": "Konetadu",
     "player": "Jogador",
     "spectator": "Espetador"
+  },
+  "chat": {
+    "title": "Mensajens",
+    "notAuthenticated": "Bo ten ki entra pa uza chat.",
+    "noFriends": "Adisiona amigus pa kumesa konversa.",
+    "noMessages": "Sem mensajens ainda. Diz olá!",
+    "online": "Online",
+    "offline": "Offline",
+    "selectFriend": "Skolji un amigu pa kumesa konversa",
+    "inputPlaceholder": "Skrevi un mensajen...",
+    "sendMessage": "Manda"
   },
   "footer": {
     "rights": "Tudu direitus reservadus.",

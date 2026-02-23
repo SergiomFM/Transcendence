@@ -5,3 +5,4 @@ export * from "./request";
 export * from "./users";
 export * from "./players";
 export * from "./friends";
+export * from "./chat";
