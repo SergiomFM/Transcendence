@@ -13,7 +13,7 @@ async function authPlugin(fastify) {
 		//APPARENTLY, FASTIFY-SECURE-SESSION NEEDS A SECRET KEY, USE SSL TO GET IT
 		//openssl rand 32 > secret-key
 		//REASON: Fastify doesn't store sessions in memory — it stores them in an encrypted cookie on the client.
-		key: fs.readFileSync("./secret-key"),
+		key: fs.readFileSync("/app/database/secret-key"),
 		cookie: {
 			path: "/",
 		},

@@ -528,19 +528,26 @@ class GameRoom {
 				player.z - this.ball.z,
 				player.x - this.ball.x,
 			);
-			let direction = -1;
-			if (
-				this.ball.angle - ballToPaddleAngle <
-				ballToPaddleAngle - this.ball.angle
-			) {
-				direction = 1;
-			}
-			let deviation = degreesToRadians() * delta * direction;
+			let angleDiff = ballToPaddleAngle - this.ball.angle;
+			angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+			let direction = angleDiff >= 0 ? 1 : -1;
+			let deviation = degreesToRadians(SPELL_CONSTANTS.ballImanStrenght) * delta * direction;
 			let newAngle = this.ball.angle + deviation;
+
+			// Clamp angle to prevent near-horizontal trajectories
+			let minAngle = degreesToRadians(SPELL_CONSTANTS.ballImanMaxAngle);
+			let normalized = ((newAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+			if (normalized < minAngle) {
+				newAngle = minAngle;
+			} else if (normalized > Math.PI - minAngle && normalized < Math.PI + minAngle) {
+				newAngle = (normalized < Math.PI) ? Math.PI - minAngle : Math.PI + minAngle;
+			} else if (normalized > 2 * Math.PI - minAngle) {
+				newAngle = 2 * Math.PI - minAngle;
+			}
+
 			this.physics.setBallAngle(newAngle);
 			this._imanDuration = (this._imanDuration || 0) + delta * 1000;
-			if (this._imanDuration >= 1000) {
-				// 1s duration
+			if (this._imanDuration >= SPELL_CONSTANTS.ballImanDuration) {
 				this._imanActive = false;
 				this._imanDuration = 0;
 				this._imanPlayer = null;

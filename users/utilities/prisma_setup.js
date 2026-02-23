@@ -10,8 +10,7 @@ export default prismaInit
 function prismaInit(app)
 {
     const prismaPlugin = fp(async (server, options) => {
-    const databaseUrl = process.env.DATABASE_URL || 'file:./data/dev.db';
-    const dbPath = databaseUrl.replace('file:', '');
+    const dbPath = '/app/database/app.db';
     
     const prisma = new PrismaClient({
         adapter: new PrismaD1(new BetterSqlite3(dbPath)),

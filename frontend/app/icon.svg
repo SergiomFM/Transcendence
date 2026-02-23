@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- Dark background -->
-  <rect width="32" height="32" rx="0" fill="#1c1510"/>
+  <rect width="32" height="32" rx="7" ry="7" fill="#1c1510"/>
   
   <!-- Outer glow -->
   <circle cx="16" cy="17" r="9" fill="#b45309" opacity="0.2"/>

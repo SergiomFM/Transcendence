@@ -509,16 +509,25 @@ class BallIman extends Spell {
       this.player.x - this.pong.ball.x,
     );
 
-    let direction = -1;
-    if (this.pong.ball.angle - ballToPaddleAngle <
-      ballToPaddleAngle - this.pong.ball.angle
-    ) {
-		direction = 1;
-	}
+    let angleDiff = ballToPaddleAngle - this.pong.ball.angle;
+    angleDiff = ((angleDiff + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    let direction = angleDiff >= 0 ? 1 : -1;
 
     let deviation = this.strenght * delta * direction;
 
 	let newAngle = this.pong.ball.angle + deviation;
+
+    // Clamp angle to prevent near-horizontal trajectories
+    let minAngle = Tools.ToRadians(SPELL_CONSTANTS.ballImanMaxAngle);
+    let normalized = ((newAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    if (normalized < minAngle) {
+      newAngle = minAngle;
+    } else if (normalized > Math.PI - minAngle && normalized < Math.PI + minAngle) {
+      newAngle = (normalized < Math.PI) ? Math.PI - minAngle : Math.PI + minAngle;
+    } else if (normalized > 2 * Math.PI - minAngle) {
+      newAngle = 2 * Math.PI - minAngle;
+    }
+
     this.pong.ball.setAngle(newAngle);
 
     this.activeElapsed += elapsedTime;

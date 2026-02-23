@@ -20,4 +20,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && openssl rand 32 > secret-key && npm start"]
+CMD ["sh", "-c", "npx prisma generate && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && npm start"]

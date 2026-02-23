@@ -7,7 +7,7 @@ import path from 'path' //path
 
 async function dbPlugin(fastify){
 
-	const dbDirectory = path.join(process.cwd(), 'database')
+	const dbDirectory = '/app/database'
 	if (!fs.existsSync(dbDirectory)) {
 
 		fs.mkdirSync(dbDirectory)

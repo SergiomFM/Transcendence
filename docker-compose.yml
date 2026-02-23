@@ -64,25 +64,23 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: file:./database/app.db
       FRONTEND_URL: https://transcendence.pvcordeiro.dev
       GOOGLE_CALLBACK_URL: https://transcendence.pvcordeiro.dev/api/users/auth/google/callback
     env_file:
       - users/.env
     volumes:
-      - users_db:/app/data
+      - users_db:/app/database
     profiles:
       - prod
 
   users-dev:
     image: node:22.18.0
     working_dir: /app
-    command: sh -c "npm install && npx prisma generate && npx prisma db push --url 'file:./data/dev.db' && openssl rand 32 > secret-key && npm start"
+    command: sh -c "npm install && npx prisma generate && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && npm start"
     ports:
       - "3001:3000"
     environment:
       NODE_ENV: development
-      DATABASE_URL: file:./database/app.db
       FRONTEND_URL: http://localhost:3000
       GOOGLE_CALLBACK_URL: http://localhost:3001/auth/google/callback
     env_file:
@@ -90,7 +88,7 @@ services:
     volumes:
       - ./users:/app:cached
       - users_node_modules:/app/node_modules
-      - users_db:/app/data
+      - users_db:/app/database
     profiles:
       - dev
 

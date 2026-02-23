@@ -185,6 +185,7 @@ export class Pong {
       lockstepMaxSteps: 4,
       adaptToDeviceRatio: false,
     });
+    this.engine.loadingScreen = { displayLoadingUI: () => {}, hideLoadingUI: () => {}, loadingUIBackgroundColor: "", loadingUIText: "" };
     this.engine.setSize(854, 480);
     // Lock render resolution to 854x480 regardless of CSS display size
     const lockedSetSize = this.engine.setSize.bind(this.engine);
