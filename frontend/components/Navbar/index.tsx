@@ -19,6 +19,8 @@ const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
   { code: "pt", label: "Português", flag: "🇧🇷" },
   { code: "cv", label: "Kriolu", flag: "🇨🇻" },
+  { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
+  { code: "he", label: "עברית", flag: "🇮🇱" },
 ] as const;
 
 export function Navbar() {
