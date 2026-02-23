@@ -175,20 +175,23 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
-      <Card className="w-full max-w-md">
+    <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+      {/* Scanline overlay */}
+      <div className="scanlines absolute inset-0 pointer-events-none" />
+
+      <Card className="relative z-10 w-full max-w-md border-glow animate-fade-up">
         <CardHeader className="space-y-1">
-          <div className="flex rounded-lg border p-1 mb-2">
+          <div className="flex rounded-lg border border-border/50 p-1 mb-2">
             <button
               type="button"
               onClick={() => {
                 setIsSignup(false);
                 setError("");
               }}
-              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                 !isSignup
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-neon-muted"
+                  : "text-muted-foreground hover:text-neon"
               }`}
             >
               {t("auth.switchToLogin")}
@@ -199,16 +202,16 @@ export default function AuthPage() {
                 setIsSignup(true);
                 setError("");
               }}
-              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
                 isSignup
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-sm shadow-neon-muted"
+                  : "text-muted-foreground hover:text-neon"
               }`}
             >
               {t("auth.switchToSignup")}
             </button>
           </div>
-          <CardTitle className="text-2xl font-bold">
+          <CardTitle className="text-2xl font-bold text-glow">
             {isSignup ? t("auth.signupTitle") : t("auth.loginTitle")}
           </CardTitle>
           <CardDescription>
@@ -281,7 +284,7 @@ export default function AuthPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-3 pt-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full animate-pulse-glow" disabled={isLoading}>
                 {isLoading ? t("common.loading") : t("common.signup")}
               </Button>
               <div className="relative w-full">
@@ -341,7 +344,7 @@ export default function AuthPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-3 pt-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full animate-pulse-glow" disabled={isLoading}>
                 {isLoading ? t("common.loading") : t("common.login")}
               </Button>
               <div className="relative w-full">

@@ -7,7 +7,12 @@ export default async function playerProfileRoutes(fastify){
 		}
 
 		const profile = fastify.profiles.findByUserId.get(req.user.id)
-		return profile
+		if (!profile) return profile
+
+		const wins = fastify.matches.countWins.get(req.user.id)?.wins || 0
+		const losses = fastify.matches.countLosses.get(req.user.id, req.user.id, req.user.id)?.losses || 0
+
+		return { ...profile, wins, losses }
 	})
 
 	//search tool to find profiles by looking up user id
@@ -16,7 +21,10 @@ export default async function playerProfileRoutes(fastify){
 		if (!profile)
 			return reply.code(404).send({ error: "Not found" })
 
-		return profile
+		const wins = fastify.matches.countWins.get(req.params.userId)?.wins || 0
+		const losses = fastify.matches.countLosses.get(req.params.userId, req.params.userId, req.params.userId)?.losses || 0
+
+		return { ...profile, wins, losses }
 	})
 
 	fastify.post("/me/profile/display-name", async (req, reply) => {

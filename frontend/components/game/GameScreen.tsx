@@ -4,9 +4,11 @@ import { useState, Suspense, lazy, useRef, useEffect, useCallback } from "react"
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize, Minimize } from "lucide-react";
+import { Maximize, Minimize, Volume2, Volume1, VolumeX } from "lucide-react";
 import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/config";
 import { GameMode } from "./types";
+import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
+import type { VolumeState } from "@/components/Pong/pongAudio";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -18,6 +20,8 @@ interface GameScreenProps {
 export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(true);
+  const [muted, setMuted] = useState<VolumeState>(getVolumeState());
   const [rooms, setRooms] = useState<
     Array<{
       id: string;
@@ -32,6 +36,19 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const handleSessionReplaced = useCallback(() => setSelectedRoomId(null), []);
+
+  const handleToggleMute = useCallback(() => {
+    const newState = cycleVolume();
+    setMuted(newState);
+  }, []);
+
+  // Detect whether the Fullscreen API is available (including webkit prefix for iOS)
+  useEffect(() => {
+    const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+    const standard = typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled;
+    const webkit = typeof el.webkitRequestFullscreen === "function";
+    setCanFullscreen(standard || webkit);
+  }, []);
 
   const isMobileViewport = () =>
     typeof window !== "undefined" &&
@@ -62,9 +79,16 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
 
   const requestFullscreen = async (target?: HTMLElement) => {
     const element = target ?? gameContainerRef.current;
-    if (!element || document.fullscreenElement) return;
+    if (!element) return;
+    const el = element as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (document.fullscreenElement || doc.webkitFullscreenElement) return;
     try {
-      await element.requestFullscreen();
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        await el.webkitRequestFullscreen();
+      }
       await lockLandscape();
     } catch (err) {
       console.error("Error attempting to enable fullscreen:", err);
@@ -72,9 +96,14 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   };
 
   const exitFullscreen = async () => {
-    if (!document.fullscreenElement) return;
+    const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => Promise<void> };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) return;
     try {
-      await document.exitFullscreen();
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        await doc.webkitExitFullscreen();
+      }
     } catch (err) {
       console.error("Error attempting to exit fullscreen:", err);
     } finally {
@@ -83,7 +112,8 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   };
 
   const toggleFullscreen = async () => {
-    if (!document.fullscreenElement) {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) {
       await requestFullscreen();
       setIsFullscreen(true);
     } else {
@@ -92,25 +122,29 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     }
   };
 
-  const handleBackToMenu = async () => {
-    await exitFullscreen();
+  const handleBackToMenu = () => {
     onBackToMenu();
   };
 
   useEffect(() => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
     const handleFullscreenChange = () => {
-      const active = !!document.fullscreenElement;
+      const active = !!(document.fullscreenElement || doc.webkitFullscreenElement);
       setIsFullscreen(active);
       if (!active) {
         unlockOrientation();
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
   }, []);
 
   useEffect(() => {
+    if (!canFullscreen) return;
     if (gameMode !== "multiplayer" || !selectedRoomId) return;
     if (!isMobileViewport()) return;
     const raf = requestAnimationFrame(() => {
@@ -160,7 +194,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         <div
           ref={gameContainerRef}
           className={cn(
-            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
             isFullscreen && "relative"
           )}
         >
@@ -175,8 +209,9 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 "game-frame relative",
                 isFullscreen
                   ? "w-full h-full"
-                  : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                  : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
               )}
+              style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
             >
               <Suspense
                 fallback={
@@ -192,9 +227,11 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   gameServerUrl={GAME_HTTP_URL}
                   roomId={selectedRoomId}
                   onSessionReplaced={handleSessionReplaced}
+                  isFullscreen={isFullscreen}
                 />
               </Suspense>
 
+              {canFullscreen && (
               <Button
                 onClick={toggleFullscreen}
                 variant="ghost"
@@ -207,6 +244,32 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                   <Minimize className="w-5 h-5" />
                 ) : (
                   <Maximize className="w-5 h-5" />
+                )}
+              </Button>
+              )}
+              <Button
+                onClick={handleToggleMute}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
+                  canFullscreen ? "right-14" : "right-4"
+                )}
+                onContextMenu={(event) => event.preventDefault()}
+                title={
+                  muted === "all-muted"
+                    ? t("game.unmute")
+                    : muted === "music-muted"
+                      ? t("game.muteAll")
+                      : t("game.muteMusic")
+                }
+              >
+                {muted === "all-muted" ? (
+                  <VolumeX className="w-5 h-5" />
+                ) : muted === "music-muted" ? (
+                  <Volume1 className="w-5 h-5" />
+                ) : (
+                  <Volume2 className="w-5 h-5" />
                 )}
               </Button>
               <Button
@@ -225,82 +288,88 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
 
           {!isFullscreen && (
             <div className="text-center p-4 flex-shrink-0">
-              <p className="text-sm text-gray-400">{t("game.multiplayerRooms")}</p>
+              <p className="text-sm text-muted-foreground">{t("game.multiplayerRooms")}</p>
             </div>
           )}
         </div>
       );
     }
     return (
-      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-6 p-8">
+      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 animate-fade-up">
         <div className="text-center max-w-2xl">
-          <h1 className="text-3xl font-bold">{t("game.multiplayerRooms")}</h1>
-          <p className="text-sm text-gray-400 mt-2">
+          <h1 className="text-2xl sm:text-4xl text-primary text-glow-strong tracking-wide">{t("game.multiplayerRooms")}</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             {t("game.multiplayerRoomsSubtitle")}
           </p>
         </div>
-        <div className="w-full max-w-3xl border border-gray-700 rounded-xl p-6 bg-black/40 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">{t("game.activeRooms")}</h2>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
-                        method: "POST",
-                      });
+        <div className="w-full max-w-3xl rounded-xl border-glow p-3 sm:p-6 bg-card/80 backdrop-blur-sm text-foreground">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h2 className="text-base sm:text-lg font-semibold">{t("game.activeRooms")}</h2>
+            <Button
+              size="sm"
+              className="shrink-0 animate-pulse-glow"
+              onClick={async () => {
+                try {
+                  const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
+                    method: "POST",
+                  });
                   if (!response.ok) {
                     throw new Error(t("game.failedToCreateRoom"));
                   }
                   const data = await response.json();
-                      if (data?.id) {
-                        setSelectedRoomId(data.id);
-                      }
-                    } catch (error) {
-                      setRoomsError(t("game.unableToCreateRoom"));
-                    }
-                  }}
-                >
+                  if (data?.id) {
+                    setSelectedRoomId(data.id);
+                  }
+                } catch (error) {
+                  setRoomsError(t("game.unableToCreateRoom"));
+                }
+              }}
+            >
               {t("game.createRoom")}
             </Button>
           </div>
           <div className="space-y-3">
             {roomsLoading && (
-              <div className="text-sm text-gray-400">{t("game.loadingRooms")}</div>
+              <div className="text-sm text-muted-foreground">{t("game.loadingRooms")}</div>
             )}
             {roomsError && (
-              <div className="text-sm text-red-300">{roomsError}</div>
+              <div className="text-sm text-destructive">{roomsError}</div>
             )}
             {!roomsLoading && !roomsError && rooms.length === 0 && (
-              <div className="text-sm text-gray-400">{t("game.noActiveRooms")}</div>
+              <div className="text-sm text-muted-foreground">{t("game.noActiveRooms")}</div>
             )}
             {rooms.map((room) => (
               <div
                 key={room.id}
-                className="flex items-center justify-between rounded-lg border border-gray-700/70 px-4 py-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4 rounded-lg border border-neon-muted/30 px-3 sm:px-4 py-3 hover:border-glow transition-all"
               >
-                <div>
-                  <div className="text-sm font-semibold">{room.id}</div>
-                  <div className="text-xs text-gray-400">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold truncate">{room.id}</div>
+                  <div className="text-xs text-muted-foreground">
                     {t("game.players")}: {room.players} · {t("game.spectators")}: {room.spectators}
                   </div>
                   {room.score && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-muted-foreground">
                       {t("game.score")}: {room.score.player1} - {room.score.player2}
                     </div>
                   )}
                 </div>
-                <div className="text-xs text-gray-300">
-                  {room.running ? t("game.inMatch") : t("game.waiting")}
+                <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className={`inline-block w-2 h-2 rounded-full ${room.running ? "bg-neon animate-status-pulse" : "bg-muted-foreground"}`} />
+                    <span className="text-muted-foreground">
+                      {room.running ? t("game.inMatch") : t("game.waiting")}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => setSelectedRoomId(room.id)}
+                  >
+                    {t("game.join")}
+                  </Button>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setSelectedRoomId(room.id)}
-                >
-                  {t("game.join")}
-                </Button>
               </div>
             ))}
           </div>
@@ -316,7 +385,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     <div
       ref={gameContainerRef}
       className={cn(
-        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
         isFullscreen && "relative"
       )}
     >
@@ -331,8 +400,9 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "game-frame relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-auto max-w-[95dvw] max-h-[80dvh] border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
           )}
+          style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
         >
           <Suspense
             fallback={
@@ -346,14 +416,17 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               online={gameMode === "online"}
               serverUrl={GAME_WS_URL}
               gameServerUrl={GAME_HTTP_URL}
+              isFullscreen={isFullscreen}
             />
           </Suspense>
 
+          {canFullscreen && (
           <Button
             onClick={toggleFullscreen}
             variant="ghost"
             size="icon"
-            className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white"
+            className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+            onContextMenu={(event) => event.preventDefault()}
             title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
           >
             {isFullscreen ? (
@@ -362,12 +435,38 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               <Maximize className="w-5 h-5" />
             )}
           </Button>
+          )}
+          <Button
+            onClick={handleToggleMute}
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
+              canFullscreen ? "right-14" : "right-4"
+            )}
+            onContextMenu={(event) => event.preventDefault()}
+            title={
+              muted === "all-muted"
+                ? t("game.unmute")
+                : muted === "music-muted"
+                  ? t("game.muteAll")
+                  : t("game.muteMusic")
+            }
+          >
+            {muted === "all-muted" ? (
+              <VolumeX className="w-5 h-5" />
+            ) : muted === "music-muted" ? (
+              <Volume1 className="w-5 h-5" />
+            ) : (
+              <Volume2 className="w-5 h-5" />
+            )}
+          </Button>
         </div>
       </div>
 
       {!isFullscreen && (
         <div className="text-center p-4 flex-shrink-0">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {gameMode === "online"
               ? t("game.onlineMode")
               : t("game.localMode")}

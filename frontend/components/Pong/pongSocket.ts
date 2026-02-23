@@ -5,6 +5,11 @@ import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
 import { GAME_WS_URL } from "@/lib/backend/config";
 import { switchPlayerHandsPosition } from "./pongAnimations";
+import {
+  sfxCollision, sfxScore, sfxLostRound, sfxVictory, sfxDefeat,
+  sfxConnect, sfxDisconnect, sfxPromoted, sfxSeatAvailable,
+  sfxOpponentReady, sfxSpellSwitch,
+} from "./pongAudio";
 
 export function connectToGameServer(
   pong: Pong,
@@ -33,7 +38,6 @@ export function connectToGameServer(
       JSON.stringify({
         type: "JOIN_GAME",
         playerData: {
-          name: "Player",
           timestamp: Date.now(),
         },
       }),
@@ -89,6 +93,10 @@ function handleServerMessage(
       handleGameScore(pong, message);
       break;
 
+    case "GAME_OVER":
+      handleGameOver(pong, message);
+      break;
+
     case "PLAYER_SEAT_AVAILABLE":
       handleSeatAvailable(pong, message);
       break;
@@ -119,6 +127,10 @@ function handleServerMessage(
 
     case "SPELL_SWITCHED":
       handleSpellSwitched(pong, message);
+      break;
+
+    case "SPELL_ENDED":
+      handleSpellEnded(pong);
       break;
 
     case "COLLISION":
@@ -165,23 +177,33 @@ function handleSpellSwitched(pong: Pong, message: any) {
         player.counterSpell,
         message.spellName,
       ));
+
+  // Only play SFX for the local player's own spell switch
+  if (!pong.isSpectator && !message.enemy) {
+    sfxSpellSwitch();
+  }
+}
+
+function handleSpellEnded(pong: Pong) {
+  resetRoundColor(pong);
 }
 
 function handleGameReady(pong: Pong) {
   console.log("Both Players connected to the game!");
 
-  if (pong.isSpectator) {
-    return;
-  }
-
   if (!pong.player2.connected) {
     pong.player2.connected = true;
+    sfxConnect();
 
     if (pong.GUI) {
-      pong.GUI.showReadyPrompt();
-      if (pong.localReady) {
-        pong.GUI.showOtherPlayerReady();
-        pong.GUI.waitingForOpponentReadyUI();
+      if (pong.isSpectator) {
+        pong.GUI.spectatorModeUI(pong.seatsAvailable);
+      } else {
+        pong.GUI.showReadyPrompt();
+        if (pong.localReady) {
+          pong.GUI.showOtherPlayerReady();
+          pong.GUI.waitingForOpponentReadyUI();
+        }
       }
     }
   }
@@ -208,6 +230,7 @@ function handleGameJoined(pong: Pong, message: any) {
   }
 
   if (pong.GUI) {
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
     if (pong.isSpectator) {
       pong.GUI.spectatorModeUI(pong.seatsAvailable);
     } else if (message.alone) {
@@ -215,7 +238,6 @@ function handleGameJoined(pong: Pong, message: any) {
     } else {
       pong.GUI.pressReadyUI();
     }
-    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
     if (pong.isSpectator) {
       pong.GUI.textFadeIn("WELCOME", 1500);
     } else {
@@ -227,29 +249,24 @@ function handleGameJoined(pong: Pong, message: any) {
     pong.camera.setView(pong.isSpectator, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
-  Events.emitSpectatorState(pong);
-  Events.emitReadyState(pong);
 }
 
 function handleGameStart(pong: Pong) {
   console.log("Game starting!");
-  if (pong.isSpectator) {
-    pong.running = false;
-    Events.emitRunningState(pong);
-    if (pong.GUI) {
+
+  // Start the match for all clients (players and spectators)
+  pong.running = true;
+
+  if (pong.GUI) {
+    if (pong.isSpectator) {
       pong.GUI.spectatorModeUI(pong.seatsAvailable);
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
       pong.GUI.hideOtherPlayerReady();
+    } else {
+      pong.GUI.startRoundUI();
+      pong.GUI.hideOtherPlayerReady();
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
     }
-    return;
-  }
-
-  pong.running = true;
-  Events.emitRunningState(pong);
-  if (pong.GUI) {
-    pong.GUI.startRoundUI();
-    pong.GUI.hideOtherPlayerReady();
-    pong.GUI.textFadeOut("WAITING_FOR_READY");
   }
 }
 
@@ -257,9 +274,14 @@ function handleGameDisconnection(pong: Pong) {
   console.log("Opponent disconnected");
 
   pong.running = false;
-  Events.emitRunningState(pong);
-  pong.player2.connected = false;
   pong.localReady = false;
+  sfxDisconnect();
+  // Reset arena color so spell colors don't persist after disconnection
+  resetRoundColor(pong);
+
+  if (!pong.isSpectator) {
+    pong.player2.connected = false;
+  }
 
   if (pong.GUI) {
     if (pong.isSpectator) {
@@ -270,12 +292,17 @@ function handleGameDisconnection(pong: Pong) {
       pong.GUI.hideOtherPlayerReady();
     }
   }
-  Events.emitSpectatorState(pong);
-  Events.emitReadyState(pong);
 }
 
 function handleSeatAvailable(pong: Pong, message: any) {
   pong.seatsAvailable = message.seatsAvailable ?? 0;
+  // Skip spectator UI transition while "MATCH LOST!" is still being shown
+  if (pong.matchLostPending) {
+    return;
+  }
+  if (pong.isSpectator) {
+    sfxSeatAvailable();
+  }
   if (pong.isSpectator && pong.GUI) {
     pong.GUI.spectatorModeUI(pong.seatsAvailable);
   }
@@ -283,7 +310,6 @@ function handleSeatAvailable(pong: Pong, message: any) {
     pong.camera.setView(true, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
-  Events.emitSpectatorState(pong);
 }
 
 function handlePlayerPromoted(pong: Pong, message: any) {
@@ -292,6 +318,17 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   pong.playerId = message.playerId ?? pong.playerId;
   pong.player1.connected = true;
   pong.player2.connected = true;
+  sfxPromoted();
+  // Reset spell cooldowns so balls start small after promotion
+  pong.player1.counterSpell.resetSpell();
+  pong.player1.offensiveSpell.resetSpell();
+  pong.player2.counterSpell.resetSpell();
+  pong.player2.offensiveSpell.resetSpell();
+  // Reset arena color to default so new player doesn't inherit stale spell colors
+  resetRoundColor(pong);
+  // Update names from server to fix perspective after promotion
+  pong.player1.name = message.playerName ?? null;
+  pong.player2.name = message.opponentName ?? null;
   if (pong.GUI) {
     pong.GUI.pressReadyUI();
     pong.GUI.hideOtherPlayerReady();
@@ -302,8 +339,6 @@ function handlePlayerPromoted(pong: Pong, message: any) {
     pong.camera.setView(false, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
-  Events.emitSpectatorState(pong);
-  Events.emitReadyState(pong);
 }
 
 function handleSeatUnavailable(pong: Pong) {
@@ -314,11 +349,14 @@ function handleSeatUnavailable(pong: Pong) {
     pong.camera.setView(true, true);
     switchPlayerHandsPosition(pong, pong.camera.topView, false);
   }
-  Events.emitSpectatorState(pong);
 }
 
 function handlePlayerReadyStatus(pong: Pong, message: any) {
   if (pong.isSpectator) {
+    // Spectators hear ready SFX but don't show player-specific ready UI
+    if (message.ready) {
+      sfxOpponentReady();
+    }
     return;
   }
   if (!pong.GUI) {
@@ -335,6 +373,7 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
       pong.GUI.pressReadyUI();
     }
   } else if (message.ready) {
+    sfxOpponentReady();
     pong.GUI.showOtherPlayerReady();
   } else {
     pong.GUI.hideOtherPlayerReady();
@@ -343,7 +382,6 @@ function handlePlayerReadyStatus(pong: Pong, message: any) {
       pong.GUI.pressReadyUI();
     }
   }
-  Events.emitReadyState(pong);
 }
 
 function handleSessionReplaced(
@@ -379,15 +417,63 @@ function handleGameScore(pong: Pong, message: any) {
       pong.GUI.roundLostUI(true, message.player1Score, message.player2Score);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
+      sfxLostRound();
     } else {
       pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
+      sfxScore();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
   }
-  Events.emitReadyState(pong);
-  Events.emitRunningState(pong);
+  resetRoundColor(pong);
+}
+
+function handleGameOver(pong: Pong, message: any) {
+  console.log("Game Over!", message);
+
+  if (typeof message.player1Score === "number") {
+    pong.player1.score = message.player1Score;
+  }
+  if (typeof message.player2Score === "number") {
+    pong.player2.score = message.player2Score;
+  }
+
+  pong.running = false;
+  pong.localReady = false;
+
+  if (pong.GUI) {
+    if (pong.isSpectator) {
+      pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+    } else if (message.won) {
+      pong.GUI.matchWonUI(message.player1Score, message.player2Score);
+      sfxVictory();
+    } else {
+      pong.GUI.matchLostUI(message.player1Score, message.player2Score);
+      sfxDefeat();
+    }
+    pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
+  }
+
+  // Loser gets demoted to spectator by the server — the PLAYER_SEAT_AVAILABLE
+  // message will handle the spectator UI transition via handleSeatAvailable.
+  // But if we lost, update local state immediately so inputs don't fire.
+  if (!pong.isSpectator && message.won === false) {
+    pong.isSpectator = true;
+    // Delay the spectator UI so the player can see "MATCH LOST!" for a few seconds
+    pong.matchLostPending = true;
+    setTimeout(() => {
+      pong.matchLostPending = false;
+      if (pong.isSpectator && pong.GUI) {
+        pong.GUI.spectatorModeUI(pong.seatsAvailable);
+      }
+      if (pong.isSpectator && pong.camera) {
+        pong.camera.setView(true, true);
+        switchPlayerHandsPosition(pong, pong.camera.topView, false);
+      }
+    }, 1500);
+  }
+
   resetRoundColor(pong);
 }
 
@@ -399,6 +485,7 @@ function handleCollision(pong: Pong, message: any) {
     message.angle,
     COLLISION_VFX,
   );
+  sfxCollision();
 }
 
 // Functions to send messages to the server

@@ -1,7 +1,7 @@
 import { ActionEvent, ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { PongCamera } from "./pongCamera";
-import { Ball, Player, Pong } from "./pong";
+import { Player, Pong } from "./pong";
 import {
   sendPlayerReady,
   sendBecomePlayer,
@@ -10,6 +10,7 @@ import {
   sendPlayerDirection,
   sendBecomeSpectator,
 } from "./pongSocket";
+import { sfxReady } from "./pongAudio";
 
 enum PLAYER_KEYS {
   UP,
@@ -49,25 +50,6 @@ let menuKeys = [
 ];
 
 export namespace Events {
-  function dispatchUiEvent(name: string, detail: Record<string, unknown>) {
-    if (typeof window === "undefined") {
-      return;
-    }
-    window.dispatchEvent(new CustomEvent(name, { detail }));
-  }
-
-  export function emitSpectatorState(pong: Pong) {
-    dispatchUiEvent("pong:spectator", { isSpectator: pong.isSpectator });
-  }
-
-  export function emitReadyState(pong: Pong) {
-    const isReady = pong.online ? pong.localReady : pong.player1.ready;
-    dispatchUiEvent("pong:ready", { isReady });
-  }
-
-  export function emitRunningState(pong: Pong) {
-    dispatchUiEvent("pong:running", { isRunning: pong.running });
-  }
   // Key status
   export let keyStatus: { [key: string]: boolean } = {
     [player1Keys[0]]: false,
@@ -112,7 +94,7 @@ export namespace Events {
             pong.camera.setView(true, true);
             switchPlayerHandsPosition(pong, pong.camera.topView, false);
           }
-          emitSpectatorState(pong);
+
         }
       } else {
         // Changes the camera perspective and moves scene elements
@@ -130,13 +112,13 @@ export namespace Events {
           pong.GUI.waitingForOpponentReadyUI();
         }
         sendPlayerReady(pong);
-        emitReadyState(pong);
-      } else if (pong.online && pong.isSpectator) {
+        sfxReady();
+
         return;
       } else if (!pong.online) {
         pong.player1.ready = true;
         pong.player2.ready = true;
-        emitReadyState(pong);
+        sfxReady();
       }
     } else if (pong.loaded && !pong.running) {
       waitingForStartEvents(key, pong);
@@ -153,11 +135,9 @@ export namespace Events {
         }
         pong.localReady = true;
         sendPlayerReady(pong);
-        emitReadyState(pong);
       } else {
         pong.player1.ready = true;
         pong.player2.ready = true;
-        emitReadyState(pong);
       }
     } else {
       playerSwitchSpellEvent(key, pong);
@@ -271,6 +251,21 @@ export namespace Events {
         keyReleaseEvent(pong, event),
       ),
     );
+  }
+
+  // Touch control helpers — simulate key press/release without ActionEvent
+  export function simulateKeyDown(pong: Pong, key: string) {
+    const fakeEvent = {
+      sourceEvent: { key },
+    } as ActionEvent;
+    keyPressEvent(pong, pong.camera, fakeEvent);
+  }
+
+  export function simulateKeyUp(pong: Pong, key: string) {
+    const fakeEvent = {
+      sourceEvent: { key },
+    } as ActionEvent;
+    keyReleaseEvent(pong, fakeEvent);
   }
 
   // Assigning keys to each player

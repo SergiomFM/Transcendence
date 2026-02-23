@@ -3,6 +3,8 @@ import { PongTranslations } from "./pongUI";
 import { switchPlayerHandsPosition } from "./pongAnimations";
 import { gameLogic } from "./pongLogic";
 import { connectToGameServer, disconnectFromServer } from "./pongSocket";
+import { initAudio, startMusic, stopMusic, disposeAudio } from "./pongAudio";
+import { GamepadManager } from "./pongGamepad";
 
 // Fetch game constants from backend
 async function fetchGameConstants(gameServerUrl: string) {
@@ -27,15 +29,20 @@ export const startPong = async (
     roomId?: string;
     onSessionReplaced?: () => void;
     translations?: PongTranslations;
+    onPongReady?: (pong: Pong) => void;
   },
 ) => {
   const defaultTranslations: PongTranslations = {
     welcomeWarlock: "Welcome Warlock",
     pressSpaceReady: "(Press space when ready)",
+    pressReadyTouch: "(Press ready)",
+    pressPlayClaimSeat: "Press play to claim a seat",
     youWon: "You Won!",
     player1Wins: "Player 1 Wins!",
     youLost: "You Lost!",
     player2Wins: "Player 2 Wins!",
+    matchWon: "MATCH WON!",
+    matchLost: "MATCH LOST!",
     waitingForOpponent: "Waiting for opponent...",
     getReady: "Get Ready...",
     fight: "FIGHT!",
@@ -65,6 +72,18 @@ export const startPong = async (
   }
   switchPlayerHandsPosition(pong, pong.camera.topView, true);
 
+  // Notify React that the pong instance is ready
+  if (options?.onPongReady) {
+    options.onPongReady(pong);
+  }
+
+  // Initialize audio system and start background music
+  initAudio();
+  startMusic();
+
+  // Start gamepad polling
+  GamepadManager.startPolling();
+
   let lastFrameTime = 0;
   let elapsedTime = 0;
   const frameDuration = 1000 / FPS;
@@ -72,6 +91,9 @@ export const startPong = async (
 
   const renderLoop = () => {
     if (isDisposed) return;
+
+    // Poll gamepads every frame (before game logic processes direction)
+    GamepadManager.pollGamepads(pong);
 
     const now = performance.now();
     elapsedTime = now - lastFrameTime;
@@ -87,6 +109,13 @@ export const startPong = async (
   // Return cleanup function
   return () => {
     isDisposed = true;
+
+    // Stop music and dispose audio
+    stopMusic();
+    disposeAudio();
+
+    // Stop gamepad polling
+    GamepadManager.dispose();
 
     // Disconnect from server if online
     if (pong.online) {

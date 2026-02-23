@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
+import { LogOut, User, Sun, Moon } from "lucide-react";
 
 const LOCALES = [
   { code: "en", label: "English", flag: "🇺🇸" },
@@ -22,7 +24,9 @@ const LOCALES = [
 export function Navbar() {
   const t = useTranslations();
   const locale = useLocale();
+  const pathname = usePathname();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -34,22 +38,28 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center justify-between mx-auto px-4">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-xl">
+          <Link href="/" className="text-xl sm:text-2xl tracking-wide text-primary text-glow transition-all hover:text-glow-strong">
             Transcendence
           </Link>
           <div className="hidden md:flex items-center gap-4">
             <Link
               href="/"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
             >
               {t("navbar.home")}
             </Link>
             <Link
               href="/pong"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-all hover:text-neon hover:text-glow"
+              onClick={(e) => {
+                if (pathname === "/pong") {
+                  e.preventDefault();
+                  window.dispatchEvent(new Event("pong:back-to-menu"));
+                }
+              }}
             >
               {t("navbar.play")}
             </Link>
@@ -57,6 +67,16 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
+          >
+            <Sun className="h-4 w-4 hidden dark:block" />
+            <Moon className="h-4 w-4 block dark:hidden" />
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="gap-1.5">
@@ -81,15 +101,15 @@ export function Navbar() {
           </DropdownMenu>
 
           {isLoading ? (
-            <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
+            <div className="h-8 w-8 animate-pulse pixel-corners-sm bg-muted" />
           ) : isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="relative h-8 w-8 rounded-full"
+                  className="relative h-8 w-8 pixel-corners-sm"
                 >
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-8 w-8 ring-1 ring-neon-muted transition-shadow hover:ring-neon hover:shadow-[0_0_10px_var(--neon-muted)]">
                     {user.avatar ? (
                       <AvatarImage
                         src={user.avatar}
@@ -117,12 +137,6 @@ export function Navbar() {
                     {t("navbar.profile")}
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    {t("common.settings")}
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer text-red-600 focus:text-red-600"
                   onClick={handleLogout}
@@ -134,7 +148,7 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             <Link href="/auth">
-              <Button variant="default" size="sm">
+              <Button variant="default" size="sm" className="animate-pulse-glow">
                 {t("common.login")}
               </Button>
             </Link>

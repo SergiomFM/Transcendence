@@ -159,6 +159,7 @@ export class Pong {
   playerId: number | null = null;
   localReady = false;
   pendingWelcome = false;
+  matchLostPending = false;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -180,11 +181,19 @@ export class Pong {
       stencil: true,
       disableWebGL2Support: false,
       powerPreference: "high-performance",
-      // Prevent context loss issues
       deterministicLockstep: false,
       lockstepMaxSteps: 4,
+      adaptToDeviceRatio: false,
     });
-    this.engine.setSize(this.canvas.width, this.canvas.height);
+    this.engine.setSize(854, 480);
+    // Lock render resolution to 854x480 regardless of CSS display size
+    const lockedSetSize = this.engine.setSize.bind(this.engine);
+    this.engine.resize = () => {
+      lockedSetSize(854, 480, true);
+    };
+    this.engine.setSize = (width: number, height: number, forceSetSize?: boolean) => {
+      return lockedSetSize(854, 480, true);
+    };
 
     // Disable any WebGL-level texture smoothing
     const gl = this.engine._gl;

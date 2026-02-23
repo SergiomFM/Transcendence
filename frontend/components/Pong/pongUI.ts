@@ -3,15 +3,19 @@ import { Scene } from "@babylonjs/core";
 import { animateAttribute } from "./pongAnimations";
 import { FPS } from "./pong";
 import { GAME_CONSTANTS } from "@/shared/constants";
-import { text } from "stream/consumers";
+import { sfxCountdown, sfxFight } from "./pongAudio";
 
 export interface PongTranslations {
   welcomeWarlock: string;
   pressSpaceReady: string;
+  pressReadyTouch: string;
+  pressPlayClaimSeat: string;
   youWon: string;
   player1Wins: string;
   youLost: string;
   player2Wins: string;
+  matchWon: string;
+  matchLost: string;
   waitingForOpponent: string;
   getReady: string;
   fight: string;
@@ -53,6 +57,14 @@ function buildTextConfig(t: PongTranslations) {
     ],
     PLAYER_2_WIN: [
       "PLAYER_2_WIN", t.player2Wins, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    MATCH_WON: [
+      "MATCH_WON", t.matchWon, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    MATCH_LOST: [
+      "MATCH_LOST", t.matchLost, "white", "20%", "pongFont1", 2, "black", "-20%", "0%",
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
     WAITING: [
@@ -109,6 +121,14 @@ function buildTextConfig(t: PongTranslations) {
     ],
     PLAYER_2_SCORE_DESCRIPTION: [
       "PLAYER_2_SCORE_DESCRIPTION", t.labelOpponent, "white", "6%", "pongFont1", 2, "black", "10%", "20%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    SPECTATOR_PLAYER1_NAME: [
+      "SPECTATOR_PLAYER1_NAME", "", "white", "4%", "pongFont1", 2, "black", "0%", "-38%",
+      Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
+    ],
+    SPECTATOR_PLAYER2_NAME: [
+      "SPECTATOR_PLAYER2_NAME", "", "white", "4%", "pongFont1", 2, "black", "0%", "38%",
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
   };
@@ -174,6 +194,8 @@ export class GUI {
     this.createNewText(configs.YOU_LOST);
     this.createNewText(configs.PLAYER_1_WIN);
     this.createNewText(configs.PLAYER_2_WIN);
+    this.createNewText(configs.MATCH_WON);
+    this.createNewText(configs.MATCH_LOST);
     this.createNewText(configs.WAITING);
     this.createNewText(configs.GET_READY);
     this.createNewText(configs.PRESS_READY);
@@ -189,6 +211,21 @@ export class GUI {
     this.createNewText(configs.PLAYER_1_SCORE_DESCRIPTION);
     this.createNewText(configs.PLAYER_2_SCORE);
     this.createNewText(configs.PLAYER_2_SCORE_DESCRIPTION);
+    this.createNewText(configs.SPECTATOR_PLAYER1_NAME);
+    this.createNewText(configs.SPECTATOR_PLAYER2_NAME);
+  }
+
+  // Swap text for touch devices in fullscreen (show button names instead of keys)
+  setTouchMode(enabled: boolean) {
+    const t = this.translations;
+    const readyText = this.textBlocks.get("PRESS_READY");
+    if (readyText) {
+      readyText.text = enabled ? t.pressReadyTouch : t.pressSpaceReady;
+    }
+    const seatText = this.textBlocks.get("SPECTATOR_SEAT_PROMPT");
+    if (seatText) {
+      seatText.text = enabled ? t.pressPlayClaimSeat : t.pressClaimSeat;
+    }
   }
 
   createNewText(attributes: any) {
@@ -294,6 +331,22 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
   }
 
+  // Displays a Match Won screen (final victory - no PRESS_READY)
+  matchWonUI(score1: number, score2: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.showScores(true, score1, score2);
+    this.textFadeIn("MATCH_WON");
+    this.textFadeIn("PRESS_READY");
+    this.toggleTextBlink(this.GUI.getScene()!, "PRESS_READY");
+  }
+
+  // Displays a Match Lost screen (loser becomes spectator - no PRESS_READY)
+  matchLostUI(score1: number, score2: number) {
+    this.resetTexts(this.GUI.getScene()!);
+    this.showScores(true, score1, score2);
+    this.textFadeIn("MATCH_LOST");
+  }
+
   // Initial Texts Configuration
   waitingForPlayersUI() {
     this.resetTexts(this.GUI.getScene()!);
@@ -352,10 +405,12 @@ export class GUI {
   startRoundUI() {
     this.resetTexts(this.GUI.getScene()!);
     this.textFadeIn("GET_READY", GAME_CONSTANTS.ROUND_START_DELAY / 2);
+    sfxCountdown();
     setTimeout(() => {
       this.textBlocks.get("FIGHT")!.alpha = 1;
       this.textBlocks.get("FIGHT")!.isVisible = true;
       this.textFadeOut("FIGHT");
+      sfxFight();
     }, GAME_CONSTANTS.ROUND_START_DELAY);
   }
 
@@ -372,6 +427,7 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "SPECTATING");
     this.textFadeIn("PLAYER_1_SCORE");
     this.textFadeIn("PLAYER_2_SCORE");
+    this.showSpectatorNames();
     if (seatsAvailable > 0) {
       this.textFadeIn("SPECTATOR_SEAT_PROMPT");
       this.toggleTextBlink(this.GUI.getScene()!, "SPECTATOR_SEAT_PROMPT");
@@ -414,6 +470,35 @@ export class GUI {
     if (player2Label) {
       const name = player2Name ? player2Name : this.translations.labelOpponent;
       player2Label.text = truncate(name);
+    }
+
+    // Also update spectator paddle name labels
+    this.updateSpectatorNames(player1Name, player2Name);
+  }
+
+  updateSpectatorNames(player1Name?: string | null, player2Name?: string | null) {
+    const MAX_NAME_LENGTH = 14;
+    const truncate = (name: string) =>
+      name.length > MAX_NAME_LENGTH ? name.slice(0, MAX_NAME_LENGTH - 1) + "…" : name;
+
+    const spec1 = this.textBlocks.get("SPECTATOR_PLAYER1_NAME");
+    const spec2 = this.textBlocks.get("SPECTATOR_PLAYER2_NAME");
+    if (spec1) {
+      spec1.text = player1Name ? truncate(player1Name) : "";
+    }
+    if (spec2) {
+      spec2.text = player2Name ? truncate(player2Name) : "";
+    }
+  }
+
+  showSpectatorNames() {
+    const spec1 = this.textBlocks.get("SPECTATOR_PLAYER1_NAME");
+    const spec2 = this.textBlocks.get("SPECTATOR_PLAYER2_NAME");
+    if (spec1 && spec1.text) {
+      this.textFadeIn("SPECTATOR_PLAYER1_NAME");
+    }
+    if (spec2 && spec2.text) {
+      this.textFadeIn("SPECTATOR_PLAYER2_NAME");
     }
   }
 }

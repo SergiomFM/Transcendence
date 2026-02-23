@@ -66,7 +66,7 @@ const ChangePasswordSection = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Lock className="h-5 w-5 text-muted-foreground" />
+          <Lock className="h-5 w-5 text-neon" />
           <CardTitle>{t("settings.changePassword")}</CardTitle>
         </div>
         <CardDescription>{t("settings.changePasswordDesc")}</CardDescription>
@@ -222,7 +222,7 @@ const TwoFASection = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-muted-foreground" />
+          <Shield className="h-5 w-5 text-neon" />
           <CardTitle>{t("settings.twoFA")}</CardTitle>
         </div>
         <CardDescription>{t("settings.twoFADesc")}</CardDescription>
@@ -403,9 +403,9 @@ const SettingsPage = () => {
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-12">
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-2xl space-y-6 animate-fade-up">
         <div>
-          <h1 className="text-3xl font-bold">{t("settings.title")}</h1>
+          <h1 className="text-3xl font-bold text-glow">{t("settings.title")}</h1>
           <p className="text-muted-foreground mt-1">{t("settings.subtitle")}</p>
         </div>
         <Card>

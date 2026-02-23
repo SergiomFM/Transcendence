@@ -29,6 +29,9 @@ class GameRoom {
 		this.physics = new Physics(this);
 		this.events = new EventEmitter();
 
+		// Initialize all spell state flags and durations
+		this.resetSpellState();
+
 		// Event to handle spell related player Inputs
 		this.createSpellUsedEvent();
 
@@ -36,6 +39,10 @@ class GameRoom {
 		this.lastUpdate = Date.now();
 		this.lastStateUpdate = Date.now();
 		this.gameLoopTimeout = null;
+
+		// Broadcast throttling - decouple broadcast rate from physics tick rate
+		this.lastPlayerBroadcast = 0;
+		this.lastSpectatorBroadcast = 0;
 	}
 
 	initializeBall() {
@@ -52,6 +59,9 @@ class GameRoom {
 	}
 
 	useSpell(player, offensive) {
+		// Block spells when game is not actively running (e.g. during countdown)
+		if (!this.running) return;
+
 		const spellType = offensive
 			? player.currentOffensiveSpell
 			: player.currentCounterSpell;
@@ -251,7 +261,10 @@ class GameRoom {
 			connection.playerId = 1;
 			connection.role = "player";
 			this.player1.name = connection.userName || playerData?.name || null;
+			// Reset scores for a fresh match when both seats are filled
 			if (this.player2.connection) {
+				this.player1.score = 0;
+				this.player2.score = 0;
 				this.loaded = true;
 				this.startGameLoop();
 			}
@@ -264,7 +277,10 @@ class GameRoom {
 			connection.playerId = 2;
 			connection.role = "player";
 			this.player2.name = connection.userName || playerData?.name || null;
+			// Reset scores for a fresh match when both seats are filled
 			if (this.player1.connection) {
+				this.player1.score = 0;
+				this.player2.score = 0;
 				this.loaded = true;
 				this.startGameLoop();
 			}
@@ -366,10 +382,25 @@ class GameRoom {
 		this.resetSpellState();
 		this.resetSpells();
 
+		this.broadcastSpellReset();
 		this.broadcastState();
 	}
 
+	// Broadcast SPELL_SWITCHED for all 4 spells (both players) to all connections
+	// Called after spell types are reset to defaults so all clients recreate correct spell objects
+	broadcastSpellReset() {
+		this.broadcastSpellSwitched(1, true, this.player1.currentOffensiveSpell);
+		this.broadcastSpellSwitched(1, false, this.player1.currentCounterSpell);
+		this.broadcastSpellSwitched(2, true, this.player2.currentOffensiveSpell);
+		this.broadcastSpellSwitched(2, false, this.player2.currentCounterSpell);
+	}
+
 	resetPlayerState(player, zPosition) {
+		this.resetPlayerPositions(player, zPosition);
+		player.score = 0;
+	}
+
+	resetPlayerPositions(player, zPosition) {
 		player.x = 0;
 		player.z = zPosition;
 		player.currSpeed = 0;
@@ -381,7 +412,6 @@ class GameRoom {
 		player.failed = false;
 		player.ready = false;
 		player.size = GAME_CONSTANTS.PADDLE_SIZE;
-		player.score = 0;
 
 		player.currentOffensiveSpell = "ballAngleSwitch";
 		player.currentCounterSpell = "ballStop";
@@ -431,6 +461,8 @@ class GameRoom {
 				return;
 			}
 			if (!this.player1.ready || !this.player2.ready) {
+				// Still broadcast state so clients see ready status updates
+				this.throttledBroadcast();
 				return;
 			} else if (!this.startingRound) {
 				this.startingRound = true;
@@ -440,32 +472,37 @@ class GameRoom {
 					this.resetSpells();
 				}, GAME_CONSTANTS.ROUND_START_DELAY);
 			}
+			// Broadcast during countdown too so clients see the waiting state
+			this.throttledBroadcast();
 			return;
 		}
 
 		// SPELL: BallAngleSwitch (reverse ball direction once)
 		if (this._angleActive) {
-			this._angleDuration += delta * 1000;
+			this._angleDuration = (this._angleDuration || 0) + delta * 1000;
 			if (this._angleDuration >= 500) {
 				this._angleActive = false;
 				this._angleDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 		// SPELL: BallShot (speed boost with duration)
 		if (this._shotActive) {
-			this._shotDuration += delta * 1000;
+			this._shotDuration = (this._shotDuration || 0) + delta * 1000;
 			if (this._shotDuration >= 500) {
 				this._shotActive = false;
 				this._shotDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
 		// SPELL: BallBack (reverse ball direction once)
 		if (this._backActive) {
-			this._backDuration += delta * 1000;
+			this._backDuration = (this._backDuration || 0) + delta * 1000;
 			if (this._backDuration >= 500) {
 				this._backActive = false;
 				this._backDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -480,6 +517,7 @@ class GameRoom {
 				// 2s duration
 				this._stopActive = false;
 				this._stopDuration = 0;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -504,6 +542,7 @@ class GameRoom {
 				this._imanActive = false;
 				this._imanDuration = 0;
 				this._imanPlayer = null;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -516,6 +555,7 @@ class GameRoom {
 				this.ball.x *= -1;
 				this.physics.setBallAngle(Math.PI - this.ball.angle);
 				this._portalActive = false;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 			this._portalLastXDir = Math.sign(this.ball.cos);
 			this._portalLastZDir = Math.sign(this.ball.sin);
@@ -524,6 +564,7 @@ class GameRoom {
 				this._portalActive = false;
 				this._portalDuration = 0;
 				this._portalPlayer = null;
+				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
 
@@ -540,12 +581,48 @@ class GameRoom {
 				this.running = false;
 				this.resetSpells();
 				this.handleScoreEvent(event, true);
+
+				// Check for game over
+				if (this.player1.score >= GAME_CONSTANTS.MAX_ROUNDS || this.player2.score >= GAME_CONSTANTS.MAX_ROUNDS) {
+					const player1Wins = this.player1.score >= GAME_CONSTANTS.MAX_ROUNDS;
+					console.log(`[GAME OVER] Player1: ${this.player1.score}, Player2: ${this.player2.score}, MAX_ROUNDS: ${GAME_CONSTANTS.MAX_ROUNDS}, Winner: ${player1Wins ? 'Player1' : 'Player2'}`);
+
+					// Report match result BEFORE demotion (needs userId from connection)
+					this.reportMatchResult(player1Wins);
+
+					// Send per-player GAME_OVER messages with scores
+					this.handleGameOverEvent(player1Wins);
+
+					// Reset player positions and spells but KEEP scores
+					// so the winner and spectators can still see the final result.
+					// Scores will be reset when a new player takes the seat.
+					this.running = false;
+					this.player1.ready = false;
+					this.player2.ready = false;
+					this.resetPlayerPositions(this.player1, GAME_CONSTANTS.PLAYER1_Z);
+					this.resetPlayerPositions(this.player2, GAME_CONSTANTS.PLAYER2_Z);
+					this.initializeBall();
+					this.broadcastSpellReset();
+				}
 			} else {
 				this.handleCollisionEvent(event, true);
 			}
 		}
 
-		this.broadcastState();
+		// Throttled broadcast: physics runs at 480 Hz but broadcasts are rate-limited
+		this.throttledBroadcast();
+	}
+
+	throttledBroadcast() {
+		const now = performance.now();
+		if (now - this.lastPlayerBroadcast >= GAME_CONSTANTS.PLAYER_BROADCAST_RATE) {
+			this.broadcastStateToPlayers();
+			this.lastPlayerBroadcast = now;
+		}
+		if (now - this.lastSpectatorBroadcast >= GAME_CONSTANTS.SPECTATOR_BROADCAST_RATE) {
+			this.broadcastStateToSpectators();
+			this.lastSpectatorBroadcast = now;
+		}
 	}
 
 	handleCollisionEvent(collisionEvent, isPlayer1) {
@@ -568,6 +645,22 @@ class GameRoom {
 		}
 		if (!isPlayer1) return;
 		this.handleCollisionEvent(collisionEvent, false);
+
+		// Send to spectators from Player 1's perspective (sign = 1)
+		const spectatorMessage = JSON.stringify({
+			type: "COLLISION",
+			x: collisionEvent.x,
+			z: collisionEvent.z,
+			speed: collisionEvent.speed,
+			angle: -collisionEvent.angle,
+		});
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(spectatorMessage);
+			} catch (error) {
+				console.error("Error sending COLLISION to spectator:", error);
+			}
+		}
 	}
 
 	handleScoreEvent(scoreEvent, isPlayer1) {
@@ -589,6 +682,85 @@ class GameRoom {
 		}
 		if (!isPlayer1) return;
 		this.handleScoreEvent(scoreEvent, false);
+
+		// Send to spectators from Player 1's perspective
+		const spectatorMessage = JSON.stringify({
+			type: "GAME_SCORE",
+			enemy: !scoreEvent.player1Wins,
+			player1Score: this.player1.score,
+			player2Score: this.player2.score,
+		});
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(spectatorMessage);
+			} catch (error) {
+				console.error("Error sending GAME_SCORE to spectator:", error);
+			}
+		}
+	}
+
+	handleGameOverEvent(player1Wins) {
+		// Send per-player GAME_OVER messages with flipped scores (like handleScoreEvent)
+		const sendToPlayer = (isPlayer1) => {
+			const player = isPlayer1 ? this.player1 : this.player2;
+			const won = isPlayer1 ? player1Wins : !player1Wins;
+			if (player.connection) {
+				try {
+					player.connection.send(
+						JSON.stringify({
+							type: "GAME_OVER",
+							won: won,
+							winner: player1Wins ? 1 : 2,
+							player1Score: isPlayer1 ? this.player1.score : this.player2.score,
+							player2Score: isPlayer1 ? this.player2.score : this.player1.score,
+						}),
+					);
+				} catch (error) {
+					console.error("Error sending GAME_OVER to player:", error);
+				}
+			}
+		};
+
+		sendToPlayer(true);
+		sendToPlayer(false);
+
+		// Also notify spectators
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(
+					JSON.stringify({
+						type: "GAME_OVER",
+						won: null,
+						winner: player1Wins ? 1 : 2,
+						player1Score: this.player1.score,
+						player2Score: this.player2.score,
+					}),
+				);
+			} catch (error) {
+				console.error("Error sending GAME_OVER to spectator:", error);
+			}
+		}
+
+		// Demote the loser to spectator (lightweight: just move connection, don't reset game)
+		const loserPlayer = player1Wins ? this.player2 : this.player1;
+		const loserConnection = loserPlayer.connection;
+		if (loserConnection) {
+			// Move connection from player slot to spectators
+			loserPlayer.connection = null;
+			loserPlayer.ready = false;
+			loserPlayer.name = null;
+			loserConnection.playerId = null;
+			loserConnection.role = "spectator";
+			this.spectators.add(loserConnection);
+			this.sendStateToConnection(loserConnection);
+
+			// Notify about seat availability
+			this.broadcastEvent({
+				type: "PLAYER_SEAT_AVAILABLE",
+				seatsAvailable:
+					(this.player1.connection ? 0 : 1) + (this.player2.connection ? 0 : 1),
+			});
+		}
 	}
 
 	getStateForPlayer(isPlayer1) {
@@ -604,6 +776,8 @@ class GameRoom {
 				x: me.x * abs,
 				name: me.name,
 				score: me.score,
+				currentOffensiveSpell: me.currentOffensiveSpell,
+				currentCounterSpell: me.currentCounterSpell,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[me.currentOffensiveSpell] -
 					Math.max(0, me.spells.offensive.cooldown - now),
@@ -618,6 +792,8 @@ class GameRoom {
 				x: enemy.x * abs,
 				name: enemy.name,
 				score: enemy.score,
+				currentOffensiveSpell: enemy.currentOffensiveSpell,
+				currentCounterSpell: enemy.currentCounterSpell,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[enemy.currentOffensiveSpell] -
 					Math.max(0, enemy.spells.offensive.cooldown - now),
@@ -656,8 +832,7 @@ class GameRoom {
 		}
 	}
 
-	broadcastState() {
-		// Send to both players
+	broadcastStateToPlayers() {
 		if (this.player1.connection) {
 			try {
 				this.player1.connection.send(
@@ -677,14 +852,24 @@ class GameRoom {
 				console.error("Error sending GAME_STATE to player2:", error);
 			}
 		}
+	}
 
+	broadcastStateToSpectators() {
+		if (this.spectators.size === 0) return;
+		// Pre-serialize once for all spectators (all share Player 1's perspective)
+		const message = JSON.stringify(this.getStateForSpectator());
 		for (const spectator of this.spectators) {
 			try {
-				spectator.send(JSON.stringify(this.getStateForSpectator()));
+				spectator.send(message);
 			} catch (error) {
 				console.error("Error sending GAME_STATE to spectator:", error);
 			}
 		}
+	}
+
+	broadcastState() {
+		this.broadcastStateToPlayers();
+		this.broadcastStateToSpectators();
 	}
 
 	broadcastEvent(event) {
@@ -741,6 +926,56 @@ class GameRoom {
 			this.gameLoopTimeout = null;
 		}
 	}
+
+	async reportMatchResult(player1Wins) {
+		const player1UserId = this.player1.connection?.userId;
+		const player2UserId = this.player2.connection?.userId;
+		const p1Score = this.player1.score;
+		const p2Score = this.player2.score;
+
+		console.log(`[MATCH REPORT] Attempting to report match: p1=${player1UserId} (${p1Score}) vs p2=${player2UserId} (${p2Score}), winner=${player1Wins ? 'p1' : 'p2'}`);
+
+		// At least one player must be authenticated to record the match
+		if (!player1UserId && !player2UserId) {
+			console.log("[MATCH REPORT] Skipping: no players are authenticated");
+			return;
+		}
+
+		const USERS_BACKEND_URL = process.env.USERS_BACKEND_URL;
+		if (!USERS_BACKEND_URL) {
+			console.error("[MATCH REPORT] USERS_BACKEND_URL not configured");
+			return;
+		}
+
+		const winnerId = player1Wins ? player1UserId : player2UserId;
+
+		const body = {
+			player1_id: player1UserId || null,
+			player2_id: player2UserId || null,
+			player1_score: p1Score,
+			player2_score: p2Score,
+			winner_id: winnerId || null,
+		};
+		console.log("[MATCH REPORT] Sending:", JSON.stringify(body));
+
+		try {
+			const response = await fetch(`${USERS_BACKEND_URL}/matches`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+
+			if (!response.ok) {
+				const text = await response.text();
+				console.error(`[MATCH REPORT] Failed: ${response.status} ${text}`);
+			} else {
+				console.log("[MATCH REPORT] Match result reported successfully");
+			}
+		} catch (error) {
+			console.error("[MATCH REPORT] Error:", error);
+		}
+	}
+
 	resetSpells() {
 		const now = performance.now();
 		this.player1.spells.offensive.cooldown =
@@ -773,6 +1008,23 @@ class GameRoom {
 		this._portalLastXDir = 0;
 		this._portalLastZDir = 0;
 		this._stopOriginalPosition = null;
+	}
+
+	isAnySpellActive() {
+		return (
+			this._angleActive ||
+			this._shotActive ||
+			this._backActive ||
+			this._stopActive ||
+			this._imanActive ||
+			this._portalActive
+		);
+	}
+
+	broadcastSpellEndedIfNoneActive() {
+		if (!this.isAnySpellActive()) {
+			this.broadcastEvent({ type: "SPELL_ENDED" });
+		}
 	}
 }
 
@@ -850,7 +1102,33 @@ class GameRoomManager {
 	}
 
 	generateRoomId() {
-		return `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+		const adjectives = [
+			"ancient", "blazing", "cosmic", "dark", "epic", "fierce", "golden",
+			"hidden", "iron", "jade", "keen", "lunar", "mystic", "neon", "obsidian",
+			"phantom", "quantum", "rogue", "shadow", "thunder", "ultra", "venom",
+			"wicked", "xenon", "yonder", "zero", "arcane", "brave", "chrome",
+			"dire", "ember", "frozen", "grim", "hollow", "ivory", "jolly",
+			"knightly", "lost", "molten", "noble", "onyx", "primal", "quick",
+			"radiant", "steel", "toxic", "undying", "vivid", "wild", "astral",
+		];
+		const nouns = [
+			"arena", "blade", "comet", "dragon", "forge", "ghost", "hawk",
+			"inferno", "knight", "lion", "meteor", "nexus", "oracle", "phoenix",
+			"quest", "raven", "storm", "titan", "vortex", "wolf", "archer",
+			"bastion", "cipher", "dagger", "eclipse", "falcon", "golem", "hydra",
+			"imp", "jester", "kraken", "lancer", "mantis", "nomad", "ogre",
+			"panda", "quasar", "reaper", "serpent", "thorn", "umbra", "valkyrie",
+			"warden", "wyrm", "yeti", "zenith", "bolt", "claw", "drift",
+		];
+		const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+		const noun = nouns[Math.floor(Math.random() * nouns.length)];
+		const num = Math.floor(Math.random() * 100);
+		const id = `${adj}-${noun}-${num}`;
+		// Ensure uniqueness
+		if (this.rooms.has(id)) {
+			return this.generateRoomId();
+		}
+		return id;
 	}
 
 	getRoomForConnection(connection) {

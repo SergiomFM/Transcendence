@@ -39,6 +39,8 @@ const GAME_CONSTANTS = {
 
 	// Game physics
 	TICK_RATE: 1000 / 480, // ms per tick
+	PLAYER_BROADCAST_RATE: 1000 / 60, // ms between player state broadcasts (~60 Hz)
+	SPECTATOR_BROADCAST_RATE: 1000 / 20, // ms between spectator state broadcasts (~20 Hz)
 
 	// Player positions (from GLB - will be set dynamically at startup)
 	PLAYER1_Z: null,

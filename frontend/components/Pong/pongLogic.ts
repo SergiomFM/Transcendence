@@ -1,5 +1,4 @@
 import { Vector3, Tools, Color4 } from "@babylonjs/core";
-import { Events } from "./pongEvents";
 import {
   splashEffect,
   COLLISION_VFX,
@@ -8,8 +7,9 @@ import {
   resetRoundColor,
 } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
-import { Spell } from "./pongSpells";
+import { Spell, getNewSpell } from "./pongSpells";
 import { GAME_CONSTANTS } from "@/shared/constants";
+import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady } from "./pongAudio";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -54,11 +54,21 @@ function onlineGameLogic(pong: Pong) {
   }
 }
 
-function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any) {
+function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, pong: Pong, isLocalPlayer: boolean) {
+  // When game is not running, reset cooldown so spell balls don't grow between rounds
+  if (!pong.running) {
+    spell.cooldownElapsed = 0;
+    spell.ready = false;
+    return;
+  }
   spell.cooldownElapsed = serverSpellData.cooldownElapsed;
   if (serverSpellData.spellReady && !spell.ready) {
     spell.ready = true;
     spellReadyVFX(scene, spell);
+    // Only play SFX for the local player's own spells
+    if (isLocalPlayer && !pong.isSpectator) {
+      sfxSpellReady();
+    }
   } else if (!serverSpellData.spellReady) {
     spell.ready = false;
   }
@@ -68,11 +78,28 @@ function updatePlayerFromServer(
   player: Player,
   serverPlayerData: any,
   scene: any,
+  pong: Pong,
+  isLocalPlayer: boolean,
 ) {
   player.x = serverPlayerData.x;
-  if (serverPlayerData.name) {
+  if (serverPlayerData.name !== undefined) {
     player.name = serverPlayerData.name;
   }
+
+  // Reconcile spell types: if the server's spell doesn't match the client's, recreate it
+  if (serverPlayerData.currentOffensiveSpell &&
+      player.offensiveSpell.spellType !== serverPlayerData.currentOffensiveSpell) {
+    player.offensiveSpell = getNewSpell(
+      pong, player, player.offensiveSpell, serverPlayerData.currentOffensiveSpell,
+    );
+  }
+  if (serverPlayerData.currentCounterSpell &&
+      player.counterSpell.spellType !== serverPlayerData.currentCounterSpell) {
+    player.counterSpell = getNewSpell(
+      pong, player, player.counterSpell, serverPlayerData.currentCounterSpell,
+    );
+  }
+
   updateSpellFromServer(
     player.offensiveSpell,
     {
@@ -80,6 +107,8 @@ function updatePlayerFromServer(
       spellReady: serverPlayerData.offensiveSpellReady,
     },
     scene,
+    pong,
+    isLocalPlayer,
   );
   updateSpellFromServer(
     player.counterSpell,
@@ -88,6 +117,8 @@ function updatePlayerFromServer(
       spellReady: serverPlayerData.counterSpellReady,
     },
     scene,
+    pong,
+    isLocalPlayer,
   );
 }
 
@@ -96,8 +127,8 @@ function applyServerState(pong: Pong, serverState: any) {
   pong.ball.z = serverState.ball.z;
   pong.ball.setAngle(serverState.ball.angle);
 
-  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene);
-  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene);
+  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene, pong, true);
+  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene, pong, false);
 
   if (pong.GUI) {
     if (typeof serverState.player1.score === "number") {
@@ -107,10 +138,14 @@ function applyServerState(pong: Pong, serverState: any) {
       pong.player2.score = serverState.player2.score;
     }
     pong.GUI.updateScores(pong.player1.score, pong.player2.score);
+
+    if (pong.isSpectator) {
+      pong.GUI.updateSpectatorNames(pong.player1.name, pong.player2.name);
+      pong.GUI.showSpectatorNames();
+    }
   }
 
   pong.running = serverState.running;
-  Events.emitRunningState(pong);
 }
 
 // Paddle collision check
@@ -153,6 +188,7 @@ function paddleCollision(
       -ball.angle,
       COLLISION_VFX,
     );
+    sfxPaddleHit();
   } else {
     paddle.failed = true;
   }
@@ -216,6 +252,7 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
       Tools.ToRadians(0 + 180 * Number(newX > 0)),
       COLLISION_VFX,
     );
+    sfxWallHit();
 
     // Changing the ball angle and x value to the amount it should reflect
     ball.x = Xlimit * sign - (newX - Xlimit * sign);
@@ -246,11 +283,13 @@ function playerScore(pong: Pong, ball: Ball) {
     pong.player2.score++;
     pong.GUI.roundLostUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(90));
+    sfxLostRound();
   } else {
     // Player 1 scored
     pong.player1.score++;
     pong.GUI.roundWonUI(false, pong.player1.score, pong.player2.score);
     ball.setAngle(Tools.ToRadians(-90));
+    sfxScore();
   }
 
   // Reseting attributes
@@ -268,8 +307,6 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.player2.failed = false;
   pong.player2.ready = false;
 
-  Events.emitReadyState(pong);
-
   pong.player1.counterSpell.resetSpell();
   pong.player1.offensiveSpell.resetSpell();
 
@@ -282,5 +319,4 @@ function playerScore(pong: Pong, ball: Ball) {
   pong.running = false;
   pong.startingRound = false;
   //pong.loaded = true; // Need to set load as false and then to true when UI Done
-  Events.emitRunningState(pong);
 }

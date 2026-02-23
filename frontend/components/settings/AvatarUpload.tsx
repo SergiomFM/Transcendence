@@ -183,8 +183,8 @@ export const AvatarUploadSection = () => {
 
   return (
     <>
-      <div className="flex items-center gap-6">
-        <div className="relative group">
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+        <div className="relative group shrink-0">
           <Avatar className="h-20 w-20">
             {user?.avatar ? (
               <AvatarImage src={user.avatar} alt={displayName} />
@@ -203,8 +203,8 @@ export const AvatarUploadSection = () => {
           </button>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex gap-2">
+        <div className="space-y-2 text-center sm:text-left">
+          <div className="flex flex-wrap justify-center sm:justify-start gap-2">
             <Button
               variant="outline"
               size="sm"
