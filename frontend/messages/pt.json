@@ -165,6 +165,8 @@
   "pong": {
     "welcomeWarlock": "Bem-vindo Feiticeiro",
     "pressSpaceReady": "(Pressiona espaço quando estiveres pronto)",
+    "pressReadyTouch": "(Pressiona ready)",
+    "pressPlayClaimSeat": "Pressiona play para ocupar um lugar",
     "youWon": "Ganhaste!",
     "player1Wins": "Jogador 1 Ganhou!",
     "youLost": "Perdeste!",

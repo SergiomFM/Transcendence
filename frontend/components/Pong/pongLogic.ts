@@ -7,7 +7,7 @@ import {
   resetRoundColor,
 } from "./pongVFX";
 import { Ball, Player, Pong } from "./pong";
-import { Spell } from "./pongSpells";
+import { Spell, getNewSpell } from "./pongSpells";
 import { GAME_CONSTANTS } from "@/shared/constants";
 import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady } from "./pongAudio";
 
@@ -54,9 +54,9 @@ function onlineGameLogic(pong: Pong) {
   }
 }
 
-function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, pong: Pong) {
-  // Don't apply cooldown state while spectating or when game is not running
-  if (pong.isSpectator || !pong.running) {
+function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, pong: Pong, isLocalPlayer: boolean) {
+  // When game is not running, reset cooldown so spell balls don't grow between rounds
+  if (!pong.running) {
     spell.cooldownElapsed = 0;
     spell.ready = false;
     return;
@@ -65,7 +65,10 @@ function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, p
   if (serverSpellData.spellReady && !spell.ready) {
     spell.ready = true;
     spellReadyVFX(scene, spell);
-    sfxSpellReady();
+    // Only play SFX for the local player's own spells
+    if (isLocalPlayer && !pong.isSpectator) {
+      sfxSpellReady();
+    }
   } else if (!serverSpellData.spellReady) {
     spell.ready = false;
   }
@@ -76,11 +79,27 @@ function updatePlayerFromServer(
   serverPlayerData: any,
   scene: any,
   pong: Pong,
+  isLocalPlayer: boolean,
 ) {
   player.x = serverPlayerData.x;
   if (serverPlayerData.name !== undefined) {
     player.name = serverPlayerData.name;
   }
+
+  // Reconcile spell types: if the server's spell doesn't match the client's, recreate it
+  if (serverPlayerData.currentOffensiveSpell &&
+      player.offensiveSpell.spellType !== serverPlayerData.currentOffensiveSpell) {
+    player.offensiveSpell = getNewSpell(
+      pong, player, player.offensiveSpell, serverPlayerData.currentOffensiveSpell,
+    );
+  }
+  if (serverPlayerData.currentCounterSpell &&
+      player.counterSpell.spellType !== serverPlayerData.currentCounterSpell) {
+    player.counterSpell = getNewSpell(
+      pong, player, player.counterSpell, serverPlayerData.currentCounterSpell,
+    );
+  }
+
   updateSpellFromServer(
     player.offensiveSpell,
     {
@@ -89,6 +108,7 @@ function updatePlayerFromServer(
     },
     scene,
     pong,
+    isLocalPlayer,
   );
   updateSpellFromServer(
     player.counterSpell,
@@ -98,6 +118,7 @@ function updatePlayerFromServer(
     },
     scene,
     pong,
+    isLocalPlayer,
   );
 }
 
@@ -106,8 +127,8 @@ function applyServerState(pong: Pong, serverState: any) {
   pong.ball.z = serverState.ball.z;
   pong.ball.setAngle(serverState.ball.angle);
 
-  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene, pong);
-  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene, pong);
+  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene, pong, true);
+  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene, pong, false);
 
   if (pong.GUI) {
     if (typeof serverState.player1.score === "number") {

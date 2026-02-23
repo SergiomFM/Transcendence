@@ -174,25 +174,28 @@ function handleSpellSwitched(pong: Pong, message: any) {
         message.spellName,
       ));
 
-  sfxSpellSwitch();
+  // Only play SFX for the local player's own spell switch
+  if (!pong.isSpectator && !message.enemy) {
+    sfxSpellSwitch();
+  }
 }
 
 function handleGameReady(pong: Pong) {
   console.log("Both Players connected to the game!");
-
-  if (pong.isSpectator) {
-    return;
-  }
 
   if (!pong.player2.connected) {
     pong.player2.connected = true;
     sfxConnect();
 
     if (pong.GUI) {
-      pong.GUI.showReadyPrompt();
-      if (pong.localReady) {
-        pong.GUI.showOtherPlayerReady();
-        pong.GUI.waitingForOpponentReadyUI();
+      if (pong.isSpectator) {
+        pong.GUI.spectatorModeUI(pong.seatsAvailable);
+      } else {
+        pong.GUI.showReadyPrompt();
+        if (pong.localReady) {
+          pong.GUI.showOtherPlayerReady();
+          pong.GUI.waitingForOpponentReadyUI();
+        }
       }
     }
   }
@@ -242,22 +245,20 @@ function handleGameJoined(pong: Pong, message: any) {
 
 function handleGameStart(pong: Pong) {
   console.log("Game starting!");
-  if (pong.isSpectator) {
-    pong.running = false;
-    if (pong.GUI) {
+
+  // Start the match for all clients (players and spectators)
+  pong.running = true;
+
+  if (pong.GUI) {
+    if (pong.isSpectator) {
       pong.GUI.spectatorModeUI(pong.seatsAvailable);
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
       pong.GUI.hideOtherPlayerReady();
+    } else {
+      pong.GUI.startRoundUI();
+      pong.GUI.hideOtherPlayerReady();
+      pong.GUI.textFadeOut("WAITING_FOR_READY");
     }
-    return;
-  }
-
-  // Start the match
-  pong.running = true;
-  if (pong.GUI) {
-    pong.GUI.startRoundUI();
-    pong.GUI.hideOtherPlayerReady();
-    pong.GUI.textFadeOut("WAITING_FOR_READY");
   }
 }
 
@@ -265,9 +266,12 @@ function handleGameDisconnection(pong: Pong) {
   console.log("Opponent disconnected");
 
   pong.running = false;
-  pong.player2.connected = false;
   pong.localReady = false;
   sfxDisconnect();
+
+  if (!pong.isSpectator) {
+    pong.player2.connected = false;
+  }
 
   if (pong.GUI) {
     if (pong.isSpectator) {
@@ -337,6 +341,10 @@ function handleSeatUnavailable(pong: Pong) {
 
 function handlePlayerReadyStatus(pong: Pong, message: any) {
   if (pong.isSpectator) {
+    // Spectators hear ready SFX but don't show player-specific ready UI
+    if (message.ready) {
+      sfxOpponentReady();
+    }
     return;
   }
   if (!pong.GUI) {

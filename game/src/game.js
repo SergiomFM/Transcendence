@@ -372,7 +372,17 @@ class GameRoom {
 		this.resetSpellState();
 		this.resetSpells();
 
+		this.broadcastSpellReset();
 		this.broadcastState();
+	}
+
+	// Broadcast SPELL_SWITCHED for all 4 spells (both players) to all connections
+	// Called after spell types are reset to defaults so all clients recreate correct spell objects
+	broadcastSpellReset() {
+		this.broadcastSpellSwitched(1, true, this.player1.currentOffensiveSpell);
+		this.broadcastSpellSwitched(1, false, this.player1.currentCounterSpell);
+		this.broadcastSpellSwitched(2, true, this.player2.currentOffensiveSpell);
+		this.broadcastSpellSwitched(2, false, this.player2.currentCounterSpell);
 	}
 
 	resetPlayerState(player, zPosition) {
@@ -571,6 +581,7 @@ class GameRoom {
 					this.resetPlayerPositions(this.player1, GAME_CONSTANTS.PLAYER1_Z);
 					this.resetPlayerPositions(this.player2, GAME_CONSTANTS.PLAYER2_Z);
 					this.initializeBall();
+					this.broadcastSpellReset();
 				}
 			} else {
 				this.handleCollisionEvent(event, true);
@@ -600,6 +611,22 @@ class GameRoom {
 		}
 		if (!isPlayer1) return;
 		this.handleCollisionEvent(collisionEvent, false);
+
+		// Send to spectators from Player 1's perspective (sign = 1)
+		const spectatorMessage = JSON.stringify({
+			type: "COLLISION",
+			x: collisionEvent.x,
+			z: collisionEvent.z,
+			speed: collisionEvent.speed,
+			angle: -collisionEvent.angle,
+		});
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(spectatorMessage);
+			} catch (error) {
+				console.error("Error sending COLLISION to spectator:", error);
+			}
+		}
 	}
 
 	handleScoreEvent(scoreEvent, isPlayer1) {
@@ -621,6 +648,21 @@ class GameRoom {
 		}
 		if (!isPlayer1) return;
 		this.handleScoreEvent(scoreEvent, false);
+
+		// Send to spectators from Player 1's perspective
+		const spectatorMessage = JSON.stringify({
+			type: "GAME_SCORE",
+			enemy: !scoreEvent.player1Wins,
+			player1Score: this.player1.score,
+			player2Score: this.player2.score,
+		});
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(spectatorMessage);
+			} catch (error) {
+				console.error("Error sending GAME_SCORE to spectator:", error);
+			}
+		}
 	}
 
 	handleGameOverEvent(player1Wins) {
@@ -700,6 +742,8 @@ class GameRoom {
 				x: me.x * abs,
 				name: me.name,
 				score: me.score,
+				currentOffensiveSpell: me.currentOffensiveSpell,
+				currentCounterSpell: me.currentCounterSpell,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[me.currentOffensiveSpell] -
 					Math.max(0, me.spells.offensive.cooldown - now),
@@ -714,6 +758,8 @@ class GameRoom {
 				x: enemy.x * abs,
 				name: enemy.name,
 				score: enemy.score,
+				currentOffensiveSpell: enemy.currentOffensiveSpell,
+				currentCounterSpell: enemy.currentCounterSpell,
 				offensiveCooldownElapsed:
 					SPELL_CONSTANTS[enemy.currentOffensiveSpell] -
 					Math.max(0, enemy.spells.offensive.cooldown - now),

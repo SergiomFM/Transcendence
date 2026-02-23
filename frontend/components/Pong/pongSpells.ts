@@ -199,8 +199,8 @@ export abstract class Spell {
       return;
     }
 
-    // Keep balls at initial size while spectating or when game is not running
-    if (this.pong.isSpectator || !this.pong.running) {
+    // Keep balls at initial size when game is not running
+    if (!this.pong.running) {
       this.hemisphericEmitter.radius = this.initialSize;
       this.lastSizeUpdate = now;
       return;

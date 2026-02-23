@@ -82,9 +82,17 @@ const Pong = ({
     setPongInstance(pong);
   }, []);
 
+  // Swap UI text for touch devices in fullscreen (button names instead of key names)
+  useEffect(() => {
+    if (!pongInstance?.GUI) return;
+    pongInstance.GUI.setTouchMode(isTouchDevice && isFullscreen);
+  }, [pongInstance, isTouchDevice, isFullscreen]);
+
   const pongTranslations = useMemo<PongTranslations>(() => ({
     welcomeWarlock: t("pong.welcomeWarlock"),
     pressSpaceReady: t("pong.pressSpaceReady"),
+    pressReadyTouch: t("pong.pressReadyTouch"),
+    pressPlayClaimSeat: t("pong.pressPlayClaimSeat"),
     youWon: t("pong.youWon"),
     player1Wins: t("pong.player1Wins"),
     youLost: t("pong.youLost"),

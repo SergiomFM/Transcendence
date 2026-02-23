@@ -9,6 +9,8 @@ import { sfxCountdown, sfxFight } from "./pongAudio";
 export interface PongTranslations {
   welcomeWarlock: string;
   pressSpaceReady: string;
+  pressReadyTouch: string;
+  pressPlayClaimSeat: string;
   youWon: string;
   player1Wins: string;
   youLost: string;
@@ -212,6 +214,19 @@ export class GUI {
     this.createNewText(configs.PLAYER_2_SCORE_DESCRIPTION);
     this.createNewText(configs.SPECTATOR_PLAYER1_NAME);
     this.createNewText(configs.SPECTATOR_PLAYER2_NAME);
+  }
+
+  // Swap text for touch devices in fullscreen (show button names instead of keys)
+  setTouchMode(enabled: boolean) {
+    const t = this.translations;
+    const readyText = this.textBlocks.get("PRESS_READY");
+    if (readyText) {
+      readyText.text = enabled ? t.pressReadyTouch : t.pressSpaceReady;
+    }
+    const seatText = this.textBlocks.get("SPECTATOR_SEAT_PROMPT");
+    if (seatText) {
+      seatText.text = enabled ? t.pressPlayClaimSeat : t.pressClaimSeat;
+    }
   }
 
   createNewText(attributes: any) {

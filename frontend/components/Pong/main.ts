@@ -34,6 +34,8 @@ export const startPong = async (
   const defaultTranslations: PongTranslations = {
     welcomeWarlock: "Welcome Warlock",
     pressSpaceReady: "(Press space when ready)",
+    pressReadyTouch: "(Press ready)",
+    pressPlayClaimSeat: "Press play to claim a seat",
     youWon: "You Won!",
     player1Wins: "Player 1 Wins!",
     youLost: "You Lost!",

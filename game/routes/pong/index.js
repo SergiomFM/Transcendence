@@ -49,7 +49,7 @@ module.exports = async function (fastify, opts) {
 		};
 		const notifyGameReadyIfFull = (room) => {
 			if (isRoomFull(room)) {
-				room.broadcastEventToPlayers({ type: "GAME_READY" });
+				room.broadcastEvent({ type: "GAME_READY" });
 			} else {
 				notifySeatAvailability(room);
 			}
@@ -72,12 +72,12 @@ module.exports = async function (fastify, opts) {
 			sendStatus(2, !!room.player2.ready);
 		};
 		const broadcastReadyStatus = (room) => {
-			room.broadcastEventToPlayers({
+			room.broadcastEvent({
 				type: "PLAYER_READY_STATUS",
 				playerId: 1,
 				ready: !!room.player1.ready,
 			});
-			room.broadcastEventToPlayers({
+			room.broadcastEvent({
 				type: "PLAYER_READY_STATUS",
 				playerId: 2,
 				ready: !!room.player2.ready,
@@ -254,14 +254,14 @@ module.exports = async function (fastify, opts) {
 									broadcastReadyStatus(currentRoom);
 									notifySeatAvailability(currentRoom);
 									if (isRoomFull(currentRoom)) {
-										currentRoom.broadcastEventToPlayers({
+										currentRoom.broadcastEvent({
 											type: "GAME_READY",
 										});
 										if (
 											currentRoom.player1.ready &&
 											currentRoom.player2.ready
 										) {
-											currentRoom.broadcastEventToPlayers({
+											currentRoom.broadcastEvent({
 												type: "GAME_START",
 											});
 										}
@@ -275,14 +275,14 @@ module.exports = async function (fastify, opts) {
 								}
 							} else if (player) {
 								player.ready = true;
-								currentRoom.broadcastEventToPlayers({
+								currentRoom.broadcastEvent({
 									type: "PLAYER_READY_STATUS",
 									playerId: connection.playerId,
 									ready: true,
 								});
-								// Check if both players are ready
+							// Check if both players are ready
 								if (currentRoom.player1.ready && currentRoom.player2.ready) {
-									currentRoom.broadcastEventToPlayers({
+									currentRoom.broadcastEvent({
 										type: "GAME_START",
 									});
 								}
@@ -319,15 +319,15 @@ module.exports = async function (fastify, opts) {
 							currentRoom.player2.ready = false;
 							currentRoom.demotePlayerToSpectator(connection);
 							notifySeatAvailability(currentRoom);
-							currentRoom.broadcastEventToPlayers({
+							currentRoom.broadcastEvent({
 								type: "PLAYER_DISCONNECTED",
 							});
-							currentRoom.broadcastEventToPlayers({
+							currentRoom.broadcastEvent({
 								type: "PLAYER_READY_STATUS",
 								playerId: 1,
 								ready: false,
 							});
-							currentRoom.broadcastEventToPlayers({
+							currentRoom.broadcastEvent({
 								type: "PLAYER_READY_STATUS",
 								playerId: 2,
 								ready: false,
@@ -365,7 +365,7 @@ module.exports = async function (fastify, opts) {
 
 			if (currentRoom && wasPlayer) {
 				// Notify other player/spectators
-				currentRoom.broadcastEventToPlayers({
+				currentRoom.broadcastEvent({
 					type: "PLAYER_DISCONNECTED",
 				});
 				notifySeatAvailability(currentRoom);
