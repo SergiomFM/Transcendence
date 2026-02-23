@@ -9,6 +9,7 @@ import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/conf
 import { GameMode } from "./types";
 import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
 import type { VolumeState } from "@/components/Pong/pongAudio";
+import { ConnectedPlayers } from "./ConnectedPlayers";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -21,6 +22,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(true);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [muted, setMuted] = useState<VolumeState>(getVolumeState());
   const [rooms, setRooms] = useState<
     Array<{
@@ -48,6 +50,13 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     const standard = typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled;
     const webkit = typeof el.webkitRequestFullscreen === "function";
     setCanFullscreen(standard || webkit);
+  }, []);
+
+  // Detect touch device
+  useEffect(() => {
+    const hasTouch =
+      "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    setIsTouchDevice(hasTouch);
   }, []);
 
   const isMobileViewport = () =>
@@ -283,6 +292,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
               >
                 {t("game.backToRooms")}
               </Button>
+              <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen && isTouchDevice} />
             </div>
           </div>
 

@@ -167,7 +167,10 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "muteMusic": "Mute Music",
-    "muteAll": "Mute All"
+    "muteAll": "Mute All",
+    "connectedPlayers": "Connected",
+    "player": "Player",
+    "spectator": "Spectator"
   },
   "pong": {
     "welcomeWarlock": "Welcome Warlock",

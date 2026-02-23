@@ -16,10 +16,26 @@ async function resolveUserIdFromSession(req) {
 			return null;
 		}
 		const profile = await response.json();
-		return {
-			id: profile?.user_id || profile?.userId || profile?.id || null,
-			displayName: profile?.display_name || profile?.displayName || null,
-		};
+		const userId = profile?.user_id || profile?.userId || profile?.id || null;
+		const displayName = profile?.display_name || profile?.displayName || null;
+
+		// Fetch the user's avatar from the users backend
+		let avatar = null;
+		if (userId) {
+			try {
+				const dashResponse = await fetch(`${USERS_BACKEND_URL}/dashboard`, {
+					headers: { cookie },
+				});
+				if (dashResponse.ok) {
+					const userData = await dashResponse.json();
+					avatar = userData?.user?.avatar || null;
+				}
+			} catch (err) {
+				console.error("Error fetching user avatar:", err);
+			}
+		}
+
+		return { id: userId, displayName, avatar };
 	} catch (error) {
 		console.error("Error resolving user session:", error);
 		return null;
@@ -108,6 +124,7 @@ module.exports = async function (fastify, opts) {
 							const session = await resolveUserIdFromSession(req);
 							connection.userId = session?.id || null;
 							connection.userName = session?.displayName || null;
+							connection.userAvatar = session?.avatar || null;
 						}
 
 						kickedPreviousSession = false;
@@ -424,5 +441,48 @@ module.exports = async function (fastify, opts) {
 		const room = new GameRoom(roomId);
 		roomManager.rooms.set(roomId, room);
 		return { id: roomId };
+	});
+
+	// REST endpoint to get connected users in a room (players + spectators)
+	fastify.get("/rooms/:roomId/users", async (request, reply) => {
+		const room = roomManager.rooms.get(request.params.roomId);
+		if (!room) {
+			return reply.code(404).send({ error: "Room not found" });
+		}
+
+		const users = [];
+
+		// Add players
+		if (room.player1.connection) {
+			users.push({
+				id: room.player1.connection.userId || null,
+				name: room.player1.name || null,
+				avatar: room.player1.connection.userAvatar || null,
+				role: "player",
+				playerSlot: 1,
+			});
+		}
+		if (room.player2.connection) {
+			users.push({
+				id: room.player2.connection.userId || null,
+				name: room.player2.name || null,
+				avatar: room.player2.connection.userAvatar || null,
+				role: "player",
+				playerSlot: 2,
+			});
+		}
+
+		// Add spectators
+		for (const spectator of room.spectators) {
+			users.push({
+				id: spectator.userId || null,
+				name: spectator.userName || null,
+				avatar: spectator.userAvatar || null,
+				role: "spectator",
+				playerSlot: null,
+			});
+		}
+
+		return users;
 	});
 };

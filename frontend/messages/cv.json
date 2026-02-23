@@ -167,7 +167,10 @@
     "mute": "Silénsia",
     "unmute": "Ativa son",
     "muteMusic": "Silénsia Músika",
-    "muteAll": "Silénsia Tudu"
+    "muteAll": "Silénsia Tudu",
+    "connectedPlayers": "Konetadu",
+    "player": "Jogador",
+    "spectator": "Espetador"
   },
   "pong": {
     "welcomeWarlock": "Ben Vindu Feitiseru",

@@ -167,7 +167,10 @@
     "mute": "Silenciar",
     "unmute": "Ativar som",
     "muteMusic": "Silenciar Música",
-    "muteAll": "Silenciar Tudo"
+    "muteAll": "Silenciar Tudo",
+    "connectedPlayers": "Conectados",
+    "player": "Jogador",
+    "spectator": "Espectador"
   },
   "pong": {
     "welcomeWarlock": "Bem-vindo Feiticeiro",
