@@ -4,6 +4,7 @@ import { switchPlayerHandsPosition } from "./pongAnimations";
 import { gameLogic } from "./pongLogic";
 import { connectToGameServer, disconnectFromServer } from "./pongSocket";
 import { initAudio, startMusic, stopMusic, disposeAudio } from "./pongAudio";
+import { GamepadManager } from "./pongGamepad";
 
 // Fetch game constants from backend
 async function fetchGameConstants(gameServerUrl: string) {
@@ -80,6 +81,9 @@ export const startPong = async (
   initAudio();
   startMusic();
 
+  // Start gamepad polling
+  GamepadManager.startPolling();
+
   let lastFrameTime = 0;
   let elapsedTime = 0;
   const frameDuration = 1000 / FPS;
@@ -87,6 +91,9 @@ export const startPong = async (
 
   const renderLoop = () => {
     if (isDisposed) return;
+
+    // Poll gamepads every frame (before game logic processes direction)
+    GamepadManager.pollGamepads(pong);
 
     const now = performance.now();
     elapsedTime = now - lastFrameTime;
@@ -106,6 +113,9 @@ export const startPong = async (
     // Stop music and dispose audio
     stopMusic();
     disposeAudio();
+
+    // Stop gamepad polling
+    GamepadManager.dispose();
 
     // Disconnect from server if online
     if (pong.online) {

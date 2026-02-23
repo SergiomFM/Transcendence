@@ -42,9 +42,12 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     setMuted(newState);
   }, []);
 
-  // Detect whether the Fullscreen API is available (iOS Safari doesn't support it)
+  // Detect whether the Fullscreen API is available (including webkit prefix for iOS)
   useEffect(() => {
-    setCanFullscreen(typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled);
+    const el = document.documentElement as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+    const standard = typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled;
+    const webkit = typeof el.webkitRequestFullscreen === "function";
+    setCanFullscreen(standard || webkit);
   }, []);
 
   const isMobileViewport = () =>
@@ -76,9 +79,16 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
 
   const requestFullscreen = async (target?: HTMLElement) => {
     const element = target ?? gameContainerRef.current;
-    if (!element || document.fullscreenElement) return;
+    if (!element) return;
+    const el = element as HTMLElement & { webkitRequestFullscreen?: () => Promise<void> };
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (document.fullscreenElement || doc.webkitFullscreenElement) return;
     try {
-      await element.requestFullscreen();
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        await el.webkitRequestFullscreen();
+      }
       await lockLandscape();
     } catch (err) {
       console.error("Error attempting to enable fullscreen:", err);
@@ -86,9 +96,14 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   };
 
   const exitFullscreen = async () => {
-    if (!document.fullscreenElement) return;
+    const doc = document as Document & { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => Promise<void> };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) return;
     try {
-      await document.exitFullscreen();
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if (doc.webkitExitFullscreen) {
+        await doc.webkitExitFullscreen();
+      }
     } catch (err) {
       console.error("Error attempting to exit fullscreen:", err);
     } finally {
@@ -97,7 +112,8 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   };
 
   const toggleFullscreen = async () => {
-    if (!document.fullscreenElement) {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
+    if (!document.fullscreenElement && !doc.webkitFullscreenElement) {
       await requestFullscreen();
       setIsFullscreen(true);
     } else {
@@ -111,16 +127,20 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   };
 
   useEffect(() => {
+    const doc = document as Document & { webkitFullscreenElement?: Element };
     const handleFullscreenChange = () => {
-      const active = !!document.fullscreenElement;
+      const active = !!(document.fullscreenElement || doc.webkitFullscreenElement);
       setIsFullscreen(active);
       if (!active) {
         unlockOrientation();
       }
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () =>
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+    return () => {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("webkitfullscreenchange", handleFullscreenChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -174,7 +194,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
         <div
           ref={gameContainerRef}
           className={cn(
-            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
             isFullscreen && "relative"
           )}
         >
@@ -189,7 +209,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
                 "game-frame relative",
                 isFullscreen
                   ? "w-full h-full"
-                  : "w-full max-h-full border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+                  : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
               )}
               style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
             >
@@ -365,7 +385,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
     <div
       ref={gameContainerRef}
       className={cn(
-        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-black",
+        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
         isFullscreen && "relative"
       )}
     >
@@ -380,7 +400,7 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
             "game-frame relative",
             isFullscreen
               ? "w-full h-full"
-              : "w-full max-h-full border-2 border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+              : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
           )}
           style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
         >

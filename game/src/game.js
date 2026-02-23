@@ -39,6 +39,10 @@ class GameRoom {
 		this.lastUpdate = Date.now();
 		this.lastStateUpdate = Date.now();
 		this.gameLoopTimeout = null;
+
+		// Broadcast throttling - decouple broadcast rate from physics tick rate
+		this.lastPlayerBroadcast = 0;
+		this.lastSpectatorBroadcast = 0;
 	}
 
 	initializeBall() {
@@ -55,6 +59,9 @@ class GameRoom {
 	}
 
 	useSpell(player, offensive) {
+		// Block spells when game is not actively running (e.g. during countdown)
+		if (!this.running) return;
+
 		const spellType = offensive
 			? player.currentOffensiveSpell
 			: player.currentCounterSpell;
@@ -454,6 +461,8 @@ class GameRoom {
 				return;
 			}
 			if (!this.player1.ready || !this.player2.ready) {
+				// Still broadcast state so clients see ready status updates
+				this.throttledBroadcast();
 				return;
 			} else if (!this.startingRound) {
 				this.startingRound = true;
@@ -463,6 +472,8 @@ class GameRoom {
 					this.resetSpells();
 				}, GAME_CONSTANTS.ROUND_START_DELAY);
 			}
+			// Broadcast during countdown too so clients see the waiting state
+			this.throttledBroadcast();
 			return;
 		}
 
@@ -598,7 +609,20 @@ class GameRoom {
 			}
 		}
 
-		this.broadcastState();
+		// Throttled broadcast: physics runs at 480 Hz but broadcasts are rate-limited
+		this.throttledBroadcast();
+	}
+
+	throttledBroadcast() {
+		const now = performance.now();
+		if (now - this.lastPlayerBroadcast >= GAME_CONSTANTS.PLAYER_BROADCAST_RATE) {
+			this.broadcastStateToPlayers();
+			this.lastPlayerBroadcast = now;
+		}
+		if (now - this.lastSpectatorBroadcast >= GAME_CONSTANTS.SPECTATOR_BROADCAST_RATE) {
+			this.broadcastStateToSpectators();
+			this.lastSpectatorBroadcast = now;
+		}
 	}
 
 	handleCollisionEvent(collisionEvent, isPlayer1) {
@@ -808,8 +832,7 @@ class GameRoom {
 		}
 	}
 
-	broadcastState() {
-		// Send to both players
+	broadcastStateToPlayers() {
 		if (this.player1.connection) {
 			try {
 				this.player1.connection.send(
@@ -829,14 +852,24 @@ class GameRoom {
 				console.error("Error sending GAME_STATE to player2:", error);
 			}
 		}
+	}
 
+	broadcastStateToSpectators() {
+		if (this.spectators.size === 0) return;
+		// Pre-serialize once for all spectators (all share Player 1's perspective)
+		const message = JSON.stringify(this.getStateForSpectator());
 		for (const spectator of this.spectators) {
 			try {
-				spectator.send(JSON.stringify(this.getStateForSpectator()));
+				spectator.send(message);
 			} catch (error) {
 				console.error("Error sending GAME_STATE to spectator:", error);
 			}
 		}
+	}
+
+	broadcastState() {
+		this.broadcastStateToPlayers();
+		this.broadcastStateToSpectators();
 	}
 
 	broadcastEvent(event) {

@@ -12,6 +12,8 @@ export interface GameConstants {
   PADDLE_DRAG: number;
   PADDLE_MAX_DEVIATION_ANGLE: number;
   TICK_RATE: number;
+  PLAYER_BROADCAST_RATE: number;
+  SPECTATOR_BROADCAST_RATE: number;
   PLAYER1_Z: number | null;
   PLAYER2_Z: number | null;
   HEIGHT_LIMIT: number | null;

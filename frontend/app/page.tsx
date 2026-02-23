@@ -21,8 +21,8 @@ export default async function Home() {
         </div>
 
         {/* Decorative repeating text - the "glitch" feel */}
-        <div className="w-full max-w-2xl overflow-hidden opacity-15 select-none" aria-hidden="true">
-          <p className="font-['pongFont1'] text-xs sm:text-sm text-neon text-center leading-relaxed break-all">
+        <div className="w-full max-w-2xl overflow-hidden opacity-10 dark:opacity-15 select-none" aria-hidden="true">
+          <p className="font-['pongFont1'] text-xs sm:text-sm text-primary text-center leading-relaxed break-all">
             {Array.from({ length: Math.floor(Math.random() * 10) + 3 })
               .map(() => "Transcendence")
               .join(" ")}
