@@ -207,7 +207,18 @@
     "muteAll": "Silenciar Tudo",
     "connectedPlayers": "Conectados",
     "player": "Jogador",
-    "spectator": "Espectador"
+    "spectator": "Espectador",
+    "inviteFriend": "Convidar Amigo",
+    "inviteFriendDesc": "Seleciona um amigo para convidar para esta sala",
+    "inviteLoginRequired": "Inicia sessão para convidar amigos",
+    "invite": "Convidar",
+    "inviteSent": "Enviado",
+    "inviteToGame": "Convidar para Jogar",
+    "inviteSentLabel": "Convite Enviado",
+    "inviteReceivedLabel": "Convite de Jogo",
+    "clickToJoinRoom": "Clica para entrar na sala de jogo",
+    "gameInvites": "Convites de Jogo",
+    "joinGame": "Entrar"
   },
   "chat": {
     "title": "Mensagens",

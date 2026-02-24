@@ -207,7 +207,18 @@
     "muteAll": "सब म्यूट करें",
     "connectedPlayers": "जुड़े हुए",
     "player": "खिलाड़ी",
-    "spectator": "दर्शक"
+    "spectator": "दर्शक",
+    "inviteFriend": "मित्र को आमंत्रित करें",
+    "inviteFriendDesc": "इस गेम रूम में आमंत्रित करने के लिए एक मित्र चुनें",
+    "inviteLoginRequired": "मित्रों को आमंत्रित करने के लिए लॉग इन करें",
+    "invite": "आमंत्रित करें",
+    "inviteSent": "भेजा गया",
+    "inviteToGame": "गेम में आमंत्रित करें",
+    "inviteSentLabel": "गेम आमंत्रण भेजा गया",
+    "inviteReceivedLabel": "गेम आमंत्रण",
+    "clickToJoinRoom": "गेम रूम में शामिल होने के लिए क्लिक करें",
+    "gameInvites": "गेम आमंत्रण",
+    "joinGame": "शामिल हों"
   },
   "chat": {
     "title": "संदेश",

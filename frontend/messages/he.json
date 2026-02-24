@@ -207,7 +207,18 @@
     "muteAll": "השתק הכל",
     "connectedPlayers": "מחובר",
     "player": "שחקן",
-    "spectator": "צופה"
+    "spectator": "צופה",
+    "inviteFriend": "הזמן חבר",
+    "inviteFriendDesc": "בחר חבר להזמין לחדר המשחק הזה",
+    "inviteLoginRequired": "התחבר כדי להזמין חברים",
+    "invite": "הזמן",
+    "inviteSent": "נשלח",
+    "inviteToGame": "הזמן למשחק",
+    "inviteSentLabel": "הזמנה למשחק נשלחה",
+    "inviteReceivedLabel": "הזמנה למשחק",
+    "clickToJoinRoom": "לחץ להצטרף לחדר המשחק",
+    "gameInvites": "הזמנות למשחק",
+    "joinGame": "הצטרף"
   },
   "chat": {
     "title": "הודעות",

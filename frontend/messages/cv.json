@@ -207,7 +207,18 @@
     "muteAll": "Silénsia Tudu",
     "connectedPlayers": "Konetadu",
     "player": "Jogador",
-    "spectator": "Espetador"
+    "spectator": "Espetador",
+    "inviteFriend": "Konvida Amigu",
+    "inviteFriendDesc": "Skolji un amigu pa konvida pa es sala",
+    "inviteLoginRequired": "Entra pa konvida amigus",
+    "invite": "Konvida",
+    "inviteSent": "Enviadu",
+    "inviteToGame": "Konvida pa Djuga",
+    "inviteSentLabel": "Konvite Enviadu",
+    "inviteReceivedLabel": "Konvite di Djugu",
+    "clickToJoinRoom": "Klike pa entra na sala di djugu",
+    "gameInvites": "Konvitis di Djugu",
+    "joinGame": "Entra"
   },
   "chat": {
     "title": "Mensajens",

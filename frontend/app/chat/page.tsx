@@ -4,16 +4,18 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useChat } from "@/components/providers/chat-provider";
 import { Friends } from "@/lib/backend/friends";
 import { Chat, type ChatMessage } from "@/lib/backend/chat";
+import type { GameInviteEvent } from "@/lib/backend/chat";
 import type { Friend } from "@/lib/backend/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { GAME_BACKEND_URL } from "@/lib/backend/config";
 
 const getInitials = (name: string) =>
   name
@@ -37,12 +39,15 @@ export default function ChatPage() {
     setMessages,
     clearUnread,
     sendMessage: wsSendMessage,
+    sendGameInvite,
+    gameInviteEvents,
   } = useChat();
 
   const [friends, setFriends] = useState<Friend[]>([]);
   const [input, setInput] = useState("");
   const [activeFriend, setActiveFriend] = useState<Friend | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [invitingGame, setInvitingGame] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -134,6 +139,28 @@ export default function ChatPage() {
     if (e.key === "Enter") handleSend();
   };
 
+  // ── invite friend to a new game room ───────────────────────────────────────
+  const handleInviteToGame = useCallback(async () => {
+    if (!activeFriend || invitingGame) return;
+    setInvitingGame(true);
+    try {
+      const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
+        method: "POST",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.id) {
+        sendGameInvite(activeFriend.display_name, data.id);
+        // Navigate to the room
+        router.push(`/pong?room=${encodeURIComponent(data.id)}`);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setInvitingGame(false);
+    }
+  }, [activeFriend, invitingGame, sendGameInvite]);
+
   // ── go back to friend list (mobile) ────────────────────────────────────────
   const handleBack = () => {
     setActiveFriend(null);
@@ -149,6 +176,26 @@ export default function ChatPage() {
           (msg.from === activeFriend.display_name && msg.to === myUsername),
       )
     : [];
+
+  // ── Merge game invites into conversation timeline ─────────────────────────
+  const conversationInvites = activeFriend
+    ? gameInviteEvents.filter(
+        (inv) =>
+          (inv.from === myUsername && inv.to === activeFriend.display_name) ||
+          (inv.from === activeFriend.display_name && inv.to === myUsername),
+      )
+    : [];
+
+  type TimelineItem =
+    | { kind: "message"; data: ChatMessage }
+    | { kind: "invite"; data: GameInviteEvent };
+
+  const timeline: TimelineItem[] = [
+    ...conversationMessages.map((m) => ({ kind: "message" as const, data: m })),
+    ...conversationInvites.map((inv) => ({ kind: "invite" as const, data: inv })),
+  ].sort(
+    (a, b) => new Date(a.data.timestamp).getTime() - new Date(b.data.timestamp).getTime(),
+  );
 
   // ── auth guard ─────────────────────────────────────────────────────────────
   if (authLoading) {
@@ -272,7 +319,7 @@ export default function ChatPage() {
                   className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 fill-current ${onlineUsers.has(activeFriend.display_name) ? "text-green-500" : "text-muted-foreground/40"}`}
                 />
               </Link>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold text-sm truncate">
                   {activeFriend.display_name}
                 </p>
@@ -282,6 +329,17 @@ export default function ChatPage() {
                     : t("chat.offline")}
                 </p>
               </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 text-xs gap-1.5"
+                onClick={handleInviteToGame}
+                disabled={invitingGame}
+                title={t("game.inviteToGame")}
+              >
+                <Gamepad2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("game.inviteToGame")}</span>
+              </Button>
             </div>
 
             {/* messages */}
@@ -290,12 +348,53 @@ export default function ChatPage() {
                 <p className="text-center text-sm text-muted-foreground py-8">
                   {t("common.loading")}
                 </p>
-              ) : conversationMessages.length === 0 ? (
+              ) : timeline.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
                   {t("chat.noMessages")}
                 </p>
               ) : (
-                conversationMessages.map((msg, i) => {
+                timeline.map((item, i) => {
+                  if (item.kind === "invite") {
+                    const inv = item.data;
+                    const isSelf = inv.from === myUsername;
+                    return (
+                      <div
+                        key={`inv-${inv.roomId}-${inv.timestamp}`}
+                        className={`flex ${isSelf ? "justify-end" : "justify-start"}`}
+                      >
+                        <button
+                          onClick={() => {
+                            router.push(`/pong?room=${encodeURIComponent(inv.roomId)}`);
+                          }}
+                          className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 py-2 text-sm break-words cursor-pointer transition-colors ${
+                            isSelf
+                              ? "bg-neon/10 border border-neon/40 hover:bg-neon/20 rounded-br-sm"
+                              : "bg-neon/10 border border-neon/40 hover:bg-neon/20 rounded-bl-sm"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Gamepad2 className="h-4 w-4 text-neon shrink-0" />
+                            <span className="font-medium text-neon">
+                              {isSelf
+                                ? t("game.inviteSentLabel")
+                                : t("game.inviteReceivedLabel")}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {t("game.clickToJoinRoom")}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
+                            {new Date(inv.timestamp).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  const msg = item.data;
                   const isSelf = msg.from === myUsername;
                   return (
                     <div

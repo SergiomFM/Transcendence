@@ -16,9 +16,10 @@ const Pong = lazy(() => import("@/components/Pong"));
 interface GameScreenProps {
   gameMode: GameMode;
   onBackToMenu: () => void;
+  initialRoomId?: string | null;
 }
 
-export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
+export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreenProps) {
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(true);
@@ -38,6 +39,13 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const handleSessionReplaced = useCallback(() => setSelectedRoomId(null), []);
+
+  // Auto-select room from initialRoomId (invite link)
+  useEffect(() => {
+    if (initialRoomId) {
+      setSelectedRoomId(initialRoomId);
+    }
+  }, [initialRoomId]);
 
   const handleToggleMute = useCallback(() => {
     const newState = cycleVolume();
@@ -200,108 +208,117 @@ export function GameScreen({ gameMode, onBackToMenu }: GameScreenProps) {
   if (gameMode === "multiplayer") {
     if (selectedRoomId) {
       return (
-        <div
-          ref={gameContainerRef}
-          className={cn(
-            "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
-            isFullscreen && "relative"
-          )}
-        >
+        <>
           <div
+            ref={gameContainerRef}
             className={cn(
-              "flex-1 flex justify-center items-center overflow-hidden",
-              isFullscreen ? "p-0" : "p-4"
+              "game-shell w-full flex flex-col overflow-hidden bg-background",
+              isFullscreen ? "h-[100dvh] relative" : "h-auto"
             )}
           >
             <div
               className={cn(
-                "game-frame relative",
-                isFullscreen
-                  ? "w-full h-full"
-                  : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
+                "flex justify-center items-center overflow-hidden",
+                isFullscreen ? "flex-1 p-0" : "p-4"
               )}
-              style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
             >
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center w-full h-full text-xl text-white">
-                    {t("game.loadingGame")}
-                  </div>
-                }
-              >
-                <Pong
-                  className="w-full h-full min-w-full min-h-full"
-                  online
-                  serverUrl={GAME_WS_URL}
-                  gameServerUrl={GAME_HTTP_URL}
-                  roomId={selectedRoomId}
-                  onSessionReplaced={handleSessionReplaced}
-                  isFullscreen={isFullscreen}
-                />
-              </Suspense>
-
-              {canFullscreen && (
-              <Button
-                onClick={toggleFullscreen}
-                variant="ghost"
-                size="icon"
-                className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
-                onContextMenu={(event) => event.preventDefault()}
-                title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
-              >
-                {isFullscreen ? (
-                  <Minimize className="w-5 h-5" />
-                ) : (
-                  <Maximize className="w-5 h-5" />
-                )}
-              </Button>
-              )}
-              <Button
-                onClick={handleToggleMute}
-                variant="ghost"
-                size="icon"
+              <div
                 className={cn(
-                  "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
-                  canFullscreen ? "right-14" : "right-4"
+                  "game-frame relative",
+                  isFullscreen
+                    ? "w-full h-full"
+                    : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
                 )}
-                onContextMenu={(event) => event.preventDefault()}
-                title={
-                  muted === "all-muted"
-                    ? t("game.unmute")
-                    : muted === "music-muted"
-                      ? t("game.muteAll")
-                      : t("game.muteMusic")
-                }
+                style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
               >
-                {muted === "all-muted" ? (
-                  <VolumeX className="w-5 h-5" />
-                ) : muted === "music-muted" ? (
-                  <Volume1 className="w-5 h-5" />
-                ) : (
-                  <Volume2 className="w-5 h-5" />
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center w-full h-full text-xl text-white">
+                      {t("game.loadingGame")}
+                    </div>
+                  }
+                >
+                  <Pong
+                    className="w-full h-full min-w-full min-h-full"
+                    online
+                    serverUrl={GAME_WS_URL}
+                    gameServerUrl={GAME_HTTP_URL}
+                    roomId={selectedRoomId}
+                    onSessionReplaced={handleSessionReplaced}
+                    isFullscreen={isFullscreen}
+                  />
+                </Suspense>
+
+                {canFullscreen && (
+                <Button
+                  onClick={toggleFullscreen}
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                  onContextMenu={(event) => event.preventDefault()}
+                  title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="w-5 h-5" />
+                  ) : (
+                    <Maximize className="w-5 h-5" />
+                  )}
+                </Button>
                 )}
-              </Button>
-              <Button
-                onClick={async () => {
-                  await exitFullscreen();
-                  setSelectedRoomId(null);
-                }}
-                variant="ghost"
-                className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
-                onContextMenu={(event) => event.preventDefault()}
-              >
-                {t("game.backToRooms")}
-              </Button>
-              <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen && isTouchDevice} />
+                <Button
+                  onClick={handleToggleMute}
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
+                    canFullscreen ? "right-14" : "right-4"
+                  )}
+                  onContextMenu={(event) => event.preventDefault()}
+                  title={
+                    muted === "all-muted"
+                      ? t("game.unmute")
+                      : muted === "music-muted"
+                        ? t("game.muteAll")
+                        : t("game.muteMusic")
+                  }
+                >
+                  {muted === "all-muted" ? (
+                    <VolumeX className="w-5 h-5" />
+                  ) : muted === "music-muted" ? (
+                    <Volume1 className="w-5 h-5" />
+                  ) : (
+                    <Volume2 className="w-5 h-5" />
+                  )}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    await exitFullscreen();
+                    setSelectedRoomId(null);
+                  }}
+                  variant="ghost"
+                  className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                  onContextMenu={(event) => event.preventDefault()}
+                >
+                  {t("game.backToRooms")}
+                </Button>
+                {/* Desktop: show overlay inside game frame */}
+                {!isTouchDevice && (
+                  <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen} />
+                )}
+              </div>
             </div>
           </div>
 
-          {!isFullscreen && (
-            <div className="text-center p-4 flex-shrink-0">
-              <p className="text-sm text-muted-foreground">{t("game.multiplayerRooms")}</p>
+          {/* Mobile/touch: show below the game frame, outside fullscreen container */}
+          {isTouchDevice && !isFullscreen && (
+            <div className="px-4 pb-4">
+              <ConnectedPlayers
+                roomId={selectedRoomId}
+                className="static w-full"
+              />
             </div>
           )}
-        </div>
+        </>
       );
     }
     return (

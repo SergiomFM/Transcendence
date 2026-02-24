@@ -4,8 +4,11 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { GAME_BACKEND_URL } from "@/lib/backend/config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Gamepad2, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { User, Gamepad2, Eye, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/auth-provider";
+import { FriendInviteModal } from "./FriendInviteModal";
 
 interface RoomUser {
   id: string | null;
@@ -23,8 +26,10 @@ interface ConnectedPlayersProps {
 
 export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayersProps) {
   const t = useTranslations("game");
+  const { isAuthenticated } = useAuth();
   const [users, setUsers] = useState<RoomUser[]>([]);
   const [collapsed, setCollapsed] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -87,6 +92,25 @@ export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayers
             <PlayerEntry key={`s-${user.id || i}`} user={user} t={t} />
           ))}
         </div>
+      )}
+
+      {isAuthenticated && (
+        <>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mt-1.5 w-full text-xs text-neon/70 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm"
+            onClick={() => setInviteOpen(true)}
+          >
+            <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+            {t("inviteFriend")}
+          </Button>
+          <FriendInviteModal
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+            roomId={roomId}
+          />
+        </>
       )}
     </div>
   );

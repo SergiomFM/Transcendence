@@ -207,7 +207,18 @@
     "muteAll": "Mute All",
     "connectedPlayers": "Connected",
     "player": "Player",
-    "spectator": "Spectator"
+    "spectator": "Spectator",
+    "inviteFriend": "Invite Friend",
+    "inviteFriendDesc": "Select a friend to invite to this game room",
+    "inviteLoginRequired": "Log in to invite friends",
+    "invite": "Invite",
+    "inviteSent": "Sent",
+    "inviteToGame": "Invite to Game",
+    "inviteSentLabel": "Game Invite Sent",
+    "inviteReceivedLabel": "Game Invite",
+    "clickToJoinRoom": "Click to join the game room",
+    "gameInvites": "Game Invites",
+    "joinGame": "Join"
   },
   "chat": {
     "title": "Messages",

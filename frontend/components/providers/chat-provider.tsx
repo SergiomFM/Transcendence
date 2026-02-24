@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "./auth-provider";
-import { Chat, type ChatMessage, type ChatEvent } from "@/lib/backend/chat";
+import { Chat, type ChatMessage, type ChatEvent, type GameInviteEvent } from "@/lib/backend/chat";
 
 export interface UnreadEntry {
   /** Username of the sender */
@@ -21,6 +21,15 @@ export interface UnreadEntry {
   lastMessage: string;
   /** Timestamp of the most recent unread message */
   lastTimestamp: string;
+}
+
+export interface GameInvite {
+  /** Username of the sender */
+  from: string;
+  /** Game room ID to join */
+  roomId: string;
+  /** When the invite was sent */
+  timestamp: string;
 }
 
 interface ChatContextType {
@@ -38,6 +47,14 @@ interface ChatContextType {
   clearUnread: (sender?: string) => void;
   /** Send a message via WebSocket */
   sendMessage: (to: string, content: string) => boolean;
+  /** Send a game invite via WebSocket */
+  sendGameInvite: (to: string, roomId: string) => boolean;
+  /** Pending game invites received from friends */
+  gameInvites: GameInvite[];
+  /** Dismiss a game invite */
+  clearGameInvite: (roomId: string) => void;
+  /** All game invite events (for rendering in chat) */
+  gameInviteEvents: GameInviteEvent[];
   /** Whether the WebSocket is connected */
   isConnected: boolean;
 }
@@ -58,6 +75,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [unreadEntries, setUnreadEntries] = useState<UnreadEntry[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
+  const [gameInviteEvents, setGameInviteEvents] = useState<GameInviteEvent[]>([]);
 
   // Track unread messages per sender: username → { count, lastMessage, lastTimestamp }
   const unreadMapRef = useRef<Map<string, UnreadData>>(new Map());
@@ -96,6 +115,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       JSON.stringify({ type: "message", to, content }),
     );
     return true;
+  }, []);
+
+  // Send a game invite through WebSocket
+  const sendGameInvite = useCallback((to: string, roomId: string): boolean => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false;
+    wsRef.current.send(
+      JSON.stringify({ type: "game_invite", to, roomId }),
+    );
+    return true;
+  }, []);
+
+  // Dismiss a game invite by roomId
+  const clearGameInvite = useCallback((roomId: string) => {
+    setGameInvites((prev) => prev.filter((inv) => inv.roomId !== roomId));
   }, []);
 
   // Global WebSocket connection — connects when user is authenticated
@@ -149,6 +182,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               });
               syncUnreadState();
             }
+          } else if (payload.type === "game_invite") {
+            // Track game invite events for rendering in chat
+            setGameInviteEvents((prev) => [...prev, payload]);
+
+            // Track as pending invite notification (only from others)
+            if (!payload.self) {
+              setGameInvites((prev) => {
+                // Deduplicate by roomId + from
+                if (prev.some((inv) => inv.roomId === payload.roomId && inv.from === payload.from)) {
+                  return prev;
+                }
+                return [...prev, { from: payload.from, roomId: payload.roomId, timestamp: payload.timestamp }];
+              });
+            }
           }
         } catch {
           // ignore parse errors
@@ -186,6 +233,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         unreadEntries,
         clearUnread,
         sendMessage,
+        sendGameInvite,
+        gameInvites,
+        clearGameInvite,
+        gameInviteEvents,
         isConnected,
       }}
     >

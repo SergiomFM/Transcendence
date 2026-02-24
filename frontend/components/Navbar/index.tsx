@@ -26,6 +26,7 @@ import {
   UserPlus,
   MessageSquare,
   Bell,
+  Gamepad2,
 } from "lucide-react";
 
 const LOCALES = [
@@ -54,7 +55,7 @@ export function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { unreadCount, unreadEntries, clearUnread } = useChat();
+  const { unreadCount, unreadEntries, clearUnread, gameInvites, clearGameInvite } = useChat();
 
   const [friends, setFriends] = useState<Friend[]>([]);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
@@ -118,7 +119,7 @@ export function Navbar() {
   const getFriend = (displayName: string) =>
     friends.find((f) => f.display_name === displayName);
 
-  const totalNotifications = unreadCount + friendRequests.length;
+  const totalNotifications = unreadCount + friendRequests.length + gameInvites.length;
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
@@ -334,6 +335,68 @@ export function Navbar() {
                                   </div>
                                   <p className="text-xs text-muted-foreground truncate mt-0.5">
                                     {entry.lastMessage}
+                                  </p>
+                                </div>
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </>
+                    )}
+
+                    {/* ── Game invites ── */}
+                    {gameInvites.length > 0 && (
+                      <>
+                        {(friendRequests.length > 0 || unreadEntries.length > 0) && (
+                          <div className="px-3 py-1.5 border-b border-border/50">
+                            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                              {t("game.gameInvites")}
+                            </span>
+                          </div>
+                        )}
+                        {gameInvites.map((invite) => {
+                          const friend = getFriend(invite.from);
+                          return (
+                            <DropdownMenuItem
+                              key={`${invite.roomId}-${invite.from}`}
+                              className="cursor-pointer px-3 py-2.5 focus:bg-muted/50"
+                              onClick={() => {
+                                clearGameInvite(invite.roomId);
+                                router.push(`/pong?room=${encodeURIComponent(invite.roomId)}`);
+                              }}
+                            >
+                              <div className="flex items-start gap-3 w-full">
+                                <button
+                                  type="button"
+                                  className="shrink-0 mt-0.5"
+                                  onClick={(e) => {
+                                    if (friend) {
+                                      e.stopPropagation();
+                                      router.push(`/users/${friend.user_id}`);
+                                    }
+                                  }}
+                                >
+                                  <Avatar className="h-8 w-8 ring-1 ring-border hover:ring-neon transition-shadow">
+                                    {friend && resolveAvatar(friend) ? (
+                                      <AvatarImage
+                                        src={resolveAvatar(friend)!}
+                                        alt={invite.from}
+                                      />
+                                    ) : null}
+                                    <AvatarFallback className="text-xs">
+                                      {getInitials(invite.from)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-sm font-medium truncate">
+                                      {invite.from}
+                                    </span>
+                                    <Gamepad2 className="h-3.5 w-3.5 shrink-0 text-neon" />
+                                  </div>
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                    {t("game.inviteReceivedLabel")}
                                   </p>
                                 </div>
                               </div>

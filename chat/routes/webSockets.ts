@@ -86,6 +86,27 @@ export async function webSocketsRoutes(fastify: FastifyInstance) {
             if (receiverSocket && receiverSocket.readyState === WebSocket.OPEN) {
               receiverSocket.send(JSON.stringify({ ...outgoing, self: false }));
             }
+          } else if (payload.type === "game_invite") {
+            // Ephemeral game invite — not persisted, just forwarded
+            const { to, roomId } = payload;
+            if (!to || !roomId) return;
+
+            const outgoing = {
+              type: "game_invite",
+              from: username,
+              to,
+              roomId,
+              timestamp: new Date().toISOString(),
+            };
+
+            // Echo back to sender for confirmation
+            connection.send(JSON.stringify({ ...outgoing, self: true }));
+
+            // Forward to receiver if online
+            const receiverSocket = connectionsMap.get(to);
+            if (receiverSocket && receiverSocket.readyState === WebSocket.OPEN) {
+              receiverSocket.send(JSON.stringify({ ...outgoing, self: false }));
+            }
           }
         } catch (err) {
           console.error("[chat] ws message error:", err);

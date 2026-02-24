@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Settings, UserPlus, UserCheck, UserX, Loader2, X, Swords } from "lucide-react";
+import { Settings, UserPlus, UserCheck, UserX, Loader2, X, Swords, MessageSquare, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useChat } from "@/components/providers/chat-provider";
 import { Players } from "@/lib/backend/players";
 import { Friends } from "@/lib/backend/friends";
 import { isRequestError } from "@/lib/backend";
@@ -13,13 +14,16 @@ import type { MatchRecord, PlayerProfile } from "@/lib/backend/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GAME_BACKEND_URL } from "@/lib/backend/config";
 
 type FriendStatus = "none" | "friends" | "pending_sent" | "loading";
 
 const UserProfilePage = () => {
   const t = useTranslations();
+  const router = useRouter();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser, isAuthenticated } = useAuth();
+  const { sendGameInvite } = useChat();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [error, setError] = useState("");
@@ -29,6 +33,7 @@ const UserProfilePage = () => {
   const [friendActionError, setFriendActionError] = useState("");
   const [matches, setMatches] = useState<MatchRecord[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(true);
+  const [invitingGame, setInvitingGame] = useState(false);
 
   const isOwnProfile = currentUser?.id === userId;
 
@@ -156,6 +161,26 @@ const UserProfilePage = () => {
     }
   };
 
+  const handleInviteToGame = async () => {
+    if (!profile || invitingGame) return;
+    setInvitingGame(true);
+    try {
+      const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
+        method: "POST",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.id) {
+        sendGameInvite(profile.display_name, data.id);
+        router.push(`/pong?room=${encodeURIComponent(data.id)}`);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setInvitingGame(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
@@ -198,20 +223,46 @@ const UserProfilePage = () => {
 
     if (friendStatus === "friends") {
       return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRemoveFriend}
-          disabled={friendActionLoading}
-          className="border-neon-muted/50 text-muted-foreground hover:border-destructive hover:text-destructive"
-        >
-          {friendActionLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <UserX className="mr-2 h-4 w-4" />
-          )}
-          {t("friends.removeFriend")}
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
+          <Link href={`/chat?with=${encodeURIComponent(profile?.display_name ?? "")}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-neon/30 hover:border-neon hover:text-neon"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              {t("navbar.chat")}
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleInviteToGame}
+            disabled={invitingGame}
+            className="border-neon/30 hover:border-neon hover:text-neon"
+          >
+            {invitingGame ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Gamepad2 className="mr-2 h-4 w-4" />
+            )}
+            {t("game.inviteToGame")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRemoveFriend}
+            disabled={friendActionLoading}
+            className="border-neon-muted/50 text-muted-foreground hover:border-destructive hover:text-destructive"
+          >
+            {friendActionLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <UserX className="mr-2 h-4 w-4" />
+            )}
+            {t("friends.removeFriend")}
+          </Button>
+        </div>
       );
     }
 
@@ -344,27 +395,32 @@ const UserProfilePage = () => {
                 <AvatarFallback className="text-xl">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 text-center sm:text-left w-full">
-                <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <h1 className="text-xl sm:text-2xl font-bold truncate text-glow">
-                      {profile.display_name}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                      {t("profile.memberSince")}{" "}
-                      {new Date(profile.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {renderFriendButton()}
-                    {isOwnProfile && (
-                      <Link href="/settings">
-                        <Button variant="outline" size="sm">
-                          <Settings className="mr-2 h-4 w-4" />
-                          {t("profile.editProfile")}
-                        </Button>
-                      </Link>
+                <div className="flex flex-col items-center sm:items-start gap-2">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-2 w-full">
+                    <div className="min-w-0">
+                      <h1 className="text-xl sm:text-2xl font-bold truncate text-glow">
+                        {profile.display_name}
+                      </h1>
+                      <p className="text-sm text-muted-foreground">
+                        {t("profile.memberSince")}{" "}
+                        {new Date(profile.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {friendStatus !== "friends" && (
+                      <div className="flex items-center gap-2 shrink-0">
+                        {renderFriendButton()}
+                        {isOwnProfile && (
+                          <Link href="/settings">
+                            <Button variant="outline" size="sm">
+                              <Settings className="mr-2 h-4 w-4" />
+                              {t("profile.editProfile")}
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
                     )}
                   </div>
+                  {friendStatus === "friends" && renderFriendButton()}
                 </div>
                 {friendActionError && (
                   <p className="mt-2 text-xs text-destructive">{friendActionError}</p>

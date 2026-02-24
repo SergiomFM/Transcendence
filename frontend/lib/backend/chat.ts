@@ -11,8 +11,18 @@ export type ChatMessage = {
   self: boolean;
 };
 
+export type GameInviteEvent = {
+  type: "game_invite";
+  from: string;
+  to: string;
+  roomId: string;
+  timestamp: string;
+  self: boolean;
+};
+
 export type ChatEvent =
   | ChatMessage
+  | GameInviteEvent
   | { type: "online_users"; users: string[] }
   | { type: "user_online"; username: string }
   | { type: "user_offline"; username: string }

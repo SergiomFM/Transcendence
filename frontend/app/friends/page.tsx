@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck, MessageSquare, Send } from "lucide-react";
+import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck, MessageSquare, Send, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useChat } from "@/components/providers/chat-provider";
 import { Friends } from "@/lib/backend/friends";
 import { Players } from "@/lib/backend/players";
 import { isRequestError } from "@/lib/backend";
@@ -13,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { GAME_BACKEND_URL } from "@/lib/backend/config";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -31,7 +34,9 @@ const resolveAvatar = (obj: { avatar?: string | null; avatar_url?: string | null
 
 const FriendsPage = () => {
   const t = useTranslations();
+  const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { sendGameInvite } = useChat();
 
   // lists
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -40,6 +45,7 @@ const FriendsPage = () => {
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [invitingId, setInvitingId] = useState<string | null>(null);
 
   // search
   const [searchQuery, setSearchQuery] = useState("");
@@ -185,6 +191,26 @@ const FriendsPage = () => {
       // silently fail
     } finally {
       setActionLoadingId(null);
+    }
+  };
+
+  const handleInviteToGame = async (friend: Friend) => {
+    if (invitingId) return;
+    setInvitingId(friend.user_id);
+    try {
+      const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`, {
+        method: "POST",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data?.id) {
+        sendGameInvite(friend.display_name, data.id);
+        router.push(`/pong?room=${encodeURIComponent(data.id)}`);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setInvitingId(null);
     }
   };
 
@@ -545,6 +571,20 @@ const FriendsPage = () => {
                             <MessageSquare className="h-4 w-4" />
                           </Button>
                         </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 w-8 p-0 border-neon/30 hover:border-neon hover:text-neon"
+                          onClick={() => handleInviteToGame(friend)}
+                          disabled={invitingId === friend.user_id}
+                          title={t("game.inviteToGame")}
+                        >
+                          {invitingId === friend.user_id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Gamepad2 className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
