@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
 import type { User, Message } from "@prisma/client";
 import { sendToUser } from "./sse.ts";
+import { verifyAuth } from "../utils/authVerify.ts";
 
 const prisma = new PrismaClient();
 
@@ -63,7 +64,25 @@ export async function messageRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Body: { senderUsername: string; receiverUsername: string; content: string };
   }>("/sendMessage", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
     const { senderUsername, receiverUsername, content } = request.body;
+
+    // Ensure authenticated user matches the sender (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot send messages as another user" });
+    }
 
     if (!senderUsername || !receiverUsername || !content?.trim()) {
       return reply.code(400).send({ error: "Missing required fields" });
@@ -107,7 +126,25 @@ export async function messageRoutes(fastify: FastifyInstance) {
   fastify.post<{
     Body: { senderUsername: string; receiverUsername: string; roomId: string };
   }>("/sendGameInvite", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
     const { senderUsername, receiverUsername, roomId } = request.body;
+
+    // Ensure authenticated user matches the sender (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot send invites as another user" });
+    }
 
     if (!senderUsername || !receiverUsername || !roomId) {
       return reply.code(400).send({ error: "Missing required fields" });
@@ -134,7 +171,25 @@ export async function messageRoutes(fastify: FastifyInstance) {
   fastify.get<{
     Querystring: { user: string; otherUser: string; n?: string };
   }>("/messages", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
     const { user: userName, otherUser: otherUserName, n } = request.query;
+
+    // Ensure authenticated user is requesting their own messages (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== userName.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot view another user's messages" });
+    }
 
     if (!userName || !otherUserName) {
       return reply.code(400).send({ error: "Missing user or otherUser query param" });
@@ -158,7 +213,26 @@ export async function messageRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: { username: string } }>(
     "/register",
     async (request, reply) => {
+      // Verify authentication
+      const authData = await verifyAuth(request);
+      if (!authData) {
+        return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+      }
+
+      // Use username if available, fallback to alias (for Google OAuth users)
+      const authenticatedUsername = authData.username || authData.alias;
+      
+      if (!authenticatedUsername) {
+        return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+      }
+
       const { username } = request.body;
+
+      // Ensure authenticated user matches the username to register (case-insensitive)
+      if (authenticatedUsername.toLowerCase() !== username.toLowerCase()) {
+        return reply.code(403).send({ error: "Forbidden - cannot register another user" });
+      }
+
       if (!username) return reply.code(400).send({ error: "Missing username" });
       const user = await findOrCreateUser(username);
       return reply.code(200).send(user);

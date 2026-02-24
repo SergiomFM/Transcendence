@@ -1,5 +1,6 @@
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { findOrCreateUser } from "./messages.ts";
+import { verifyAuth } from "../utils/authVerify.ts";
 
 // Map username → SSE reply stream
 const connectionsMap: Map<string, FastifyReply> = new Map();
@@ -46,18 +47,36 @@ export async function sseRoutes(fastify: FastifyInstance) {
   // GET /events/:username — SSE stream for real-time events
   fastify.get<{ Params: { username: string } }>(
     "/events/:username",
-    async (request, reply) => {
-      const username = request.params.username;
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const requestedUsername = request.params.username;
 
-      if (!username) {
+      if (!requestedUsername) {
         return reply.code(400).send({ error: "Missing username" });
       }
 
+      // Verify authentication with users service
+      const authData = await verifyAuth(request);
+      if (!authData) {
+        return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+      }
+
+      // Use username if available, fallback to alias (for Google OAuth users)
+      const authenticatedUsername = authData.username || authData.alias;
+      
+      if (!authenticatedUsername) {
+        return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+      }
+
+      // Ensure the authenticated user matches the requested username (case-insensitive)
+      if (authenticatedUsername.toLowerCase() !== requestedUsername.toLowerCase()) {
+        return reply.code(403).send({ error: "Forbidden - cannot access another user's stream" });
+      }
+
       // Ensure the chat user record exists
-      await findOrCreateUser(username);
+      await findOrCreateUser(requestedUsername);
 
       // Close any existing connection for this user (reconnect scenario)
-      const existing = connectionsMap.get(username);
+      const existing = connectionsMap.get(requestedUsername);
       if (existing && !existing.raw.destroyed) {
         existing.raw.end();
       }
@@ -71,8 +90,8 @@ export async function sseRoutes(fastify: FastifyInstance) {
       });
 
       // Register connection
-      connectionsMap.set(username, reply);
-      console.log(`[chat] ${username} connected via SSE (total: ${connectionsMap.size})`);
+      connectionsMap.set(requestedUsername, reply);
+      console.log(`[chat] ${requestedUsername} connected via SSE (total: ${connectionsMap.size})`);
 
       // Send current online users to the new connection
       sendSSE(reply, "online_users", {
@@ -81,9 +100,9 @@ export async function sseRoutes(fastify: FastifyInstance) {
       });
 
       // Notify all others that this user is now online
-      broadcastExcept(username, "user_online", {
+      broadcastExcept(requestedUsername, "user_online", {
         type: "user_online",
-        username,
+        username: requestedUsername,
       });
 
       // Send periodic heartbeat to keep the connection alive
@@ -98,15 +117,15 @@ export async function sseRoutes(fastify: FastifyInstance) {
       // Handle disconnect
       request.raw.on("close", () => {
         clearInterval(heartbeat);
-        connectionsMap.delete(username);
-        console.log(`[chat] ${username} disconnected from SSE (total: ${connectionsMap.size})`);
+        connectionsMap.delete(requestedUsername);
+        console.log(`[chat] ${requestedUsername} disconnected from SSE (total: ${connectionsMap.size})`);
 
         // Notify others that user went offline
         for (const [, otherReply] of connectionsMap.entries()) {
           if (!otherReply.raw.destroyed) {
             sendSSE(otherReply, "user_offline", {
               type: "user_offline",
-              username,
+              username: requestedUsername,
             });
           }
         }
