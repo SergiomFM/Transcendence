@@ -11,7 +11,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@fastify/websocket": "^11.2.0",
+    "@fastify/cors": "^11.2.0",
     "@libsql/client": "^0.17.0",
     "@prisma/adapter-d1": "^7.3.0",
     "@prisma/adapter-libsql": "^7.3.0",

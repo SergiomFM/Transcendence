@@ -1,27 +1,23 @@
 import Fastify from "fastify";
-import fastifyWebsocket from "@fastify/websocket";
+import cors from "@fastify/cors";
 import { PrismaClient } from "@prisma/client";
 import { messageRoutes } from "./routes/messages.ts";
-import { webSocketsRoutes } from "./routes/webSockets.ts";
+import { sseRoutes } from "./routes/sse.ts";
 
 const fastify = Fastify({ logger: true });
 
 const prisma = new PrismaClient();
 
+// Register CORS plugin to allow credentials
+fastify.register(cors, {
+  origin: true, // Allow all origins (configure as needed for security)
+  credentials: true, // Allow cookies/credentials
+});
 
-
-// Register WebSocket
-
-await fastify.register(fastifyWebsocket);
-
-
-//Register routes
+// Register routes
 
 messageRoutes(fastify);
-webSocketsRoutes(fastify);
-
-
-
+sseRoutes(fastify);
 
 
 // Start server

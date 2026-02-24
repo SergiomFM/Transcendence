@@ -10,4 +10,3 @@ export const GAME_BACKEND_URL = `${httpProtocol}//${host}/api/game`;
 export const GAME_WS_URL = `${wsProtocol}//${host}/ws/pong`;
 export const GAME_HTTP_URL = `${httpProtocol}//${host}/api/game`;
 export const CHAT_BACKEND_URL = `${httpProtocol}//${host}/api/chat`;
-export const CHAT_WS_URL = `${wsProtocol}//${host}/ws/chat`;

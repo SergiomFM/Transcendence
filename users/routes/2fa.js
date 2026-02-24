@@ -4,6 +4,31 @@ import { generate2FASecret, verify2FA, generateRecoveryCodes, verifyRecoveryCode
 //begins 2FA setup and generates QR code
 export default async function twoFARoutes(fastify, opts){
 
+	fastify.post("/auth/verify_auth", async (req, reply) => {
+
+		if (!req.isAuthenticated()) {
+			console.log("[auth] Verification failed: user not authenticated");
+			return reply.code(401).send({ error: "Unauthorized" });
+		}
+
+		try {
+			console.log("[auth] User object:", JSON.stringify(req.user, null, 2));
+			// Use username if available, fallback to alias (for Google OAuth users)
+			const username = req.user.username || req.user.alias;
+			
+			console.log("[auth] Returning username:", username);
+			
+			return reply.code(200).send({
+				username,
+				id: req.user.id,
+				email: req.user.email,
+			});
+		} catch (error) {
+			console.error("[auth] Error sending verification response:", error);
+			return reply.code(500).send({ error: "Internal server error" });
+		}
+	});
+
 	fastify.post("/auth/2fa/setup", async (req, reply) => {
 		if (!req.isAuthenticated()) {
 			return reply.code(401).send({ error: "Unauthorized" });

@@ -45,9 +45,9 @@ interface ChatContextType {
   unreadEntries: UnreadEntry[];
   /** Clear unread count for a specific sender, or all if no sender given */
   clearUnread: (sender?: string) => void;
-  /** Send a message via WebSocket */
+  /** Send a message via REST */
   sendMessage: (to: string, content: string) => boolean;
-  /** Send a game invite via WebSocket */
+  /** Send a game invite via REST */
   sendGameInvite: (to: string, roomId: string) => boolean;
   /** Pending game invites received from friends */
   gameInvites: GameInvite[];
@@ -55,7 +55,7 @@ interface ChatContextType {
   clearGameInvite: (roomId: string) => void;
   /** All game invite events (for rendering in chat) */
   gameInviteEvents: GameInviteEvent[];
-  /** Whether the WebSocket is connected */
+  /** Whether the SSE connection is active */
   isConnected: boolean;
   /** The username of the chat currently being viewed (null if none) */
   activeChatUser: string | null;
@@ -85,10 +85,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Track unread messages per sender: username → { count, lastMessage, lastTimestamp }
   const unreadMapRef = useRef<Map<string, UnreadData>>(new Map());
-  const wsRef = useRef<WebSocket | null>(null);
   const activeChatUserRef = useRef<string | null>(null);
+  const myUsernameRef = useRef<string | null>(null);
 
   const myUsername = user ? (user.alias || user.username) : null;
+  myUsernameRef.current = myUsername;
 
   // Sync unreadMapRef → state
   const syncUnreadState = useCallback(() => {
@@ -114,21 +115,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     syncUnreadState();
   }, [syncUnreadState]);
 
-  // Send a message through WebSocket
+  // Send a message via REST POST
   const sendMessage = useCallback((to: string, content: string): boolean => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false;
-    wsRef.current.send(
-      JSON.stringify({ type: "message", to, content }),
-    );
+    const username = myUsernameRef.current;
+    if (!username) return false;
+    // Fire-and-forget; the SSE stream will deliver the echoed message
+    Chat.sendMessage(username, to, content).catch((err) => {
+      console.error("[chat] failed to send message:", err);
+    });
     return true;
   }, []);
 
-  // Send a game invite through WebSocket
+  // Send a game invite via REST POST
   const sendGameInvite = useCallback((to: string, roomId: string): boolean => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false;
-    wsRef.current.send(
-      JSON.stringify({ type: "game_invite", to, roomId }),
-    );
+    const username = myUsernameRef.current;
+    if (!username) return false;
+    Chat.sendGameInvite(username, to, roomId).catch((err) => {
+      console.error("[chat] failed to send game invite:", err);
+    });
     return true;
   }, []);
 
@@ -143,7 +147,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setActiveChatUserState(username);
   }, []);
 
-  // Global WebSocket connection — connects when user is authenticated
+  // Global SSE connection — connects when user is authenticated
   useEffect(() => {
     if (!myUsername) return;
 
@@ -155,15 +159,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const connect = () => {
       if (destroyed) return;
 
-      const ws = new WebSocket(Chat.wsUrl(myUsername));
-      wsRef.current = ws;
+      const eventSource = new EventSource(Chat.sseUrl(myUsername));
 
-      ws.onopen = () => {
-        console.log("[chat] global ws connected");
+      eventSource.onopen = () => {
+        console.log("[chat] SSE connected");
         setIsConnected(true);
       };
 
-      ws.onmessage = (event) => {
+      // Handle named SSE events
+      const handleEvent = (event: MessageEvent) => {
         try {
           const payload: ChatEvent = JSON.parse(event.data);
 
@@ -215,22 +219,32 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         }
       };
 
-      ws.onclose = () => {
-        console.log("[chat] global ws disconnected — retrying in 2s");
+      // Listen for each named event type from the SSE stream
+      eventSource.addEventListener("online_users", handleEvent);
+      eventSource.addEventListener("user_online", handleEvent);
+      eventSource.addEventListener("user_offline", handleEvent);
+      eventSource.addEventListener("message", handleEvent);
+      eventSource.addEventListener("game_invite", handleEvent);
+
+      eventSource.onerror = () => {
+        console.log("[chat] SSE connection error — reconnecting...");
         setIsConnected(false);
+        eventSource.close();
         if (!destroyed) {
           retryTimeout = setTimeout(connect, 2000);
         }
       };
+
+      // Store reference for cleanup
+      return eventSource;
     };
 
-    connect();
+    const eventSource = connect();
 
     return () => {
       destroyed = true;
       if (retryTimeout) clearTimeout(retryTimeout);
-      wsRef.current?.close();
-      wsRef.current = null;
+      eventSource?.close();
       setIsConnected(false);
       setOnlineUsers(new Set());
     };

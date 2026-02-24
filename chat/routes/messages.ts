@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
 import type { User, Message } from "@prisma/client";
+import { sendToUser } from "./sse.ts";
+import { verifyAuth } from "../utils/authVerify.ts";
 
 const prisma = new PrismaClient();
 
@@ -58,11 +60,29 @@ export async function getMessages(
 }
 
 export async function messageRoutes(fastify: FastifyInstance) {
-  // POST /sendMessage — used by WebSocket handler internally, also available via HTTP
+  // POST /sendMessage — persists message and pushes to SSE connections
   fastify.post<{
     Body: { senderUsername: string; receiverUsername: string; content: string };
   }>("/sendMessage", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
     const { senderUsername, receiverUsername, content } = request.body;
+
+    // Ensure authenticated user matches the sender (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot send messages as another user" });
+    }
 
     if (!senderUsername || !receiverUsername || !content?.trim()) {
       return reply.code(400).send({ error: "Missing required fields" });
@@ -84,14 +104,92 @@ export async function messageRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: "Failed to create message" });
     }
 
+    const outgoing = {
+      type: "message" as const,
+      id: message.id,
+      from: senderUsername,
+      to: receiverUsername,
+      content: message.content,
+      timestamp: message.createdAt,
+    };
+
+    // Push to sender's SSE stream (echo with self: true)
+    sendToUser(senderUsername, "message", { ...outgoing, self: true });
+
+    // Push to receiver's SSE stream if online (self: false)
+    sendToUser(receiverUsername, "message", { ...outgoing, self: false });
+
     return reply.code(201).send(message);
+  });
+
+  // POST /sendGameInvite — ephemeral game invite, not persisted
+  fastify.post<{
+    Body: { senderUsername: string; receiverUsername: string; roomId: string };
+  }>("/sendGameInvite", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
+    const { senderUsername, receiverUsername, roomId } = request.body;
+
+    // Ensure authenticated user matches the sender (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot send invites as another user" });
+    }
+
+    if (!senderUsername || !receiverUsername || !roomId) {
+      return reply.code(400).send({ error: "Missing required fields" });
+    }
+
+    const outgoing = {
+      type: "game_invite" as const,
+      from: senderUsername,
+      to: receiverUsername,
+      roomId,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Echo back to sender
+    sendToUser(senderUsername, "game_invite", { ...outgoing, self: true });
+
+    // Forward to receiver if online
+    const delivered = sendToUser(receiverUsername, "game_invite", { ...outgoing, self: false });
+
+    return reply.code(200).send({ delivered });
   });
 
   // GET /messages?user=a&otherUser=b&n=50
   fastify.get<{
     Querystring: { user: string; otherUser: string; n?: string };
   }>("/messages", async (request, reply) => {
+    // Verify authentication
+    const authData = await verifyAuth(request);
+    if (!authData) {
+      return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+    }
+
+    // Use username if available, fallback to alias (for Google OAuth users)
+    const authenticatedUsername = authData.username || authData.alias;
+    
+    if (!authenticatedUsername) {
+      return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+    }
+
     const { user: userName, otherUser: otherUserName, n } = request.query;
+
+    // Ensure authenticated user is requesting their own messages (case-insensitive)
+    if (authenticatedUsername.toLowerCase() !== userName.toLowerCase()) {
+      return reply.code(403).send({ error: "Forbidden - cannot view another user's messages" });
+    }
 
     if (!userName || !otherUserName) {
       return reply.code(400).send({ error: "Missing user or otherUser query param" });
@@ -115,7 +213,26 @@ export async function messageRoutes(fastify: FastifyInstance) {
   fastify.post<{ Body: { username: string } }>(
     "/register",
     async (request, reply) => {
+      // Verify authentication
+      const authData = await verifyAuth(request);
+      if (!authData) {
+        return reply.code(401).send({ error: "Unauthorized - authentication failed" });
+      }
+
+      // Use username if available, fallback to alias (for Google OAuth users)
+      const authenticatedUsername = authData.username || authData.alias;
+      
+      if (!authenticatedUsername) {
+        return reply.code(401).send({ error: "Unauthorized - no username or alias available" });
+      }
+
       const { username } = request.body;
+
+      // Ensure authenticated user matches the username to register (case-insensitive)
+      if (authenticatedUsername.toLowerCase() !== username.toLowerCase()) {
+        return reply.code(403).send({ error: "Forbidden - cannot register another user" });
+      }
+
       if (!username) return reply.code(400).send({ error: "Missing username" });
       const user = await findOrCreateUser(username);
       return reply.code(200).send(user);
