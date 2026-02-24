@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { PrismaClient } from "@prisma/client";
 import type { User, Message } from "@prisma/client";
+import { sendToUser } from "./sse.ts";
 
 const prisma = new PrismaClient();
 
@@ -58,7 +59,7 @@ export async function getMessages(
 }
 
 export async function messageRoutes(fastify: FastifyInstance) {
-  // POST /sendMessage — used by WebSocket handler internally, also available via HTTP
+  // POST /sendMessage — persists message and pushes to SSE connections
   fastify.post<{
     Body: { senderUsername: string; receiverUsername: string; content: string };
   }>("/sendMessage", async (request, reply) => {
@@ -84,7 +85,49 @@ export async function messageRoutes(fastify: FastifyInstance) {
       return reply.code(500).send({ error: "Failed to create message" });
     }
 
+    const outgoing = {
+      type: "message" as const,
+      id: message.id,
+      from: senderUsername,
+      to: receiverUsername,
+      content: message.content,
+      timestamp: message.createdAt,
+    };
+
+    // Push to sender's SSE stream (echo with self: true)
+    sendToUser(senderUsername, "message", { ...outgoing, self: true });
+
+    // Push to receiver's SSE stream if online (self: false)
+    sendToUser(receiverUsername, "message", { ...outgoing, self: false });
+
     return reply.code(201).send(message);
+  });
+
+  // POST /sendGameInvite — ephemeral game invite, not persisted
+  fastify.post<{
+    Body: { senderUsername: string; receiverUsername: string; roomId: string };
+  }>("/sendGameInvite", async (request, reply) => {
+    const { senderUsername, receiverUsername, roomId } = request.body;
+
+    if (!senderUsername || !receiverUsername || !roomId) {
+      return reply.code(400).send({ error: "Missing required fields" });
+    }
+
+    const outgoing = {
+      type: "game_invite" as const,
+      from: senderUsername,
+      to: receiverUsername,
+      roomId,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Echo back to sender
+    sendToUser(senderUsername, "game_invite", { ...outgoing, self: true });
+
+    // Forward to receiver if online
+    const delivered = sendToUser(receiverUsername, "game_invite", { ...outgoing, self: false });
+
+    return reply.code(200).send({ delivered });
   });
 
   // GET /messages?user=a&otherUser=b&n=50

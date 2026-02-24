@@ -1,4 +1,4 @@
-import { CHAT_BACKEND_URL, CHAT_WS_URL } from "./config";
+import { CHAT_BACKEND_URL } from "./config";
 import { sendRequest, Method } from "./request";
 
 export type ChatMessage = {
@@ -45,6 +45,23 @@ export const Chat = {
       params: { user, otherUser, n: String(n) },
     }),
 
-  /** Get the WebSocket URL for a given username */
-  wsUrl: (username: string) => `${CHAT_WS_URL}/${encodeURIComponent(username)}`,
+  /** Get the SSE events URL for a given username */
+  sseUrl: (username: string) =>
+    `${CHAT_BACKEND_URL}/events/${encodeURIComponent(username)}`,
+
+  /** Send a message via REST */
+  sendMessage: (senderUsername: string, receiverUsername: string, content: string) =>
+    sendRequest({
+      url: `${CHAT_BACKEND_URL}/sendMessage`,
+      method: Method.POST,
+      body: { senderUsername, receiverUsername, content },
+    }),
+
+  /** Send a game invite via REST */
+  sendGameInvite: (senderUsername: string, receiverUsername: string, roomId: string) =>
+    sendRequest({
+      url: `${CHAT_BACKEND_URL}/sendGameInvite`,
+      method: Method.POST,
+      body: { senderUsername, receiverUsername, roomId },
+    }),
 };
