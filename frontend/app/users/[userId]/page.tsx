@@ -176,7 +176,7 @@ const UserProfilePage = () => {
     );
   }
 
-  const avatarUrl = isOwnProfile ? currentUser?.avatar : profile.avatar_url;
+  const avatarUrl = isOwnProfile ? currentUser?.avatar : (profile.avatar || profile.avatar_url);
   const initials = profile.display_name
     .split(" ")
     .map((n) => n[0])
@@ -261,7 +261,9 @@ const UserProfilePage = () => {
       ? (match.player2_display_name ?? t("profile.guest"))
       : (match.player1_display_name ?? t("profile.guest"));
     const opponentId = isPlayer1 ? match.player2_id : match.player1_id;
-    const opponentAvatarUrl = isPlayer1 ? match.player2_avatar_url : match.player1_avatar_url;
+    const opponentAvatarUrl = isPlayer1
+      ? (match.player2_avatar || match.player2_avatar_url)
+      : (match.player1_avatar || match.player1_avatar_url);
     const opponentInitials = opponentName
       .split(" ")
       .map((n: string) => n[0])

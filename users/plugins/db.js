@@ -209,7 +209,9 @@ async function dbPlugin(fastify){
 			//PLAYER_PROFILE
 		fastify.decorate('profiles', {
 			findByUserId: db.prepare(`
-				SELECT * FROM player_profiles WHERE user_id = ?
+				SELECT p.*, u.avatar FROM player_profiles p
+				JOIN users u ON u.id = p.user_id
+				WHERE p.user_id = ?
 				`),
 
 			createProfile: db.prepare(`
@@ -237,9 +239,10 @@ async function dbPlugin(fastify){
 
 			// Search profiles by display_name (case-insensitive, partial match), excluding self
 			searchByDisplayName: db.prepare(`
-				SELECT * FROM player_profiles
-				WHERE display_name LIKE ? AND user_id != ?
-				ORDER BY display_name ASC
+				SELECT p.*, u.avatar FROM player_profiles p
+				JOIN users u ON u.id = p.user_id
+				WHERE p.display_name LIKE ? AND p.user_id != ?
+				ORDER BY p.display_name ASC
 				LIMIT 20
 				`)
 			})
@@ -272,11 +275,15 @@ async function dbPlugin(fastify){
 				mh.played_at,
 				p1.display_name AS player1_display_name,
 				p1.avatar_url   AS player1_avatar_url,
+				u1.avatar        AS player1_avatar,
 				p2.display_name AS player2_display_name,
-				p2.avatar_url   AS player2_avatar_url
+				p2.avatar_url   AS player2_avatar_url,
+				u2.avatar        AS player2_avatar
 			FROM match_history mh
 			LEFT JOIN player_profiles p1 ON p1.user_id = mh.player1_id
+			LEFT JOIN users u1 ON u1.id = mh.player1_id
 			LEFT JOIN player_profiles p2 ON p2.user_id = mh.player2_id
+			LEFT JOIN users u2 ON u2.id = mh.player2_id
 			WHERE mh.player1_id = ? OR mh.player2_id = ?
 			ORDER BY mh.played_at DESC
 			LIMIT 50
@@ -309,16 +316,18 @@ async function dbPlugin(fastify){
 				`),
 
 			getIncomingRequests: db.prepare(`
-				SELECT r.*, p.display_name, p.avatar_url
+				SELECT r.*, p.display_name, p.avatar_url, u.avatar
 				FROM friend_requests r
 				JOIN player_profiles p ON p.user_id = r.sender_id
+				JOIN users u ON u.id = r.sender_id
 				WHERE r.receiver_id = ? AND r.status = 'pending'
 				`),
 
 			getSentRequests: db.prepare(`
-				SELECT r.*, p.display_name, p.avatar_url
+				SELECT r.*, p.display_name, p.avatar_url, u.avatar
 				FROM friend_requests r
 				JOIN player_profiles p ON p.user_id = r.receiver_id
+				JOIN users u ON u.id = r.receiver_id
 				WHERE r.sender_id = ? AND r.status = 'pending'
 				`),
 
@@ -351,9 +360,10 @@ async function dbPlugin(fastify){
 				`),
 
 			listFriends: db.prepare(`
-				SELECT p.* 
+				SELECT p.*, u.avatar
 				FROM friends f
 				JOIN player_profiles p ON p.user_id = f.friend_id
+				JOIN users u ON u.id = f.friend_id
 				WHERE f.user_id = ?
 				`)
 			})

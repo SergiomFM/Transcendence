@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck, MessageSquare } from "lucide-react";
+import { UserX, Check, X, Loader2, Users, Search, UserPlus, UserCheck, MessageSquare, Send } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { Friends } from "@/lib/backend/friends";
 import { Players } from "@/lib/backend/players";
@@ -23,6 +23,9 @@ const getInitials = (name: string) =>
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+const resolveAvatar = (obj: { avatar?: string | null; avatar_url?: string | null }) =>
+  obj.avatar || obj.avatar_url || null;
 
 // ─── page ────────────────────────────────────────────────────────────────────
 
@@ -338,8 +341,8 @@ const FriendsPage = () => {
                       className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
-                        {player.avatar_url && (
-                          <AvatarImage src={player.avatar_url} alt={player.display_name} />
+                        {resolveAvatar(player) && (
+                          <AvatarImage src={resolveAvatar(player)!} alt={player.display_name} />
                         )}
                         <AvatarFallback className="text-xs">{getInitials(player.display_name)}</AvatarFallback>
                       </Avatar>
@@ -385,7 +388,7 @@ const FriendsPage = () => {
                       className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
                     >
                       <Avatar className="h-9 w-9 shrink-0">
-                        {req.avatar_url && <AvatarImage src={req.avatar_url} alt={req.display_name} />}
+                        {resolveAvatar(req) && <AvatarImage src={resolveAvatar(req)!} alt={req.display_name} />}
                         <AvatarFallback className="text-xs">{getInitials(req.display_name)}</AvatarFallback>
                       </Avatar>
                       <span className="text-sm font-medium truncate">{req.display_name}</span>
@@ -427,6 +430,65 @@ const FriendsPage = () => {
           </Card>
         )}
 
+        {/* Sent Requests */}
+        {!isSearchActive && (loadingRequests || sentRequests.length > 0) && (
+          <Card className="border-yellow-500/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base font-semibold text-yellow-500">
+                <Send className="h-4 w-4" />
+                {t("friends.sentRequests")}
+                {sentRequests.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center rounded-full bg-yellow-500/20 px-2 py-0.5 text-xs text-yellow-500">
+                    {sentRequests.length}
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {loadingRequests ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t("common.loading")}
+                </div>
+              ) : sentRequests.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("friends.noSentRequests")}</p>
+              ) : (
+                sentRequests.map((req) => (
+                  <div
+                    key={req.receiver_id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/50 p-3"
+                  >
+                    <Link
+                      href={`/users/${req.receiver_id}`}
+                      className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar className="h-9 w-9 shrink-0">
+                        {resolveAvatar(req) && <AvatarImage src={resolveAvatar(req)!} alt={req.display_name} />}
+                        <AvatarFallback className="text-xs">{getInitials(req.display_name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium truncate">{req.display_name}</span>
+                    </Link>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 gap-1.5 border-destructive/50 hover:border-destructive hover:text-destructive text-xs px-3 shrink-0"
+                      onClick={() => handleCancelRequest(req.receiver_id)}
+                      disabled={actionLoadingId === req.receiver_id}
+                    >
+                      {actionLoadingId === req.receiver_id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <X className="h-3.5 w-3.5" />
+                      )}
+                      {t("friends.cancelRequest")}
+                    </Button>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         {/* Friends List */}
         {!isSearchActive && (
           <Card className="border-glow">
@@ -461,8 +523,8 @@ const FriendsPage = () => {
                         className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
                       >
                         <Avatar className="h-9 w-9 shrink-0">
-                          {friend.avatar_url && (
-                            <AvatarImage src={friend.avatar_url} alt={friend.display_name} />
+                          {resolveAvatar(friend) && (
+                            <AvatarImage src={resolveAvatar(friend)!} alt={friend.display_name} />
                           )}
                           <AvatarFallback className="text-xs">
                             {getInitials(friend.display_name)}

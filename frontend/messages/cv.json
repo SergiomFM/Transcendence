@@ -49,7 +49,12 @@
     "play": "Djuga",
     "profile": "Perfil",
     "friends": "Amigus",
-    "chat": "Chat"
+    "chat": "Chat",
+    "notifications": "Notifikasons",
+    "noNotifications": "Sem notifikasons novu",
+    "clearAll": "Limpa tudu",
+    "friendRequest": "manda-bu un pididu di amizadi",
+    "friendRequests": "Pididus di Amizadi"
   },
   "home": {
     "welcomeTo": "Ben vindu na",
@@ -84,7 +89,9 @@
     "notAuthenticated": "Bu tem ki entra pa odja bus amigus.",
     "searchPlaceholder": "Piskiza djogadoris pur nomi...",
     "searchResults": "Rezultadus di Piskiza",
-    "noSearchResults": "Nixun djogador nkontradu."
+    "noSearchResults": "Nixun djogador nkontradu.",
+    "sentRequests": "Pididus Mandadu",
+    "noSentRequests": "Sem pididus mandadu pendentis."
   },
   "settings": {
     "title": "Definisons",

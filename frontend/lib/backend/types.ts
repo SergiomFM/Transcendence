@@ -15,6 +15,7 @@ export type PlayerProfile = {
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
+  avatar: string | null;
   wins: number;
   losses: number;
   created_at: string;
@@ -31,6 +32,7 @@ export type FriendRequest = {
   // Joined from player_profiles of the sender
   display_name: string;
   avatar_url: string | null;
+  avatar: string | null;
 };
 
 export type Friend = {
@@ -39,6 +41,7 @@ export type Friend = {
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
+  avatar: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -49,6 +52,7 @@ export type PlayerSearchResult = {
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
+  avatar: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +67,8 @@ export type MatchRecord = {
   played_at: string;
   player1_display_name: string | null;
   player1_avatar_url: string | null;
+  player1_avatar: string | null;
   player2_display_name: string | null;
   player2_avatar_url: string | null;
+  player2_avatar: string | null;
 };

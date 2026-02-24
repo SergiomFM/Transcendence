@@ -49,7 +49,12 @@
     "play": "Play",
     "profile": "Profile",
     "friends": "Friends",
-    "chat": "Chat"
+    "chat": "Chat",
+    "notifications": "Notifications",
+    "noNotifications": "No new notifications",
+    "clearAll": "Clear all",
+    "friendRequest": "sent you a friend request",
+    "friendRequests": "Friend Requests"
   },
   "home": {
     "welcomeTo": "Welcome to",
@@ -84,7 +89,9 @@
     "notAuthenticated": "You must be logged in to view your friends.",
     "searchPlaceholder": "Search players by name...",
     "searchResults": "Search Results",
-    "noSearchResults": "No players found."
+    "noSearchResults": "No players found.",
+    "sentRequests": "Sent Requests",
+    "noSentRequests": "No pending sent requests."
   },
   "settings": {
     "title": "Settings",

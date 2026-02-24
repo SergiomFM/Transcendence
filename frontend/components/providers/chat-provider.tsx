@@ -1,0 +1,203 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
+import { useAuth } from "./auth-provider";
+import { Chat, type ChatMessage, type ChatEvent } from "@/lib/backend/chat";
+
+export interface UnreadEntry {
+  /** Username of the sender */
+  from: string;
+  /** Number of unread messages from this sender */
+  count: number;
+  /** The most recent unread message content */
+  lastMessage: string;
+  /** Timestamp of the most recent unread message */
+  lastTimestamp: string;
+}
+
+interface ChatContextType {
+  /** Set of currently online usernames */
+  onlineUsers: Set<string>;
+  /** All messages for the currently active conversation */
+  messages: ChatMessage[];
+  /** Set messages (used by the chat page when loading history) */
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  /** Total unread message count (across all conversations) */
+  unreadCount: number;
+  /** Per-sender unread entries for the notification dropdown */
+  unreadEntries: UnreadEntry[];
+  /** Clear unread count for a specific sender, or all if no sender given */
+  clearUnread: (sender?: string) => void;
+  /** Send a message via WebSocket */
+  sendMessage: (to: string, content: string) => boolean;
+  /** Whether the WebSocket is connected */
+  isConnected: boolean;
+}
+
+const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+type UnreadData = {
+  count: number;
+  lastMessage: string;
+  lastTimestamp: string;
+};
+
+export function ChatProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+
+  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadEntries, setUnreadEntries] = useState<UnreadEntry[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Track unread messages per sender: username → { count, lastMessage, lastTimestamp }
+  const unreadMapRef = useRef<Map<string, UnreadData>>(new Map());
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const myUsername = user ? (user.alias || user.username) : null;
+
+  // Sync unreadMapRef → state
+  const syncUnreadState = useCallback(() => {
+    let total = 0;
+    const entries: UnreadEntry[] = [];
+    for (const [from, data] of unreadMapRef.current.entries()) {
+      total += data.count;
+      entries.push({ from, ...data });
+    }
+    // Sort by most recent first
+    entries.sort((a, b) => new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime());
+    setUnreadCount(total);
+    setUnreadEntries(entries);
+  }, []);
+
+  // Clear unread for a specific sender or all
+  const clearUnread = useCallback((sender?: string) => {
+    if (sender) {
+      unreadMapRef.current.delete(sender);
+    } else {
+      unreadMapRef.current.clear();
+    }
+    syncUnreadState();
+  }, [syncUnreadState]);
+
+  // Send a message through WebSocket
+  const sendMessage = useCallback((to: string, content: string): boolean => {
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return false;
+    wsRef.current.send(
+      JSON.stringify({ type: "message", to, content }),
+    );
+    return true;
+  }, []);
+
+  // Global WebSocket connection — connects when user is authenticated
+  useEffect(() => {
+    if (!myUsername) return;
+
+    Chat.register(myUsername).catch(() => {});
+
+    let destroyed = false;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = () => {
+      if (destroyed) return;
+
+      const ws = new WebSocket(Chat.wsUrl(myUsername));
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log("[chat] global ws connected");
+        setIsConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const payload: ChatEvent = JSON.parse(event.data);
+
+          if (payload.type === "online_users") {
+            setOnlineUsers(new Set(payload.users));
+          } else if (payload.type === "user_online") {
+            setOnlineUsers((prev) => new Set([...prev, payload.username]));
+          } else if (payload.type === "user_offline") {
+            setOnlineUsers((prev) => {
+              const next = new Set(prev);
+              next.delete(payload.username);
+              return next;
+            });
+          } else if (payload.type === "message") {
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === payload.id)) return prev;
+              return [...prev, payload];
+            });
+
+            // Track unread: only count messages from others (not self)
+            if (!payload.self) {
+              const from = payload.from;
+              const existing = unreadMapRef.current.get(from);
+              unreadMapRef.current.set(from, {
+                count: (existing?.count ?? 0) + 1,
+                lastMessage: payload.content,
+                lastTimestamp: payload.timestamp,
+              });
+              syncUnreadState();
+            }
+          }
+        } catch {
+          // ignore parse errors
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("[chat] global ws disconnected — retrying in 2s");
+        setIsConnected(false);
+        if (!destroyed) {
+          retryTimeout = setTimeout(connect, 2000);
+        }
+      };
+    };
+
+    connect();
+
+    return () => {
+      destroyed = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
+      wsRef.current?.close();
+      wsRef.current = null;
+      setIsConnected(false);
+      setOnlineUsers(new Set());
+    };
+  }, [myUsername, syncUnreadState]);
+
+  return (
+    <ChatContext.Provider
+      value={{
+        onlineUsers,
+        messages,
+        setMessages,
+        unreadCount,
+        unreadEntries,
+        clearUnread,
+        sendMessage,
+        isConnected,
+      }}
+    >
+      {children}
+    </ChatContext.Provider>
+  );
+}
+
+export function useChat() {
+  const context = useContext(ChatContext);
+  if (context === undefined) {
+    throw new Error("useChat must be used within a ChatProvider");
+  }
+  return context;
+}

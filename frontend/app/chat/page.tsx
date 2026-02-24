@@ -6,8 +6,9 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Send, MessageSquare, ArrowLeft, Circle } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useChat } from "@/components/providers/chat-provider";
 import { Friends } from "@/lib/backend/friends";
-import { Chat, type ChatMessage, type ChatEvent } from "@/lib/backend/chat";
+import { Chat, type ChatMessage } from "@/lib/backend/chat";
 import type { Friend } from "@/lib/backend/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -22,20 +23,27 @@ const getInitials = (name: string) =>
     .toUpperCase()
     .slice(0, 2);
 
+const resolveAvatar = (obj: { avatar?: string | null; avatar_url?: string | null }) =>
+  obj.avatar || obj.avatar_url || null;
+
 export default function ChatPage() {
   const t = useTranslations();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    onlineUsers,
+    messages,
+    setMessages,
+    clearUnread,
+    sendMessage: wsSendMessage,
+  } = useChat();
 
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [activeFriend, setActiveFriend] = useState<Friend | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,67 +72,12 @@ export default function ChatPage() {
     }
   }, [friends, searchParams]);
 
-  // ── WebSocket connection with auto-reconnect ──────────────────────────────
+  // ── Clear unread when active friend changes ───────────────────────────────
   useEffect(() => {
-    if (!user) return;
-
-    const myUsername = user.alias || user.username;
-    Chat.register(myUsername).catch(() => {});
-
-    let destroyed = false;
-    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    const connect = () => {
-      if (destroyed) return;
-
-      const ws = new WebSocket(Chat.wsUrl(myUsername));
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log("[chat] ws connected");
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const payload: ChatEvent = JSON.parse(event.data);
-
-          if (payload.type === "online_users") {
-            setOnlineUsers(new Set(payload.users));
-          } else if (payload.type === "user_online") {
-            setOnlineUsers((prev) => new Set([...prev, payload.username]));
-          } else if (payload.type === "user_offline") {
-            setOnlineUsers((prev) => {
-              const next = new Set(prev);
-              next.delete(payload.username);
-              return next;
-            });
-          } else if (payload.type === "message") {
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === payload.id)) return prev;
-              return [...prev, payload];
-            });
-          }
-        } catch {
-          // ignore parse errors
-        }
-      };
-
-      ws.onclose = () => {
-        console.log("[chat] ws disconnected — retrying in 2s");
-        if (!destroyed) {
-          retryTimeout = setTimeout(connect, 2000);
-        }
-      };
-    };
-
-    connect();
-
-    return () => {
-      destroyed = true;
-      if (retryTimeout) clearTimeout(retryTimeout);
-      wsRef.current?.close();
-    };
-  }, [user]);
+    if (activeFriend) {
+      clearUnread(activeFriend.display_name);
+    }
+  }, [activeFriend, clearUnread]);
 
   // ── load history when active friend changes ────────────────────────────────
   useEffect(() => {
@@ -166,27 +119,36 @@ export default function ChatPage() {
       scroll: false,
     });
     inputRef.current?.focus();
-  }, [activeFriend, user, router]);
+  }, [activeFriend, user, router, setMessages]);
 
   // ── send message ───────────────────────────────────────────────────────────
-  const sendMessage = useCallback(() => {
+  const handleSend = useCallback(() => {
     const content = input.trim();
-    if (!content || !activeFriend || !wsRef.current) return;
-    if (wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!content || !activeFriend) return;
 
-    wsRef.current.send(
-      JSON.stringify({
-        type: "message",
-        to: activeFriend.display_name,
-        content,
-      }),
-    );
-    setInput("");
-  }, [input, activeFriend]);
+    const success = wsSendMessage(activeFriend.display_name, content);
+    if (success) setInput("");
+  }, [input, activeFriend, wsSendMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") sendMessage();
+    if (e.key === "Enter") handleSend();
   };
+
+  // ── go back to friend list (mobile) ────────────────────────────────────────
+  const handleBack = () => {
+    setActiveFriend(null);
+    router.replace("/chat", { scroll: false });
+  };
+
+  // ── Filter messages for the active conversation ───────────────────────────
+  const myUsername = user ? (user.alias || user.username) : "";
+  const conversationMessages = activeFriend
+    ? messages.filter(
+        (msg) =>
+          (msg.from === myUsername && msg.to === activeFriend.display_name) ||
+          (msg.from === activeFriend.display_name && msg.to === myUsername),
+      )
+    : [];
 
   // ── auth guard ─────────────────────────────────────────────────────────────
   if (authLoading) {
@@ -207,12 +169,16 @@ export default function ChatPage() {
     );
   }
 
-  const myUsername = user.alias || user.username;
-
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* ── sidebar: friend list ── */}
-      <aside className="w-64 shrink-0 border-r border-border/50 flex flex-col">
+    <div className="flex flex-1 min-h-0 overflow-hidden">
+      {/* ── sidebar: friend list ──
+           Mobile: full-width, hidden when a conversation is open
+           Desktop: fixed 16rem sidebar, always visible */}
+      <aside
+        className={`${
+          activeFriend ? "hidden" : "flex"
+        } md:flex w-full md:w-64 shrink-0 border-r border-border/50 flex-col`}
+      >
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
           <MessageSquare className="h-4 w-4 text-neon" />
           <span className="font-semibold text-sm">{t("chat.title")}</span>
@@ -233,17 +199,23 @@ export default function ChatPage() {
                   onClick={() => setActiveFriend(friend)}
                 >
                   <div className="relative shrink-0">
-                    <Avatar className="h-8 w-8">
-                      {friend.avatar_url && (
-                        <AvatarImage
-                          src={friend.avatar_url}
-                          alt={friend.display_name}
-                        />
-                      )}
-                      <AvatarFallback className="text-xs">
-                        {getInitials(friend.display_name)}
-                      </AvatarFallback>
-                    </Avatar>
+                    <Link
+                      href={`/users/${friend.user_id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar className="h-8 w-8">
+                        {resolveAvatar(friend) && (
+                          <AvatarImage
+                            src={resolveAvatar(friend)!}
+                            alt={friend.display_name}
+                          />
+                        )}
+                        <AvatarFallback className="text-xs">
+                          {getInitials(friend.display_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Link>
                     <Circle
                       className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 fill-current ${isOnline ? "text-green-500" : "text-muted-foreground/40"}`}
                     />
@@ -263,23 +235,32 @@ export default function ChatPage() {
         </div>
       </aside>
 
-      {/* ── main: conversation ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* ── main: conversation ──
+           Mobile: full-width, hidden when no conversation is open
+           Desktop: fills remaining space, always visible */}
+      <div
+        className={`${
+          activeFriend ? "flex" : "hidden"
+        } md:flex flex-1 flex-col min-w-0`}
+      >
         {activeFriend ? (
           <>
             {/* header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 shrink-0">
-              <Link
-                href="/friends"
+              <button
+                onClick={handleBack}
                 className="md:hidden text-muted-foreground hover:text-foreground"
               >
                 <ArrowLeft className="h-4 w-4" />
-              </Link>
-              <div className="relative">
+              </button>
+              <Link
+                href={`/users/${activeFriend.user_id}`}
+                className="relative hover:opacity-80 transition-opacity"
+              >
                 <Avatar className="h-8 w-8">
-                  {activeFriend.avatar_url && (
+                  {resolveAvatar(activeFriend) && (
                     <AvatarImage
-                      src={activeFriend.avatar_url}
+                      src={resolveAvatar(activeFriend)!}
                       alt={activeFriend.display_name}
                     />
                   )}
@@ -290,9 +271,9 @@ export default function ChatPage() {
                 <Circle
                   className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 fill-current ${onlineUsers.has(activeFriend.display_name) ? "text-green-500" : "text-muted-foreground/40"}`}
                 />
-              </div>
-              <div>
-                <p className="font-semibold text-sm">
+              </Link>
+              <div className="min-w-0">
+                <p className="font-semibold text-sm truncate">
                   {activeFriend.display_name}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -304,17 +285,17 @@ export default function ChatPage() {
             </div>
 
             {/* messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+            <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-2">
               {loadingHistory ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
                   {t("common.loading")}
                 </p>
-              ) : messages.length === 0 ? (
+              ) : conversationMessages.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground py-8">
                   {t("chat.noMessages")}
                 </p>
               ) : (
-                messages.map((msg, i) => {
+                conversationMessages.map((msg, i) => {
                   const isSelf = msg.from === myUsername;
                   return (
                     <div
@@ -322,7 +303,7 @@ export default function ChatPage() {
                       className={`flex ${isSelf ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-2xl px-3 py-2 text-sm break-words ${
+                        className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 py-2 text-sm break-words ${
                           isSelf
                             ? "bg-neon/20 border border-neon/30 text-foreground rounded-br-sm"
                             : "bg-muted border border-border/50 text-foreground rounded-bl-sm"
@@ -344,7 +325,7 @@ export default function ChatPage() {
             </div>
 
             {/* input */}
-            <div className="px-4 py-3 border-t border-border/50 shrink-0 flex gap-2">
+            <div className="px-3 sm:px-4 py-3 border-t border-border/50 shrink-0 flex gap-2">
               <Input
                 ref={inputRef}
                 value={input}
@@ -356,7 +337,7 @@ export default function ChatPage() {
               />
               <Button
                 size="icon"
-                onClick={sendMessage}
+                onClick={handleSend}
                 disabled={!input.trim()}
                 className="shrink-0"
               >

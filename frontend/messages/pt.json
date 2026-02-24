@@ -49,7 +49,12 @@
     "play": "Jogar",
     "profile": "Perfil",
     "friends": "Amigos",
-    "chat": "Chat"
+    "chat": "Chat",
+    "notifications": "Notificações",
+    "noNotifications": "Sem novas notificações",
+    "clearAll": "Limpar tudo",
+    "friendRequest": "enviou-te um pedido de amizade",
+    "friendRequests": "Pedidos de Amizade"
   },
   "home": {
     "welcomeTo": "Bem-vindo ao",
@@ -84,7 +89,9 @@
     "notAuthenticated": "Tens de iniciar sessão para ver os teus amigos.",
     "searchPlaceholder": "Pesquisar jogadores pelo nome...",
     "searchResults": "Resultados da Pesquisa",
-    "noSearchResults": "Nenhum jogador encontrado."
+    "noSearchResults": "Nenhum jogador encontrado.",
+    "sentRequests": "Pedidos Enviados",
+    "noSentRequests": "Sem pedidos enviados pendentes."
   },
   "settings": {
     "title": "Definições",
