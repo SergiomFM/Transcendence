@@ -1,0 +1,43 @@
+               			  	    ┌──────────────────────────────┐
+               			  	    │         Browser / User       │
+               			  	    │  (HTTPS in Production)       │
+               			  	    └─────────────┬───────────────┘
+               			  	                  │
+               			  	                  ▼
+               			  	    ┌──────────────────────────────┐
+               			  	    │           Nginx Proxy        │
+               			  	    │  - Routes /api/* to services │
+               			  	    │  - Routes /ws/* for WS      │
+               			  	    │  - Serves frontend / _next/ │
+               			  	    │  - HTTPS termination         │
+               			  	    └─────────────┬───────────────┘
+               			  	                  │
+      ┌────────────────────┬──────────────────┼──────────────────┬───────────────────────┐
+      ▼       		       ▼       	          ▼    		    	 ▼         			     ▼
+┌──────────┐  		 ┌──────────┐  		 ┌──────────┐  		┌──────────┐  			┌──────────┐
+│ Frontend │  		 │ Users    │  		 │ Game     │  		│ Chat     │  			│ Database │
+│ Next.js  │  		 │ Service  │  		 │ Service  │  		│ Service  │  			│ (SQLite/ │
+│ / React  │  		 │ Fastify  │  		 │ Fastify  │  		│ Fastify  │  			│ Prisma)  │
+└─────┬────┘  		 └────┬─────┘  		 └────┬─────┘  		└────┬─────┘  			└─────┬────┘
+      │  		          │           		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      │  		    ┌─────▼──────┐    		  │        		     │           			  │
+      │  		    │ Auth       │    		  │        		     │           			  │
+      │  		    │ - Google   │    		  │        		     │           			  │
+      │  		    │ - 2FA      │    		  │        		     │           			  │
+      │  		    │ - Sessions │    		  │        		     │           			  │
+      │  		    │ - Recovery │    		  │        		     │           			  │
+      │  		    └─────┬──────┘    		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      │  		┌─────────▼──────────┐		  │        		     │           			  │
+      │  		│ Session / Cookies  │		  │        		     │           			  │
+      │  		│ (connect.sid)      │		  │        		     │           			  │
+      │  		└─────────┬──────────┘		  │        		     │           			  │
+      │  		          │           		  │        		     │           			  │
+      ▼  		          ▼           		  ▼        		     ▼           			  ▼
+Frontend state 		  2FA verify         Pong WS / API		 Chat WS / API  	 User / Game / Chat DB
+(useAuth hook) 		  Recovery           Real-time    		 Real-time     		 Stores sessions, 
+               		  codes              gameplay     		 messages      		 2FA secrets, etc.
