@@ -49,7 +49,12 @@
     "play": "שחק",
     "profile": "פרופיל",
     "friends": "חברים",
-    "chat": "צ'אט"
+    "chat": "צ'אט",
+    "notifications": "התראות",
+    "noNotifications": "אין התראות חדשות",
+    "clearAll": "נקה הכל",
+    "friendRequest": "שלח לך בקשת חברות",
+    "friendRequests": "בקשות חברות"
   },
   "home": {
     "welcomeTo": "ברוך הבא ל",
@@ -84,7 +89,9 @@
     "notAuthenticated": "עליך להתחבר כדי לראות את חבריך.",
     "searchPlaceholder": "חפש שחקנים לפי שם...",
     "searchResults": "תוצאות חיפוש",
-    "noSearchResults": "לא נמצאו שחקנים."
+    "noSearchResults": "לא נמצאו שחקנים.",
+    "sentRequests": "בקשות שנשלחו",
+    "noSentRequests": "אין בקשות שנשלחו ממתינות."
   },
   "settings": {
     "title": "הגדרות",

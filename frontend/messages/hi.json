@@ -49,7 +49,12 @@
     "play": "खेलें",
     "profile": "प्रोफ़ाइल",
     "friends": "मित्र",
-    "chat": "चैट"
+    "chat": "चैट",
+    "notifications": "सूचनाएं",
+    "noNotifications": "कोई नई सूचना नहीं",
+    "clearAll": "सब साफ करें",
+    "friendRequest": "ने आपको मित्र अनुरोध भेजा",
+    "friendRequests": "मित्र अनुरोध"
   },
   "home": {
     "welcomeTo": "स्वागत है",
@@ -84,7 +89,9 @@
     "notAuthenticated": "अपने मित्रों को देखने के लिए आपको लॉग इन होना चाहिए।",
     "searchPlaceholder": "नाम से खिलाड़ियों को खोजें...",
     "searchResults": "खोज परिणाम",
-    "noSearchResults": "कोई खिलाड़ी नहीं मिला।"
+    "noSearchResults": "कोई खिलाड़ी नहीं मिला।",
+    "sentRequests": "भेजे गए अनुरोध",
+    "noSentRequests": "कोई लंबित भेजे गए अनुरोध नहीं।"
   },
   "settings": {
     "title": "सेटिंग्स",

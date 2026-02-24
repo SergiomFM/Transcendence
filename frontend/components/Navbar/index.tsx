@@ -29,17 +29,11 @@ import {
 } from "lucide-react";
 
 const LOCALES = [
-<<<<<<< Updated upstream
   { code: "en", label: "English", flag: "🇺🇸" },
   { code: "pt", label: "Português", flag: "🇧🇷" },
   { code: "cv", label: "Kriolu", flag: "🇨🇻" },
   { code: "hi", label: "हिन्दी", flag: "🇮🇳" },
   { code: "he", label: "עברית", flag: "🇮🇱" },
-=======
-  { code: "en", label: "English", flag: "\u{1F1FA}\u{1F1F8}" },
-  { code: "pt", label: "Portugu\u00EAs", flag: "\u{1F1E7}\u{1F1F7}" },
-  { code: "cv", label: "Kriolu", flag: "\u{1F1E8}\u{1F1FB}" },
->>>>>>> Stashed changes
 ] as const;
 
 const getInitials = (name: string) =>
