@@ -445,7 +445,7 @@ export function Navbar() {
                   variant="ghost"
                   className="relative h-8 w-8 pixel-corners-sm"
                 >
-                  <Avatar className="h-8 w-8 ring-1 ring-neon-muted transition-shadow hover:ring-neon hover:shadow-[0_0_10px_var(--neon-muted)]">
+                  <Avatar key={user.avatar || "no-avatar"} className="h-8 w-8 ring-1 ring-neon-muted transition-shadow hover:ring-neon hover:shadow-[0_0_10px_var(--neon-muted)]">
                     {user.avatar ? (
                       <AvatarImage
                         src={user.avatar}

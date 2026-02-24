@@ -32,6 +32,7 @@ async function dbPlugin(fastify){
 		email TEXT UNIQUE NOT NULL,
 		alias TEXT,
 		avatar TEXT,
+		google_avatar TEXT,
 		google_id TEXT UNIQUE,
 		password_hash TEXT,
 		two_factor_enabled INTEGER DEFAULT 0,
@@ -47,6 +48,10 @@ async function dbPlugin(fastify){
 	if (!columns.find(c => c.name === 'avatar')) {
 		db.prepare(`ALTER TABLE users ADD COLUMN avatar TEXT`).run()
 		fastify.log.info('Added avatar column to users table')
+	}
+	if (!columns.find(c => c.name === 'google_avatar')) {
+		db.prepare(`ALTER TABLE users ADD COLUMN google_avatar TEXT`).run()
+		fastify.log.info('Added google_avatar column to users table')
 	}
 	
 	db.prepare(` CREATE TABLE IF NOT EXISTS recovery_codes (
@@ -135,11 +140,11 @@ async function dbPlugin(fastify){
 			findById: db.prepare(`SELECT * FROM users WHERE id = ?`),
 			findByUsername: db.prepare(`SELECT * FROM users WHERE username = ?`),
 		
-			//create a user using google
-			createGoogleUser: db.prepare(`
-				INSERT INTO users (id, email, alias, google_id)
-				VALUES (?, ?, ?, ?)
-			`),
+		//create a user using google
+		createGoogleUser: db.prepare(`
+			INSERT INTO users (id, email, alias, google_id, avatar)
+			VALUES (?, ?, ?, ?, ?)
+		`),
 
 			//create a local user, to use with password
 			createLocalUser: db.prepare(`
@@ -181,6 +186,11 @@ async function dbPlugin(fastify){
 		//update avatar (base64 webp)
 		updateAvatar: db.prepare(`
 			UPDATE users SET avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+		`),
+
+		//update google avatar (base64, fetched from Google during OAuth)
+		updateGoogleAvatar: db.prepare(`
+			UPDATE users SET google_avatar = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 		`),
 
 			

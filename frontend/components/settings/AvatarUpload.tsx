@@ -185,7 +185,7 @@ export const AvatarUploadSection = () => {
     <>
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
         <div className="relative group shrink-0">
-          <Avatar className="h-20 w-20">
+          <Avatar key={user?.avatar || "no-avatar"} className="h-20 w-20">
             {user?.avatar ? (
               <AvatarImage src={user.avatar} alt={displayName} />
             ) : null}

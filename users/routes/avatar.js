@@ -35,6 +35,15 @@ export default async function avatarRoutes(fastify) {
 			return reply.code(401).send({ error: 'Not authenticated' })
 		}
 
+		const user = fastify.users.findById.get(request.user.id)
+
+		// For Google users: if they have a custom avatar (different from their
+		// Google one), fall back to the Google photo. Otherwise, clear it entirely.
+		if (user?.google_id && user?.google_avatar && user?.avatar !== user?.google_avatar) {
+			fastify.users.updateAvatar.run(user.google_avatar, request.user.id)
+			return { message: 'Avatar reset to Google profile picture' }
+		}
+
 		fastify.users.updateAvatar.run(null, request.user.id)
 
 		return { message: 'Avatar removed successfully' }
