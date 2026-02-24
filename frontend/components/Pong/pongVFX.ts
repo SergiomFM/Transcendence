@@ -6,11 +6,24 @@ import {
   Color4,
   DynamicTexture,
   Matrix,
-  BoxParticleEmitter,
   HemisphericParticleEmitter,
 } from "@babylonjs/core";
 import { Spell } from "./pongSpells";
 import { Pong } from "./pong";
+
+export interface VFXConfig {
+  NAME: string;
+  COLOR_1: Color4 | null;
+  COLOR_2: Color4 | null;
+  MIN_SIZE: number;
+  MAX_SIZE: number;
+  MIN_TIME: number;
+  MAX_TIME: number;
+  EMIT_RATE: number;
+  MIN_POWER: number;
+  MAX_POWER: number;
+  [key: string]: unknown;
+}
 
 export const COLOR_DIFFERENCE = 1;
 const PARTICLE_FPS = 24;
@@ -183,7 +196,7 @@ function startParticle(scene: Scene, particle: ParticleSystem) {
   const updateInterval = 1000 / PARTICLE_FPS;
   let lastUpdate = performance.now();
 
-  let particleObserver = scene.onBeforeRenderObservable.add(() => {
+  const particleObserver = scene.onBeforeRenderObservable.add(() => {
     const now = performance.now();
     const delta = now - lastUpdate;
 
@@ -203,13 +216,13 @@ function startParticle(scene: Scene, particle: ParticleSystem) {
 }
 
 // Creates the base attributes of a particle
-function createBaseParticle(scene: Scene, VFX: any) {
+function createBaseParticle(scene: Scene, VFX: VFXConfig) {
   const particle = new ParticleSystem(VFX["NAME"], 1000, scene);
 
   // Coloring a blank texture to use as particle
   particle.particleTexture = scene.getTextureByName("blankTexture");
-  particle.color1 = VFX["COLOR_1"];
-  particle.color2 = VFX["COLOR_2"];
+  if (VFX["COLOR_1"]) particle.color1 = VFX["COLOR_1"];
+  if (VFX["COLOR_2"]) particle.color2 = VFX["COLOR_2"];
 
   // Size of the particles
   particle.minSize = VFX["MIN_SIZE"];
@@ -279,17 +292,17 @@ export function splashEffect(
   position: Vector3,
   splashPower: number,
   angle: number,
-  VFX: any,
+  VFX: VFXConfig,
 ) {
   const particle = createBaseParticle(scene, VFX);
 
   // Rate and velocity of the particles
-  particle.manualEmitCount = VFX["PARTICLE_NUMBER"];
+  particle.manualEmitCount = VFX["PARTICLE_NUMBER"] as number;
   particle.minEmitPower *= splashPower;
   particle.maxEmitPower *= splashPower;
 
-  const spread = (VFX["SPREAD"] * Math.PI) / 180;
-  let cone = particle.createDirectedConeEmitter(0, 0);
+  const spread = ((VFX["SPREAD"] as number) * Math.PI) / 180;
+  const cone = particle.createDirectedConeEmitter(0, 0);
   cone.direction1 = new Vector3(
     Math.cos(spread),
     -Math.sin(spread),
@@ -314,7 +327,7 @@ export function splashEffect(
 }
 
 export function diskExplosion(scene: Scene, position: Vector3) {
-  let particle = createBaseParticle(scene, DISK_EXPLOSION_VFX);
+  const particle = createBaseParticle(scene, DISK_EXPLOSION_VFX);
 
   // Rate and velocity of the particles
   particle.manualEmitCount = DISK_EXPLOSION_VFX["PARTICLE_NUMBER"];
@@ -328,7 +341,7 @@ export function diskExplosion(scene: Scene, position: Vector3) {
 }
 
 export function spellReadyVFX(scene: Scene, spell: Spell) {
-  let particle = createBaseParticle(scene, DISK_EXPLOSION_VFX);
+  const particle = createBaseParticle(scene, DISK_EXPLOSION_VFX);
 
   particle.color1 = spell.particle.color1.clone();
   particle.color2 = spell.particle.color2.clone();
@@ -345,12 +358,12 @@ export function spellReadyVFX(scene: Scene, spell: Spell) {
 }
 
 function updateOldParticles(scene: Scene, name: string, newColor: Color4) {
-  let particle = scene.getParticleSystemById(name) as ParticleSystem;
+  const particle = scene.getParticleSystemById(name) as ParticleSystem;
   const originalUpdate = particle.updateFunction;
   particle.updateFunction = (particles) => {
-    for (let p of particles) {
+    for (const p of particles) {
       // Force all active particles to use the new color
-      let ratio = Scalar.RandomRange(0.01, 1);
+      const ratio = Scalar.RandomRange(0.01, 1);
       p.color.r = newColor.r + COLOR_DIFFERENCE * ratio;
       p.color.g = newColor.g + COLOR_DIFFERENCE * ratio;
       p.color.b = newColor.b + COLOR_DIFFERENCE * ratio;
@@ -360,7 +373,7 @@ function updateOldParticles(scene: Scene, name: string, newColor: Color4) {
 }
 
 function wallExplosion(scene: Scene, wallName: string) {
-  let particle = createBaseParticle(scene, WALL_EXPLOSION_VFX);
+  const particle = createBaseParticle(scene, WALL_EXPLOSION_VFX);
 
   particle.particleEmitterType =
     scene.getParticleSystemById(wallName)!.particleEmitterType!;
@@ -374,7 +387,7 @@ function wallExplosion(scene: Scene, wallName: string) {
 
 export function updateArena(scene: Scene, newColor: Color4, ballPos: Vector3) {
   // Changing the ball Particle to change every element of the arena
-  let particle = scene.getParticleSystemById("ball") as ParticleSystem;
+  const particle = scene.getParticleSystemById("ball") as ParticleSystem;
   particle.color1.set(newColor.r, newColor.g, newColor.b, 1);
   particle.color2.set(
     newColor.r + COLOR_DIFFERENCE,
@@ -386,18 +399,19 @@ export function updateArena(scene: Scene, newColor: Color4, ballPos: Vector3) {
   // Updating the old particles and creating a visual effect
   const walls = ["wall1", "wall2", "wall3", "wall4"];
   walls.forEach((id) => {
-    (updateOldParticles(scene, id, newColor), wallExplosion(scene, id));
+    updateOldParticles(scene, id, newColor);
+    wallExplosion(scene, id);
   });
 
   // Creating a visual effect for the Arena update
   diskExplosion(scene, ballPos);
 }
 
-export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
+export function createSpellParticles(scene: Scene, spell: Spell, VFX: VFXConfig) {
   const particle = createBaseParticle(scene, VFX);
 
   // Creating a Sphere to emit the particles
-  let hemisphericEmitter = new HemisphericParticleEmitter(
+  const hemisphericEmitter = new HemisphericParticleEmitter(
     spell.initialSize,
     0,
     1,
@@ -410,7 +424,7 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
     worldMatrix,
     position,
     particle,
-    isLocal,
+    _isLocal,
   ) {
     originalPositionFunction(worldMatrix, position, particle, true);
 
@@ -446,7 +460,7 @@ export function createSpellParticles(scene: Scene, spell: Spell, VFX: object) {
 
 export function resetRoundColor(pong: Pong) {
   const defaultColor = new Color4(0, 0, 0, 0);
-  let light = pong.scene.getLightById("ball");
+  const light = pong.scene.getLightById("ball");
   if (light) {
     light.diffuse.set(0, 0, 0);
   }

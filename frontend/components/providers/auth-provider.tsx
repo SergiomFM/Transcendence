@@ -42,9 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let mounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshUser().finally(() => {
-      setIsLoading(false);
+      if (mounted) setIsLoading(false);
     });
+    return () => { mounted = false; };
   }, []);
 
   const login = async (identifier: string, password: string) => {

@@ -6,6 +6,7 @@ import { Spell, BallAngleSwitch, BallStop } from "./pongSpells";
 import { GUI, PongTranslations } from "./pongUI";
 import { ANIMATION_FPS } from "./pongAnimations";
 import { GAME_CONSTANTS } from "@/shared/constants";
+import type { ChatMessage, RoomUser } from "@/components/game/types";
 
 export const FPS = 60;
 
@@ -152,17 +153,20 @@ export class Pong {
 
   // Multiplayer properties
   socket?: WebSocket;
-  serverGameState?: any;
+  serverGameState?: Record<string, unknown>;
   serverGameStateApplied = false;
   isSpectator = false;
   seatsAvailable = 0;
-  playerId: number | null = null;
+  playerId: string | null = null;
   localReady = false;
   pendingWelcome = false;
   matchLostPending = false;
 
-  // Room chat callback (set by React to receive chat messages)
-  onChatMessage?: (message: any) => void;
+	// Room chat callback (set by React to receive chat messages)
+	onChatMessage?: (message: ChatMessage) => void;
+
+	// Room users callback (set by React to receive user list updates)
+	onRoomUsers?: (users: RoomUser[]) => void;
 
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -195,17 +199,9 @@ export class Pong {
     this.engine.resize = () => {
       lockedSetSize(854, 480, true);
     };
-    this.engine.setSize = (width: number, height: number, forceSetSize?: boolean) => {
+    this.engine.setSize = (_width: number, _height: number, _forceSetSize?: boolean) => {
       return lockedSetSize(854, 480, true);
     };
-
-    // Disable any WebGL-level texture smoothing
-    const gl = this.engine._gl;
-    if (gl) {
-      // Disable LINEAR filtering at WebGL level
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    }
   }
 
   // Initialization of the core game components

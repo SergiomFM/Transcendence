@@ -1,7 +1,7 @@
 all: dev
 
 dev:
-	docker compose --profile dev up
+	docker compose --profile dev up -d
 
 dev-down:
 	docker compose --profile dev down

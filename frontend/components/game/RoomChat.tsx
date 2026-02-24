@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { GAME_BACKEND_URL } from "@/lib/backend/config";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Gamepad2, Eye, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ interface RoomChatProps {
 }
 
 export function RoomChat({
-  roomId,
   hidden,
   className,
   messages,
@@ -45,6 +44,7 @@ export function RoomChat({
   // Clear unread when expanded
   useEffect(() => {
     if (!collapsed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUnread(0);
     }
   }, [collapsed]);
@@ -150,34 +150,60 @@ export function RoomChat({
 function ChatEntry({ message }: { message: ChatMessage }) {
   const isPlayer = message.role === "player";
 
+  const avatar = (
+    <Avatar className="h-6 w-6 shrink-0 mt-0.5">
+      {message.avatar ? (
+        <AvatarImage src={message.avatar} alt={message.name} />
+      ) : null}
+      <AvatarFallback className="text-[10px] bg-muted/80">
+        <User className="h-3 w-3" />
+      </AvatarFallback>
+    </Avatar>
+  );
+
+  const nameAndIcon = (
+    <div className="flex items-center gap-1">
+      <span
+        className={cn(
+          "text-xs font-semibold truncate max-w-[140px]",
+          isPlayer ? "text-neon/90" : "text-muted-foreground",
+        )}
+      >
+        {message.name}
+      </span>
+      {isPlayer ? (
+        <Gamepad2 className="h-3 w-3 shrink-0 text-neon/40" />
+      ) : (
+        <Eye className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+      )}
+    </div>
+  );
+
   return (
     <div className="flex items-start gap-2 px-1">
-      <Avatar className="h-6 w-6 shrink-0 mt-0.5">
-        {message.avatar ? (
-          <AvatarImage src={message.avatar} alt={message.name} />
-        ) : null}
-        <AvatarFallback className="text-[10px] bg-muted/80">
-          <User className="h-3 w-3" />
-        </AvatarFallback>
-      </Avatar>
+      {message.userId ? (
+        <Link href={`/users/${message.userId}`} className="shrink-0 hover:opacity-80 transition-opacity">
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1">
-          <span
-            className={cn(
-              "text-xs font-semibold truncate max-w-[140px]",
-              isPlayer ? "text-neon/90" : "text-muted-foreground",
-            )}
-          >
-            {message.name}
-          </span>
-          {isPlayer ? (
-            <Gamepad2 className="h-3 w-3 shrink-0 text-neon/40" />
-          ) : (
-            <Eye className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-          )}
-        </div>
+        {message.userId ? (
+          <Link href={`/users/${message.userId}`} className="hover:opacity-80 transition-opacity">
+            {nameAndIcon}
+          </Link>
+        ) : (
+          nameAndIcon
+        )}
         <p className="text-sm text-foreground/80 break-words leading-snug">
           {message.content}
+        </p>
+        <p className="text-xs text-muted-foreground/50 mt-0.5">
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </p>
       </div>
     </div>

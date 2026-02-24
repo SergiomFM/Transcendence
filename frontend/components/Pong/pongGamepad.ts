@@ -53,6 +53,7 @@ interface GamepadState {
 
 // ─── Gamepad Manager ─────────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace GamepadManager {
   /**
    * Maps a gamepad index → player number (1 or 2).
@@ -94,7 +95,7 @@ export namespace GamepadManager {
 
   function tryAssignGamepad(
     gamepadIndex: number,
-    pong: Pong,
+    _pong: Pong,
   ): number | null {
     if (gamepadAssignments.has(gamepadIndex)) {
       return gamepadAssignments.get(gamepadIndex)!;

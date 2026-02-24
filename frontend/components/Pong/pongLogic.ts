@@ -1,8 +1,7 @@
-import { Vector3, Tools, Color4 } from "@babylonjs/core";
+import { Vector3, Tools, Scene } from "@babylonjs/core";
 import {
   splashEffect,
   COLLISION_VFX,
-  updateArena,
   spellReadyVFX,
   resetRoundColor,
 } from "./pongVFX";
@@ -54,14 +53,14 @@ function onlineGameLogic(pong: Pong) {
   }
 }
 
-function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, pong: Pong, isLocalPlayer: boolean) {
+function updateSpellFromServer(spell: Spell, serverSpellData: Record<string, unknown>, scene: Scene, pong: Pong, isLocalPlayer: boolean) {
   // When game is not running, reset cooldown so spell balls don't grow between rounds
   if (!pong.running) {
     spell.cooldownElapsed = 0;
     spell.ready = false;
     return;
   }
-  spell.cooldownElapsed = serverSpellData.cooldownElapsed;
+  spell.cooldownElapsed = serverSpellData.cooldownElapsed as number;
   if (serverSpellData.spellReady && !spell.ready) {
     spell.ready = true;
     spellReadyVFX(scene, spell);
@@ -76,27 +75,27 @@ function updateSpellFromServer(spell: Spell, serverSpellData: any, scene: any, p
 
 function updatePlayerFromServer(
   player: Player,
-  serverPlayerData: any,
-  scene: any,
+  serverPlayerData: Record<string, unknown>,
+  scene: Scene,
   pong: Pong,
   isLocalPlayer: boolean,
 ) {
-  player.x = serverPlayerData.x;
+  player.x = serverPlayerData.x as number;
   if (serverPlayerData.name !== undefined) {
-    player.name = serverPlayerData.name;
+    player.name = serverPlayerData.name as string;
   }
 
   // Reconcile spell types: if the server's spell doesn't match the client's, recreate it
   if (serverPlayerData.currentOffensiveSpell &&
       player.offensiveSpell.spellType !== serverPlayerData.currentOffensiveSpell) {
     player.offensiveSpell = getNewSpell(
-      pong, player, player.offensiveSpell, serverPlayerData.currentOffensiveSpell,
+      pong, player, player.offensiveSpell, serverPlayerData.currentOffensiveSpell as string,
     );
   }
   if (serverPlayerData.currentCounterSpell &&
       player.counterSpell.spellType !== serverPlayerData.currentCounterSpell) {
     player.counterSpell = getNewSpell(
-      pong, player, player.counterSpell, serverPlayerData.currentCounterSpell,
+      pong, player, player.counterSpell, serverPlayerData.currentCounterSpell as string,
     );
   }
 
@@ -105,7 +104,7 @@ function updatePlayerFromServer(
     {
       cooldownElapsed: serverPlayerData.offensiveCooldownElapsed,
       spellReady: serverPlayerData.offensiveSpellReady,
-    },
+    } as Record<string, unknown>,
     scene,
     pong,
     isLocalPlayer,
@@ -115,27 +114,31 @@ function updatePlayerFromServer(
     {
       cooldownElapsed: serverPlayerData.counterCooldownElapsed,
       spellReady: serverPlayerData.counterSpellReady,
-    },
+    } as Record<string, unknown>,
     scene,
     pong,
     isLocalPlayer,
   );
 }
 
-function applyServerState(pong: Pong, serverState: any) {
-  pong.ball.x = serverState.ball.x;
-  pong.ball.z = serverState.ball.z;
-  pong.ball.setAngle(serverState.ball.angle);
+function applyServerState(pong: Pong, serverState: Record<string, unknown>) {
+  const ball = serverState.ball as Record<string, unknown>;
+  const player1 = serverState.player1 as Record<string, unknown>;
+  const player2 = serverState.player2 as Record<string, unknown>;
 
-  updatePlayerFromServer(pong.player1, serverState.player1, pong.scene, pong, true);
-  updatePlayerFromServer(pong.player2, serverState.player2, pong.scene, pong, false);
+  pong.ball.x = ball.x as number;
+  pong.ball.z = ball.z as number;
+  pong.ball.setAngle(ball.angle as number);
+
+  updatePlayerFromServer(pong.player1, player1, pong.scene, pong, true);
+  updatePlayerFromServer(pong.player2, player2, pong.scene, pong, false);
 
   if (pong.GUI) {
-    if (typeof serverState.player1.score === "number") {
-      pong.player1.score = serverState.player1.score;
+    if (typeof player1.score === "number") {
+      pong.player1.score = player1.score;
     }
-    if (typeof serverState.player2.score === "number") {
-      pong.player2.score = serverState.player2.score;
+    if (typeof player2.score === "number") {
+      pong.player2.score = player2.score;
     }
     pong.GUI.updateScores(pong.player1.score, pong.player2.score);
 
@@ -145,7 +148,7 @@ function applyServerState(pong: Pong, serverState: any) {
     }
   }
 
-  pong.running = serverState.running;
+  pong.running = serverState.running as boolean;
 }
 
 // Paddle collision check
@@ -154,7 +157,7 @@ function paddleCollision(
   paddle: Player,
   signal: number,
 ) {
-  let ball = pong.ball;
+  const ball = pong.ball;
 
   // Calculating the collision point using the ball angle
   const deltaZ = ball.z - paddle.z;
@@ -227,11 +230,11 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
   const Xlimit = pong.heightLimit;
 
   let oldX = ball.x;
-  let oldZ = ball.z;
+  const oldZ = ball.z;
 
   // Moving the ball
   let newX = oldX + ball.cos * ball.speed * delta;
-  let newZ = oldZ + ball.sin * ball.speed * delta;
+  const newZ = oldZ + ball.sin * ball.speed * delta;
   ball.z = newZ;
   ball.x = newX;
 

@@ -236,7 +236,6 @@ function GamepadDiagram({
   const body = "var(--neon-muted)";
   const accent = "var(--neon)";
   const dim = "var(--muted-foreground)";
-  const bg = "var(--card)";
   const bodyFill = "var(--card)"; // Background color for body
 
   /*

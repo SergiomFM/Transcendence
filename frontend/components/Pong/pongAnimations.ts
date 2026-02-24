@@ -1,6 +1,5 @@
 import { Mesh, Scene, Vector3 } from "@babylonjs/core";
-import { TextBlock } from "@babylonjs/gui";
-import { Pong, FPS } from "./pong";
+import { Pong } from "./pong";
 import { CAMERA_ANIMATION_TIME } from "./pongCamera";
 
 export const ANIMATION_FPS = 24;
@@ -55,6 +54,7 @@ export const COUNTER_CASTING = [0.1, 0.25, 0.1, 250, 500];
 // Animates an attribute from an object to a target in a given time in miliseconds
 // Returns a cancel function to stop the animation
 export function animateAttribute(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   object: any,
   target: number,
   attribute: string,
@@ -122,7 +122,7 @@ export function animateMeshes(scene: Scene) {
 }
 
 // Sway animation for a mesh
-export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: any) {
+export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: number[]) {
   let lastUpdate = 0;
 
   let direction = 1;
@@ -133,7 +133,7 @@ export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: any) {
 
   let currSway = 0;
 
-  let meshPos = mesh.position;
+  const meshPos = mesh.position;
 
   scene.registerBeforeRender(() => {
     const now = performance.now();
@@ -175,27 +175,27 @@ export function addSwayAnimation(scene: Scene, mesh: Mesh, sway: any) {
 }
 
 export function switchPlayerHandsPosition(pong: Pong, topView: boolean, instant: boolean) {
-  let player = pong.player1;
+  const player = pong.player1;
   let target = player;
-  topView ? target = pong.player2 : target = pong.player1;
+  if (topView) { target = pong.player2; } else { target = pong.player1; }
 
-  let leftX =
+  const leftX =
     Math.abs(player.initialLeftHandPos.x) -
     Math.abs(target.initialLeftHandPos.x);
-  let leftY =
+  const leftY =
     Math.abs(target.initialLeftHandPos.y) -
     Math.abs(player.initialLeftHandPos.y);
-  let leftZ =
+  const leftZ =
     Math.abs(target.initialLeftHandPos.z) -
     Math.abs(player.initialLeftHandPos.z);
 
-  let rightX =
+  const rightX =
     Math.abs(target.initialRightHandPos.x) -
     Math.abs(player.initialRightHandPos.x);
-  let rightY =
+  const rightY =
     Math.abs(target.initialRightHandPos.y) -
     Math.abs(player.initialRightHandPos.y);
-  let rightZ =
+  const rightZ =
     Math.abs(target.initialRightHandPos.z) -
     Math.abs(player.initialRightHandPos.z);
 
@@ -307,7 +307,7 @@ export function switchPlayerHandsPosition(pong: Pong, topView: boolean, instant:
   );
 }
 
-export function useSpellAnimation(arm: Vector3, ANIMATION: any) {
+export function playSpellAnimation(arm: Vector3, ANIMATION: number[]) {
   const initialPosition = [arm.x, arm.y, arm.z];
 
   let nextX = arm.x + ANIMATION[X];

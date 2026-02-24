@@ -24,6 +24,8 @@ export interface UnreadEntry {
 }
 
 export interface GameInvite {
+  /** Database ID of the invite */
+  id?: number;
   /** Username of the sender */
   from: string;
   /** Game room ID to join */
@@ -89,7 +91,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const myUsernameRef = useRef<string | null>(null);
 
   const myUsername = user ? (user.alias || user.username) : null;
-  myUsernameRef.current = myUsername;
+
+  useEffect(() => {
+    myUsernameRef.current = myUsername;
+  }, [myUsername]);
 
   // Sync unreadMapRef → state
   const syncUnreadState = useCallback(() => {
@@ -107,9 +112,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Clear unread for a specific sender or all
   const clearUnread = useCallback((sender?: string) => {
+    const me = myUsernameRef.current;
     if (sender) {
       unreadMapRef.current.delete(sender);
+      // Mark as read on the server so they stay read across sessions
+      if (me) {
+        Chat.markRead(sender, me).catch(() => {});
+      }
     } else {
+      // Mark all as read on the server
+      if (me) {
+        for (const from of unreadMapRef.current.keys()) {
+          Chat.markRead(from, me).catch(() => {});
+        }
+      }
       unreadMapRef.current.clear();
     }
     syncUnreadState();
@@ -119,12 +135,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback((to: string, content: string): boolean => {
     const username = myUsernameRef.current;
     if (!username) return false;
-    // Fire-and-forget; the SSE stream will deliver the echoed message
-    Chat.sendMessage(username, to, content).catch((err) => {
-      console.error("[chat] failed to send message:", err);
-    });
+    Chat.sendMessage(username, to, content)
+      .then((res) => {
+        const msg = res.data as unknown as ChatMessage;
+        if (msg?.id) {
+          // Immediately add to local state so the sender sees their message
+          // The SSE echo (if it arrives) will be deduped by the id check
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === msg.id)) return prev;
+            return [...prev, msg];
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("[chat] failed to send message:", err);
+      });
     return true;
-  }, []);
+  }, [setMessages]);
 
   // Send a game invite via REST POST
   const sendGameInvite = useCallback((to: string, roomId: string): boolean => {
@@ -136,8 +163,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  // Dismiss a game invite by roomId
+  // Dismiss a game invite by roomId and mark as accepted on the server
   const clearGameInvite = useCallback((roomId: string) => {
+    const me = myUsernameRef.current;
+    if (me) {
+      Chat.acceptGameInvite(me, undefined, roomId).catch(() => {});
+    }
     setGameInvites((prev) => prev.filter((inv) => inv.roomId !== roomId));
   }, []);
 
@@ -199,6 +230,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               });
               syncUnreadState();
             }
+          } else if (payload.type === "unread_summary") {
+            // Populate unread map from server-persisted unread messages
+            for (const entry of payload.entries) {
+              // Skip if this chat is currently open
+              if (entry.from === activeChatUserRef.current) {
+                // Mark as read on server since user is already viewing this chat
+                const me = myUsernameRef.current;
+                if (me) {
+                  Chat.markRead(entry.from, me).catch(() => {});
+                }
+                continue;
+              }
+              unreadMapRef.current.set(entry.from, {
+                count: entry.count,
+                lastMessage: entry.lastMessage,
+                lastTimestamp: entry.lastTimestamp,
+              });
+            }
+            syncUnreadState();
           } else if (payload.type === "game_invite") {
             // Track game invite events for rendering in chat
             setGameInviteEvents((prev) => [...prev, payload]);
@@ -210,9 +260,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
                 if (prev.some((inv) => inv.roomId === payload.roomId && inv.from === payload.from)) {
                   return prev;
                 }
-                return [...prev, { from: payload.from, roomId: payload.roomId, timestamp: payload.timestamp }];
+                return [...prev, { id: payload.id, from: payload.from, roomId: payload.roomId, timestamp: payload.timestamp }];
               });
             }
+          } else if (payload.type === "pending_game_invites") {
+            // Restore pending game invites from DB on SSE connect
+            setGameInvites((prev) => {
+              const next = [...prev];
+              for (const inv of payload.invites) {
+                if (!next.some((existing) => existing.roomId === inv.roomId && existing.from === inv.from)) {
+                  next.push({ id: inv.id, from: inv.from, roomId: inv.roomId, timestamp: inv.timestamp });
+                }
+              }
+              return next;
+            });
           }
         } catch {
           // ignore parse errors
@@ -225,6 +286,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       eventSource.addEventListener("user_offline", handleEvent);
       eventSource.addEventListener("message", handleEvent);
       eventSource.addEventListener("game_invite", handleEvent);
+      eventSource.addEventListener("unread_summary", handleEvent);
+      eventSource.addEventListener("pending_game_invites", handleEvent);
 
       eventSource.onerror = () => {
         console.log("[chat] SSE connection error — reconnecting...");

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { Settings, UserPlus, UserCheck, UserX, Loader2, X, Swords, MessageSquare, Gamepad2 } from "lucide-react";
+import { Settings, UserPlus, UserX, Loader2, X, Swords, MessageSquare, Gamepad2 } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useChat } from "@/components/providers/chat-provider";
 import { Players } from "@/lib/backend/players";
@@ -23,7 +23,7 @@ const UserProfilePage = () => {
   const router = useRouter();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser, isAuthenticated } = useAuth();
-  const { sendGameInvite } = useChat();
+  const { sendGameInvite, onlineUsers } = useChat();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [error, setError] = useState("");
@@ -238,7 +238,7 @@ const UserProfilePage = () => {
             variant="outline"
             size="sm"
             onClick={handleInviteToGame}
-            disabled={invitingGame}
+            disabled={invitingGame || !onlineUsers.has(profile.display_name)}
             className="border-neon/30 hover:border-neon hover:text-neon"
           >
             {invitingGame ? (

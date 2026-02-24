@@ -1,10 +1,11 @@
-import { Player, Pong } from "./pong";
+import { Pong } from "./pong";
 import { splashEffect, COLLISION_VFX, resetRoundColor } from "./pongVFX";
-import { Vector3, Color4 } from "@babylonjs/core";
+import { Vector3 } from "@babylonjs/core";
 import { Events } from "./pongEvents";
 import { getNewSpell } from "./pongSpells";
 import { GAME_WS_URL } from "@/lib/backend/config";
 import { switchPlayerHandsPosition } from "./pongAnimations";
+import type { ChatMessage, RoomUser } from "@/components/game/types";
 import {
   sfxCollision, sfxScore, sfxLostRound, sfxVictory, sfxDefeat,
   sfxConnect, sfxDisconnect, sfxPromoted, sfxSeatAvailable,
@@ -22,7 +23,7 @@ export function connectToGameServer(
 
   pong.socket = new WebSocket(wsUrl);
 
-  pong.socket.onopen = (event) => {
+  pong.socket.onopen = () => {
     console.log("✅ Connected to game server");
 
     pong.isSpectator = true;
@@ -57,15 +58,20 @@ export function connectToGameServer(
     console.error("WebSocket error:", error);
   };
 
-  pong.socket.onclose = (event) => {
+  pong.socket.onclose = () => {
     console.log("❌ Disconnected from game server");
     pong.online = false;
   };
 }
 
+interface ServerMessage {
+  type: string;
+  [key: string]: unknown;
+}
+
 function handleServerMessage(
   pong: Pong,
-  message: any,
+  message: ServerMessage,
   onSessionReplaced?: () => void,
 ) {
   switch (message.type) {
@@ -139,7 +145,13 @@ function handleServerMessage(
 
     case "CHAT_MESSAGE":
       if (pong.onChatMessage && message.message) {
-        pong.onChatMessage(message.message);
+        pong.onChatMessage(message.message as ChatMessage);
+      }
+      break;
+
+    case "ROOM_USERS":
+      if (pong.onRoomUsers && message.users) {
+        pong.onRoomUsers(message.users as RoomUser[]);
       }
       break;
 
@@ -150,39 +162,39 @@ function handleServerMessage(
 
 // Handlers for different message types
 
-function handleGameState(pong: Pong, message: any) {
+function handleGameState(pong: Pong, message: ServerMessage) {
   pong.serverGameState = message;
   pong.serverGameStateApplied = false;
 }
 
-function handleSpellUsed(pong: Pong, message: any) {
+function handleSpellUsed(pong: Pong, message: ServerMessage) {
+  const player = message.enemy ? pong.player2 : pong.player1;
 
-  let player;
-  message.enemy ? (player = pong.player2) : (player = pong.player1);
-
-  message.offensive
-    ? player.offensiveSpell.activateSpell()
-    : player.counterSpell.activateSpell();
+  if (message.offensive) {
+    player.offensiveSpell.activateSpell();
+  } else {
+    player.counterSpell.activateSpell();
+  }
 }
 
-function handleSpellSwitched(pong: Pong, message: any) {
+function handleSpellSwitched(pong: Pong, message: ServerMessage) {
+  const player = message.enemy ? pong.player2 : pong.player1;
 
-  let player;
-  message.enemy ? (player = pong.player2) : (player = pong.player1);
-
-  message.offensive
-    ? (player.offensiveSpell = getNewSpell(
-        pong,
-        player,
-        player.offensiveSpell,
-        message.spellName,
-      ))
-    : (player.counterSpell = getNewSpell(
-        pong,
-        player,
-        player.counterSpell,
-        message.spellName,
-      ));
+  if (message.offensive) {
+    player.offensiveSpell = getNewSpell(
+      pong,
+      player,
+      player.offensiveSpell,
+      message.spellName as string,
+    );
+  } else {
+    player.counterSpell = getNewSpell(
+      pong,
+      player,
+      player.counterSpell,
+      message.spellName as string,
+    );
+  }
 
   // Only play SFX for the local player's own spell switch
   if (!pong.isSpectator && !message.enemy) {
@@ -215,12 +227,12 @@ function handleGameReady(pong: Pong) {
   }
 }
 
-function handleGameJoined(pong: Pong, message: any) {
+function handleGameJoined(pong: Pong, message: ServerMessage) {
   console.log("Joined game room:", message.roomId);
   pong.online = true;
   pong.isSpectator = message.role === "spectator";
-  pong.seatsAvailable = message.seatsAvailable ?? 0;
-  pong.playerId = message.playerId ?? null;
+  pong.seatsAvailable = (message.seatsAvailable as number) ?? 0;
+  pong.playerId = (message.playerId as string) ?? null;
   pong.localReady = false;
 
   // Reassigning the keys for online play
@@ -229,10 +241,10 @@ function handleGameJoined(pong: Pong, message: any) {
   pong.player1.connected = true;
   pong.player2.connected = !message.alone;
   if (message.playerName) {
-    pong.player1.name = message.playerName;
+    pong.player1.name = message.playerName as string;
   }
   if (message.opponentName) {
-    pong.player2.name = message.opponentName;
+    pong.player2.name = message.opponentName as string;
   }
 
   if (pong.GUI) {
@@ -300,8 +312,8 @@ function handleGameDisconnection(pong: Pong) {
   }
 }
 
-function handleSeatAvailable(pong: Pong, message: any) {
-  pong.seatsAvailable = message.seatsAvailable ?? 0;
+function handleSeatAvailable(pong: Pong, message: ServerMessage) {
+  pong.seatsAvailable = (message.seatsAvailable as number) ?? 0;
   // Skip spectator UI transition while "MATCH LOST!" is still being shown
   if (pong.matchLostPending) {
     return;
@@ -318,10 +330,10 @@ function handleSeatAvailable(pong: Pong, message: any) {
   }
 }
 
-function handlePlayerPromoted(pong: Pong, message: any) {
+function handlePlayerPromoted(pong: Pong, message: ServerMessage) {
   pong.isSpectator = false;
   pong.localReady = false;
-  pong.playerId = message.playerId ?? pong.playerId;
+  pong.playerId = (message.playerId as string) ?? pong.playerId;
   pong.player1.connected = true;
   pong.player2.connected = true;
   sfxPromoted();
@@ -333,8 +345,8 @@ function handlePlayerPromoted(pong: Pong, message: any) {
   // Reset arena color to default so new player doesn't inherit stale spell colors
   resetRoundColor(pong);
   // Update names from server to fix perspective after promotion
-  pong.player1.name = message.playerName ?? null;
-  pong.player2.name = message.opponentName ?? null;
+  pong.player1.name = (message.playerName as string) ?? null;
+  pong.player2.name = (message.opponentName as string) ?? null;
   if (pong.GUI) {
     pong.GUI.pressReadyUI();
     pong.GUI.hideOtherPlayerReady();
@@ -357,7 +369,7 @@ function handleSeatUnavailable(pong: Pong) {
   }
 }
 
-function handlePlayerReadyStatus(pong: Pong, message: any) {
+function handlePlayerReadyStatus(pong: Pong, message: ServerMessage) {
   if (pong.isSpectator) {
     // Spectators hear ready SFX but don't show player-specific ready UI
     if (message.ready) {
@@ -401,12 +413,12 @@ function handleSessionReplaced(
   }
 }
 
-function handleRoomNotFound(pong: Pong, message: any) {
+function handleRoomNotFound(pong: Pong, message: ServerMessage) {
   console.warn("Room not found:", message.roomId);
   disconnectFromServer(pong);
 }
 
-function handleGameScore(pong: Pong, message: any) {
+function handleGameScore(pong: Pong, message: ServerMessage) {
   console.log("Score!", message);
 
   if (typeof message.player1Score === "number") {
@@ -420,12 +432,12 @@ function handleGameScore(pong: Pong, message: any) {
     if (pong.isSpectator) {
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
     } else if (message.enemy) {
-      pong.GUI.roundLostUI(true, message.player1Score, message.player2Score);
+      pong.GUI.roundLostUI(true, message.player1Score as number, message.player2Score as number);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
       sfxLostRound();
     } else {
-      pong.GUI.roundWonUI(true, message.player1Score, message.player2Score);
+      pong.GUI.roundWonUI(true, message.player1Score as number, message.player2Score as number);
       pong.localReady = false;
       pong.GUI.textFadeOut("WAITING_FOR_READY");
       sfxScore();
@@ -435,7 +447,7 @@ function handleGameScore(pong: Pong, message: any) {
   resetRoundColor(pong);
 }
 
-function handleGameOver(pong: Pong, message: any) {
+function handleGameOver(pong: Pong, message: ServerMessage) {
   console.log("Game Over!", message);
 
   if (typeof message.player1Score === "number") {
@@ -452,10 +464,10 @@ function handleGameOver(pong: Pong, message: any) {
     if (pong.isSpectator) {
       pong.GUI.updateScores(pong.player1.score, pong.player2.score);
     } else if (message.won) {
-      pong.GUI.matchWonUI(message.player1Score, message.player2Score);
+      pong.GUI.matchWonUI(message.player1Score as number, message.player2Score as number);
       sfxVictory();
     } else {
-      pong.GUI.matchLostUI(message.player1Score, message.player2Score);
+      pong.GUI.matchLostUI(message.player1Score as number, message.player2Score as number);
       sfxDefeat();
     }
     pong.GUI.updatePlayerLabels(pong.player1.name, pong.player2.name);
@@ -483,12 +495,12 @@ function handleGameOver(pong: Pong, message: any) {
   resetRoundColor(pong);
 }
 
-function handleCollision(pong: Pong, message: any) {
+function handleCollision(pong: Pong, message: ServerMessage) {
   splashEffect(
     pong.scene,
-    new Vector3(message.x, pong.ball.y, message.z),
-    message.speed,
-    message.angle,
+    new Vector3(message.x as number, pong.ball.y, message.z as number),
+    message.speed as number,
+    message.angle as number,
     COLLISION_VFX,
   );
   sfxCollision();

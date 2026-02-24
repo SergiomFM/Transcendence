@@ -213,6 +213,8 @@
     "inviteLoginRequired": "Inicia sessão para convidar amigos",
     "invite": "Convidar",
     "inviteSent": "Enviado",
+    "alreadyInRoom": "Já está na sala",
+    "waitingForPlayers": "Aguardando jogadores...",
     "inviteToGame": "Convidar para Jogar",
     "inviteSentLabel": "Convite Enviado",
     "inviteReceivedLabel": "Convite de Jogo",

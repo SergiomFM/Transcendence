@@ -213,6 +213,8 @@
     "inviteLoginRequired": "Log in to invite friends",
     "invite": "Invite",
     "inviteSent": "Sent",
+    "alreadyInRoom": "Already in room",
+    "waitingForPlayers": "Waiting for players...",
     "inviteToGame": "Invite to Game",
     "inviteSentLabel": "Game Invite Sent",
     "inviteReceivedLabel": "Game Invite",

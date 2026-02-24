@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { startPong } from "./main";
 import type { PongTranslations } from "./pongUI";
 import type { Pong as PongInstance } from "./pong";
-import type { ChatMessage } from "@/components/game/types";
+import type { ChatMessage, RoomUser } from "@/components/game/types";
 import TouchControls from "./TouchControls";
 
 interface PongProps {
@@ -19,6 +19,7 @@ interface PongProps {
   isFullscreen?: boolean;
   onChatMessage?: (message: ChatMessage) => void;
   onSocketReady?: (send: (content: string) => void) => void;
+  onRoomUsers?: (users: RoomUser[]) => void;
 }
 
 const Pong = ({
@@ -31,10 +32,12 @@ const Pong = ({
   isFullscreen = false,
   onChatMessage,
   onSocketReady,
+  onRoomUsers,
 }: PongProps) => {
   const t = useTranslations();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameWrapperRef = useRef<HTMLDivElement>(null);
+  const pongInstanceRef = useRef<PongInstance | null>(null);
   const [pongInstance, setPongInstance] = useState<PongInstance | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
@@ -43,6 +46,7 @@ const Pong = ({
     const hasTouch =
       "ontouchstart" in window ||
       navigator.maxTouchPoints > 0;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time detection on mount
     setIsTouchDevice(hasTouch);
   }, []);
 
@@ -84,6 +88,7 @@ const Pong = ({
   }, []);
 
   const handlePongReady = useCallback((pong: PongInstance) => {
+    pongInstanceRef.current = pong;
     setPongInstance(pong);
   }, []);
 
@@ -95,12 +100,23 @@ const Pong = ({
 
   // Wire chat message callback from pong engine to React
   useEffect(() => {
-    if (!pongInstance) return;
-    pongInstance.onChatMessage = onChatMessage;
+    const pong = pongInstanceRef.current;
+    if (!pong) return;
+    pong.onChatMessage = onChatMessage;
     return () => {
-      pongInstance.onChatMessage = undefined;
+      pong.onChatMessage = undefined;
     };
   }, [pongInstance, onChatMessage]);
+
+  // Wire room users callback from pong engine to React
+  useEffect(() => {
+    const pong = pongInstanceRef.current;
+    if (!pong) return;
+    pong.onRoomUsers = onRoomUsers;
+    return () => {
+      pong.onRoomUsers = undefined;
+    };
+  }, [pongInstance, onRoomUsers]);
 
   // Expose send function that lazily uses the pong socket
   useEffect(() => {

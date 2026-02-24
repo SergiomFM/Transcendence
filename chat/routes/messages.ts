@@ -11,6 +11,79 @@ export async function findOrCreateUser(username: string): Promise<User> {
   return prisma.user.create({ data: { username } });
 }
 
+/**
+ * Get a summary of unread messages for a user, grouped by sender.
+ * Returns an array of { from: username, count, lastMessage, lastTimestamp }.
+ */
+export async function getUnreadSummary(username: string) {
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user) return [];
+
+  const unreadMessages = await prisma.message.findMany({
+    where: { receiverId: user.id, read: false },
+    include: { sender: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  // Group by sender
+  const grouped = new Map<string, { count: number; lastMessage: string; lastTimestamp: string }>();
+  for (const msg of unreadMessages) {
+    const from = msg.sender.username;
+    const existing = grouped.get(from);
+    grouped.set(from, {
+      count: (existing?.count ?? 0) + 1,
+      lastMessage: msg.content,
+      lastTimestamp: msg.createdAt.toISOString(),
+    });
+  }
+
+  return Array.from(grouped.entries()).map(([from, data]) => ({ from, ...data }));
+}
+
+/**
+ * Mark all messages from a specific sender to a receiver as read.
+ * Returns the number of messages marked.
+ */
+export async function markMessagesRead(senderUsername: string, receiverUsername: string): Promise<number> {
+  const sender = await prisma.user.findUnique({ where: { username: senderUsername } });
+  const receiver = await prisma.user.findUnique({ where: { username: receiverUsername } });
+  if (!sender || !receiver) return 0;
+
+  const result = await prisma.message.updateMany({
+    where: {
+      senderId: sender.id,
+      receiverId: receiver.id,
+      read: false,
+    },
+    data: { read: true },
+  });
+
+  return result.count;
+}
+
+/**
+ * Get all pending (unaccepted) game invites for a user.
+ * Returns shaped objects ready to send to the frontend.
+ */
+export async function getPendingGameInvites(username: string) {
+  const user = await prisma.user.findUnique({ where: { username } });
+  if (!user) return [];
+
+  const invites = await prisma.gameInvite.findMany({
+    where: { receiverId: user.id, accepted: false },
+    include: { sender: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return invites.map((inv) => ({
+    id: inv.id,
+    from: inv.sender.username,
+    to: username,
+    roomId: inv.roomId,
+    timestamp: inv.createdAt.toISOString(),
+  }));
+}
+
 export async function createMessage(
   sender: User,
   receiver: User,
@@ -100,10 +173,11 @@ export async function messageRoutes(fastify: FastifyInstance) {
     // Push to receiver's SSE stream if online (self: false)
     sendToUser(receiverUsername, "message", { ...outgoing, self: false });
 
-    return reply.code(201).send(message);
+    // Return the shaped message so the frontend can use it directly
+    return reply.code(201).send({ ...outgoing, self: true });
   });
 
-  // POST /sendGameInvite — ephemeral game invite, not persisted
+  // POST /sendGameInvite — persist game invite and push via SSE
   fastify.post<{
     Body: { senderUsername: string; receiverUsername: string; roomId: string };
   }>("/sendGameInvite", async (request, reply) => {
@@ -113,12 +187,29 @@ export async function messageRoutes(fastify: FastifyInstance) {
       return reply.code(400).send({ error: "Missing required fields" });
     }
 
+    const sender = await prisma.user.findUnique({ where: { username: senderUsername } });
+    const receiver = await prisma.user.findUnique({ where: { username: receiverUsername } });
+
+    if (!sender || !receiver) {
+      return reply.code(404).send({ error: "User not found" });
+    }
+
+    // Persist the invite
+    const invite = await prisma.gameInvite.create({
+      data: {
+        roomId,
+        senderId: sender.id,
+        receiverId: receiver.id,
+      },
+    });
+
     const outgoing = {
       type: "game_invite" as const,
+      id: invite.id,
       from: senderUsername,
       to: receiverUsername,
       roomId,
-      timestamp: new Date().toISOString(),
+      timestamp: invite.createdAt.toISOString(),
     };
 
     // Echo back to sender
@@ -127,7 +218,38 @@ export async function messageRoutes(fastify: FastifyInstance) {
     // Forward to receiver if online
     const delivered = sendToUser(receiverUsername, "game_invite", { ...outgoing, self: false });
 
-    return reply.code(200).send({ delivered });
+    return reply.code(200).send({ delivered, id: invite.id });
+  });
+
+  // POST /acceptGameInvite — mark a game invite as accepted
+  fastify.post<{
+    Body: { inviteId?: number; roomId?: string; receiverUsername: string };
+  }>("/acceptGameInvite", async (request, reply) => {
+    const { inviteId, roomId, receiverUsername } = request.body;
+
+    if (!receiverUsername || (!inviteId && !roomId)) {
+      return reply.code(400).send({ error: "Missing required fields" });
+    }
+
+    const receiver = await prisma.user.findUnique({ where: { username: receiverUsername } });
+    if (!receiver) {
+      return reply.code(404).send({ error: "User not found" });
+    }
+
+    // Accept by inviteId or by roomId (all pending invites for this room)
+    if (inviteId) {
+      await prisma.gameInvite.updateMany({
+        where: { id: inviteId, receiverId: receiver.id, accepted: false },
+        data: { accepted: true },
+      });
+    } else if (roomId) {
+      await prisma.gameInvite.updateMany({
+        where: { roomId, receiverId: receiver.id, accepted: false },
+        data: { accepted: true },
+      });
+    }
+
+    return reply.code(200).send({ ok: true });
   });
 
   // GET /messages?user=a&otherUser=b&n=50
@@ -164,4 +286,18 @@ export async function messageRoutes(fastify: FastifyInstance) {
       return reply.code(200).send(user);
     },
   );
+
+  // POST /markRead — mark all messages from a sender as read for the receiver
+  fastify.post<{
+    Body: { senderUsername: string; receiverUsername: string };
+  }>("/markRead", async (request, reply) => {
+    const { senderUsername, receiverUsername } = request.body;
+
+    if (!senderUsername || !receiverUsername) {
+      return reply.code(400).send({ error: "Missing required fields" });
+    }
+
+    const count = await markMessagesRead(senderUsername, receiverUsername);
+    return reply.code(200).send({ marked: count });
+  });
 }

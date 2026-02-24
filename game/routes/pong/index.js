@@ -279,6 +279,7 @@ module.exports = async function (fastify, opts) {
 						currentRoom.sendStateToConnection(connection);
 						sendReadyStatusToConnection(currentRoom, connection);
 						notifyGameReadyIfFull(currentRoom);
+						currentRoom.broadcastRoomUsers();
 
 						break;
 					}
@@ -323,18 +324,19 @@ module.exports = async function (fastify, opts) {
 									broadcastReadyStatus(currentRoom);
 									notifySeatAvailability(currentRoom);
 									if (isRoomFull(currentRoom)) {
+								currentRoom.broadcastEvent({
+										type: "GAME_READY",
+									});
+									if (
+										currentRoom.player1.ready &&
+										currentRoom.player2.ready
+									) {
 										currentRoom.broadcastEvent({
-											type: "GAME_READY",
+											type: "GAME_START",
 										});
-										if (
-											currentRoom.player1.ready &&
-											currentRoom.player2.ready
-										) {
-											currentRoom.broadcastEvent({
-												type: "GAME_START",
-											});
-										}
 									}
+								}
+								currentRoom.broadcastRoomUsers();
 								} else {
 									connection.send(
 										JSON.stringify({
@@ -401,6 +403,7 @@ module.exports = async function (fastify, opts) {
 								playerId: 2,
 								ready: false,
 							});
+							currentRoom.broadcastRoomUsers();
 						}
 						break;
 
@@ -448,6 +451,9 @@ module.exports = async function (fastify, opts) {
 					type: "PLAYER_DISCONNECTED",
 				});
 				notifySeatAvailability(currentRoom);
+			}
+			if (currentRoom && !currentRoom.isEmpty()) {
+				currentRoom.broadcastRoomUsers();
 			}
 		});
 
@@ -512,40 +518,7 @@ module.exports = async function (fastify, opts) {
 			return reply.code(404).send({ error: "Room not found" });
 		}
 
-		const users = [];
-
-		// Add players
-		if (room.player1.connection) {
-			users.push({
-				id: room.player1.connection.userId || null,
-				name: room.player1.name || null,
-				avatar: room.player1.connection.userAvatar || null,
-				role: "player",
-				playerSlot: 1,
-			});
-		}
-		if (room.player2.connection) {
-			users.push({
-				id: room.player2.connection.userId || null,
-				name: room.player2.name || null,
-				avatar: room.player2.connection.userAvatar || null,
-				role: "player",
-				playerSlot: 2,
-			});
-		}
-
-		// Add spectators
-		for (const spectator of room.spectators) {
-			users.push({
-				id: spectator.userId || null,
-				name: spectator.userName || null,
-				avatar: spectator.userAvatar || null,
-				role: "spectator",
-				playerSlot: null,
-			});
-		}
-
-		return users;
+		return room.getRoomUsers();
 	});
 
 	// REST endpoint to get chat history for a room
