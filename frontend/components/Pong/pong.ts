@@ -161,6 +161,9 @@ export class Pong {
   pendingWelcome = false;
   matchLostPending = false;
 
+  // Room chat callback (set by React to receive chat messages)
+  onChatMessage?: (message: any) => void;
+
   // Store bound resize handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
   translations: PongTranslations;

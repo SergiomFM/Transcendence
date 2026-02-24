@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { startPong } from "./main";
 import type { PongTranslations } from "./pongUI";
 import type { Pong as PongInstance } from "./pong";
+import type { ChatMessage } from "@/components/game/types";
 import TouchControls from "./TouchControls";
 
 interface PongProps {
@@ -16,6 +17,8 @@ interface PongProps {
   roomId?: string;
   onSessionReplaced?: () => void;
   isFullscreen?: boolean;
+  onChatMessage?: (message: ChatMessage) => void;
+  onSocketReady?: (send: (content: string) => void) => void;
 }
 
 const Pong = ({
@@ -26,6 +29,8 @@ const Pong = ({
   roomId,
   onSessionReplaced,
   isFullscreen = false,
+  onChatMessage,
+  onSocketReady,
 }: PongProps) => {
   const t = useTranslations();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -87,6 +92,27 @@ const Pong = ({
     if (!pongInstance?.GUI) return;
     pongInstance.GUI.setTouchMode(isTouchDevice && isFullscreen);
   }, [pongInstance, isTouchDevice, isFullscreen]);
+
+  // Wire chat message callback from pong engine to React
+  useEffect(() => {
+    if (!pongInstance) return;
+    pongInstance.onChatMessage = onChatMessage;
+    return () => {
+      pongInstance.onChatMessage = undefined;
+    };
+  }, [pongInstance, onChatMessage]);
+
+  // Expose send function that lazily uses the pong socket
+  useEffect(() => {
+    if (!pongInstance || !onSocketReady) return;
+    const send = (content: string) => {
+      const socket = pongInstance.socket;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "CHAT_MESSAGE", content }));
+      }
+    };
+    onSocketReady(send);
+  }, [pongInstance, onSocketReady]);
 
   const pongTranslations = useMemo<PongTranslations>(() => ({
     welcomeWarlock: t("pong.welcomeWarlock"),

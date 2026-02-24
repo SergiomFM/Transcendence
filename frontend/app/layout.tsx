@@ -35,12 +35,12 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body
-        className="antialiased grain flex flex-col min-h-screen"
+        className="antialiased grain flex flex-col h-dvh overflow-hidden"
       >
         <Providers>
           <ServiceWorkerRegistration />
           <Navbar />
-          <main className="flex-1 flex flex-col min-h-0">{children}</main>
+          <main className="flex-1 flex flex-col min-h-0 overflow-y-auto">{children}</main>
           <Footer />
         </Providers>
       </body>

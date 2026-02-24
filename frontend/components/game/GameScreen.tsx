@@ -7,9 +7,11 @@ import { cn } from "@/lib/utils";
 import { Maximize, Minimize, Volume2, Volume1, VolumeX } from "lucide-react";
 import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/config";
 import { GameMode } from "./types";
+import type { ChatMessage } from "./types";
 import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
 import type { VolumeState } from "@/components/Pong/pongAudio";
 import { ConnectedPlayers } from "./ConnectedPlayers";
+import { RoomChat } from "./RoomChat";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -40,6 +42,51 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   const gameContainerRef = useRef<HTMLDivElement>(null);
   const handleSessionReplaced = useCallback(() => setSelectedRoomId(null), []);
 
+  // Room chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const sendChatRef = useRef<((content: string) => void) | null>(null);
+
+  const handleChatMessage = useCallback((message: ChatMessage) => {
+    setChatMessages((prev) => {
+      // Deduplicate by message id
+      if (prev.some((m) => m.id === message.id)) return prev;
+      const next = [...prev, message];
+      // Keep at most 50 messages client-side
+      return next.length > 50 ? next.slice(next.length - 50) : next;
+    });
+  }, []);
+
+  const handleSocketReady = useCallback((send: (content: string) => void) => {
+    sendChatRef.current = send;
+  }, []);
+
+  const handleSendChat = useCallback((content: string) => {
+    sendChatRef.current?.(content);
+  }, []);
+
+  // Fetch chat history when joining a room
+  useEffect(() => {
+    if (!selectedRoomId) {
+      setChatMessages([]);
+      sendChatRef.current = null;
+      return;
+    }
+    let active = true;
+    (async () => {
+      try {
+        const res = await fetch(
+          `${GAME_BACKEND_URL}/pong/rooms/${encodeURIComponent(selectedRoomId)}/chat`
+        );
+        if (!res.ok) return;
+        const history: ChatMessage[] = await res.json();
+        if (active) setChatMessages(history);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { active = false; };
+  }, [selectedRoomId]);
+
   // Auto-select room from initialRoomId (invite link)
   useEffect(() => {
     if (initialRoomId) {
@@ -66,10 +113,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
       "ontouchstart" in window || navigator.maxTouchPoints > 0;
     setIsTouchDevice(hasTouch);
   }, []);
-
-  const isMobileViewport = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia("(max-width: 640px)").matches;
 
   const lockLandscape = async () => {
     if (typeof screen === "undefined" || !screen.orientation) return;
@@ -161,18 +204,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   }, []);
 
   useEffect(() => {
-    if (!canFullscreen) return;
-    if (gameMode !== "multiplayer" || !selectedRoomId) return;
-    if (!isMobileViewport()) return;
-    const raf = requestAnimationFrame(() => {
-      if (gameContainerRef.current) {
-        requestFullscreen(gameContainerRef.current);
-      }
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [gameMode, selectedRoomId]);
-
-  useEffect(() => {
     if (gameMode !== "multiplayer" || selectedRoomId) return;
     let active = true;
     const loadRooms = async () => {
@@ -208,20 +239,25 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   if (gameMode === "multiplayer") {
     if (selectedRoomId) {
       return (
-        <>
-          <div
-            ref={gameContainerRef}
-            className={cn(
-              "game-shell w-full flex flex-col overflow-hidden bg-background",
-              isFullscreen ? "h-[100dvh] relative" : "h-auto"
-            )}
-          >
-            <div
-              className={cn(
-                "flex justify-center items-center overflow-hidden",
-                isFullscreen ? "flex-1 p-0" : "p-4"
-              )}
-            >
+        <div
+          ref={gameContainerRef}
+          className={cn(
+            "game-shell w-full flex flex-col overflow-hidden bg-background",
+            isFullscreen ? "h-[100dvh] relative" : "flex-1 min-h-0"
+          )}
+        >
+           <div
+             className={cn(
+               "w-full flex flex-col overflow-hidden",
+               isFullscreen ? "flex-1" : "shrink-0"
+             )}
+           >
+             <div
+               className={cn(
+                 "flex justify-center overflow-hidden",
+                 isFullscreen ? "flex-1 items-center p-0" : "items-start sm:items-center sm:flex-1 p-2 sm:p-4 min-h-0"
+               )}
+             >
               <div
                 className={cn(
                   "game-frame relative",
@@ -229,7 +265,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                     ? "w-full h-full"
                     : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
                 )}
-                style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
+                style={!isFullscreen ? { aspectRatio: "16 / 9", maxWidth: "calc((100dvh - 10rem) * 16 / 9)" } : undefined}
               >
                 <Suspense
                   fallback={
@@ -246,6 +282,8 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                     roomId={selectedRoomId}
                     onSessionReplaced={handleSessionReplaced}
                     isFullscreen={isFullscreen}
+                    onChatMessage={handleChatMessage}
+                    onSocketReady={handleSocketReady}
                   />
                 </Suspense>
 
@@ -301,28 +339,40 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 >
                   {t("game.backToRooms")}
                 </Button>
-                {/* Desktop: show overlay inside game frame */}
-                {!isTouchDevice && (
+                {/* Desktop (sm+): ConnectedPlayers bottom-left, Chat bottom-right as overlays */}
+                <div className="hidden sm:block">
                   <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen} />
-                )}
+                  <RoomChat
+                    roomId={selectedRoomId}
+                    hidden={isFullscreen}
+                    messages={chatMessages}
+                    onSend={handleSendChat}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+           </div>
 
-          {/* Mobile/touch: show below the game frame, outside fullscreen container */}
-          {isTouchDevice && !isFullscreen && (
-            <div className="px-4 pb-4">
+          {/* Mobile (<sm): show below the game frame, outside fullscreen container */}
+          {!isFullscreen && (
+            <div className="sm:hidden px-2 pb-2 flex flex-col gap-1 flex-1 min-h-0 overflow-hidden">
               <ConnectedPlayers
                 roomId={selectedRoomId}
-                className="static w-full"
+                className="static w-full shrink-0"
+              />
+              <RoomChat
+                roomId={selectedRoomId}
+                messages={chatMessages}
+                onSend={handleSendChat}
+                className="static w-full flex-1 min-h-0 items-start"
               />
             </div>
           )}
-        </>
+        </div>
       );
     }
     return (
-      <div className="w-full h-[90dvh] flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 animate-fade-up">
+      <div className="w-full flex-1 min-h-0 flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 animate-fade-up">
         <div className="text-center max-w-2xl">
           <h1 className="text-2xl sm:text-4xl text-primary text-glow-strong tracking-wide">{t("game.multiplayerRooms")}</h1>
           <p className="text-sm text-muted-foreground mt-2">
@@ -412,14 +462,14 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
     <div
       ref={gameContainerRef}
       className={cn(
-        "game-shell w-full h-[90dvh] flex flex-col overflow-hidden bg-background",
+        "game-shell w-full flex-1 min-h-0 flex flex-col overflow-hidden bg-background",
         isFullscreen && "relative"
       )}
     >
       <div
         className={cn(
-          "flex-1 flex justify-center items-center overflow-hidden",
-          isFullscreen ? "p-0" : "p-4"
+          "flex-1 flex justify-center overflow-hidden",
+          isFullscreen ? "items-center p-0" : "items-start sm:items-center p-2 sm:p-4"
         )}
       >
         <div
@@ -429,7 +479,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
               ? "w-full h-full"
               : "w-full max-h-full border-2 border-border shadow-2xl overflow-hidden"
           )}
-          style={!isFullscreen ? { aspectRatio: "16 / 9" } : undefined}
+          style={!isFullscreen ? { aspectRatio: "16 / 9", maxWidth: "calc((100dvh - 10rem) * 16 / 9)" } : undefined}
         >
           <Suspense
             fallback={

@@ -381,7 +381,7 @@ const SettingsPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center">
         <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
@@ -389,7 +389,7 @@ const SettingsPage = () => {
 
   if (!user) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <p className="text-muted-foreground">
@@ -402,7 +402,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-12">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] items-start justify-center px-4 py-12">
       <div className="w-full max-w-2xl space-y-6 animate-fade-up">
         <div>
           <h1 className="text-3xl font-bold text-glow">{t("settings.title")}</h1>

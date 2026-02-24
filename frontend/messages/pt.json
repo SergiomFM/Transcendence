@@ -218,7 +218,10 @@
     "inviteReceivedLabel": "Convite de Jogo",
     "clickToJoinRoom": "Clica para entrar na sala de jogo",
     "gameInvites": "Convites de Jogo",
-    "joinGame": "Entrar"
+    "joinGame": "Entrar",
+    "roomChat": "Chat",
+    "noMessages": "Sem mensagens ainda",
+    "chatPlaceholder": "Escreve uma mensagem..."
   },
   "chat": {
     "title": "Mensagens",

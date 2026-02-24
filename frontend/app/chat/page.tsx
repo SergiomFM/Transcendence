@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Send, MessageSquare, ArrowLeft, Circle, Gamepad2 } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, Circle, Gamepad2, Bell } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useChat } from "@/components/providers/chat-provider";
 import { Friends } from "@/lib/backend/friends";
@@ -41,6 +41,8 @@ export default function ChatPage() {
     sendMessage: wsSendMessage,
     sendGameInvite,
     gameInviteEvents,
+    unreadEntries,
+    setActiveChatUser,
   } = useChat();
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -77,12 +79,18 @@ export default function ChatPage() {
     }
   }, [friends, searchParams]);
 
-  // ── Clear unread when active friend changes ───────────────────────────────
+  // ── Clear unread and tell the provider which chat is active ─────────────
   useEffect(() => {
     if (activeFriend) {
       clearUnread(activeFriend.display_name);
+      setActiveChatUser(activeFriend.display_name);
+    } else {
+      setActiveChatUser(null);
     }
-  }, [activeFriend, clearUnread]);
+    return () => {
+      setActiveChatUser(null);
+    };
+  }, [activeFriend, clearUnread, setActiveChatUser]);
 
   // ── load history when active friend changes ────────────────────────────────
   useEffect(() => {
@@ -200,7 +208,7 @@ export default function ChatPage() {
   // ── auth guard ─────────────────────────────────────────────────────────────
   if (authLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center">
         <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
@@ -208,7 +216,7 @@ export default function ChatPage() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4">
         <Card className="w-full max-w-md p-6 text-center">
           <p className="text-muted-foreground">{t("chat.notAuthenticated")}</p>
         </Card>
@@ -217,7 +225,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-1 min-h-0 overflow-hidden">
+    <div className="flex flex-1 min-h-0 h-0 overflow-hidden">
       {/* ── sidebar: friend list ──
            Mobile: full-width, hidden when a conversation is open
            Desktop: fixed 16rem sidebar, always visible */}
@@ -239,6 +247,7 @@ export default function ChatPage() {
             friends.map((friend) => {
               const isOnline = onlineUsers.has(friend.display_name);
               const isActive = activeFriend?.user_id === friend.user_id;
+              const unread = unreadEntries.find((e) => e.from === friend.display_name);
               return (
                 <button
                   key={friend.user_id}
@@ -267,10 +276,20 @@ export default function ChatPage() {
                       className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 fill-current ${isOnline ? "text-green-500" : "text-muted-foreground/40"}`}
                     />
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {friend.display_name}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium truncate">
+                        {friend.display_name}
+                      </p>
+                      {unread && unread.count > 0 && (
+                        <span className="shrink-0 flex items-center gap-1 rounded-full bg-neon px-1.5 py-0.5 animate-pulse-glow">
+                          <Bell className="h-2.5 w-2.5 text-background" />
+                          <span className="text-[10px] font-bold text-background leading-none">
+                            {unread.count > 99 ? "99+" : unread.count}
+                          </span>
+                        </span>
+                      )}
+                    </div>
                     {isOnline && (
                       <p className="text-xs text-green-500">{t("chat.online")}</p>
                     )}

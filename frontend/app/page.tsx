@@ -5,7 +5,7 @@ export default async function Home() {
   const t = await getTranslations();
 
   return (
-    <div className="relative flex flex-col gap-10 items-center justify-center px-4 min-h-[calc(100vh-3.5rem)] overflow-hidden">
+    <div className="relative flex flex-col gap-10 items-center justify-center px-4 min-h-[calc(100dvh-3.5rem)] overflow-hidden">
       {/* Scanline overlay */}
       <div className="scanlines absolute inset-0 pointer-events-none" />
 

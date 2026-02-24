@@ -181,7 +181,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="relative flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4">
       {/* Scanline overlay */}
       <div className="scanlines absolute inset-0 pointer-events-none" />
 

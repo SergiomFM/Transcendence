@@ -218,7 +218,10 @@
     "inviteReceivedLabel": "गेम आमंत्रण",
     "clickToJoinRoom": "गेम रूम में शामिल होने के लिए क्लिक करें",
     "gameInvites": "गेम आमंत्रण",
-    "joinGame": "शामिल हों"
+    "joinGame": "शामिल हों",
+    "roomChat": "चैट",
+    "noMessages": "अभी तक कोई संदेश नहीं",
+    "chatPlaceholder": "एक संदेश लिखें..."
   },
   "chat": {
     "title": "संदेश",

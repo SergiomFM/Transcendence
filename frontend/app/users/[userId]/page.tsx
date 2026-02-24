@@ -183,7 +183,7 @@ const UserProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center">
         <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
@@ -191,7 +191,7 @@ const UserProfilePage = () => {
 
   if (error || !profile) {
     return (
-      <div className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
+      <div className="flex min-h-[calc(100dvh-3.5rem)] items-center justify-center px-4">
         <Card className="w-full max-w-md text-center">
           <CardContent className="pt-6">
             <p className="text-destructive">{error || t("profile.notFound")}</p>
@@ -383,7 +383,7 @@ const UserProfilePage = () => {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] items-start justify-center px-4 py-8 sm:py-12">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] items-start justify-center px-4 py-8 sm:py-12">
       <div className="w-full max-w-2xl space-y-6 animate-fade-up">
         <Card className="border-glow">
           <CardContent className="pt-6">

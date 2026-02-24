@@ -218,7 +218,10 @@
     "inviteReceivedLabel": "הזמנה למשחק",
     "clickToJoinRoom": "לחץ להצטרף לחדר המשחק",
     "gameInvites": "הזמנות למשחק",
-    "joinGame": "הצטרף"
+    "joinGame": "הצטרף",
+    "roomChat": "צ'אט",
+    "noMessages": "אין הודעות עדיין",
+    "chatPlaceholder": "הקלד הודעה..."
   },
   "chat": {
     "title": "הודעות",

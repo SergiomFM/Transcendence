@@ -404,6 +404,16 @@ module.exports = async function (fastify, opts) {
 						}
 						break;
 
+					case "CHAT_MESSAGE": {
+						if (currentRoom && data.content) {
+							const chatMsg = currentRoom.addChatMessage(connection, data.content);
+							if (chatMsg) {
+								currentRoom.broadcastChatMessage(chatMsg);
+							}
+						}
+						break;
+					}
+
 					default:
 						console.log("Unknown message type:", data.type);
 				}
@@ -536,5 +546,14 @@ module.exports = async function (fastify, opts) {
 		}
 
 		return users;
+	});
+
+	// REST endpoint to get chat history for a room
+	fastify.get("/rooms/:roomId/chat", async (request, reply) => {
+		const room = roomManager.rooms.get(request.params.roomId);
+		if (!room) {
+			return reply.code(404).send({ error: "Room not found" });
+		}
+		return room.getChatHistory();
 	});
 };

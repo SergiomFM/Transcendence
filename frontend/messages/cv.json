@@ -218,7 +218,10 @@
     "inviteReceivedLabel": "Konvite di Djugu",
     "clickToJoinRoom": "Klike pa entra na sala di djugu",
     "gameInvites": "Konvitis di Djugu",
-    "joinGame": "Entra"
+    "joinGame": "Entra",
+    "roomChat": "Chat",
+    "noMessages": "Sem mensajens ainda",
+    "chatPlaceholder": "Skrebe un mensajen..."
   },
   "chat": {
     "title": "Mensajens",

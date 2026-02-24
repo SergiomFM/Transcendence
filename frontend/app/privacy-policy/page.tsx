@@ -26,7 +26,7 @@ function PrivacyContent() {
   ];
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] py-12 px-4">
+    <div className="min-h-[calc(100dvh-3.5rem)] py-12 px-4">
       <div className="container mx-auto max-w-3xl">
         <div className="border border-border/50 bg-card/50 backdrop-blur-sm p-8 space-y-8">
           {/* Header */}

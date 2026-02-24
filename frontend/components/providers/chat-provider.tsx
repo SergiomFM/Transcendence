@@ -57,6 +57,10 @@ interface ChatContextType {
   gameInviteEvents: GameInviteEvent[];
   /** Whether the WebSocket is connected */
   isConnected: boolean;
+  /** The username of the chat currently being viewed (null if none) */
+  activeChatUser: string | null;
+  /** Set the currently active chat user (suppresses unread for that user) */
+  setActiveChatUser: (username: string | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -77,10 +81,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [gameInvites, setGameInvites] = useState<GameInvite[]>([]);
   const [gameInviteEvents, setGameInviteEvents] = useState<GameInviteEvent[]>([]);
+  const [activeChatUser, setActiveChatUserState] = useState<string | null>(null);
 
   // Track unread messages per sender: username → { count, lastMessage, lastTimestamp }
   const unreadMapRef = useRef<Map<string, UnreadData>>(new Map());
   const wsRef = useRef<WebSocket | null>(null);
+  const activeChatUserRef = useRef<string | null>(null);
 
   const myUsername = user ? (user.alias || user.username) : null;
 
@@ -131,6 +137,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setGameInvites((prev) => prev.filter((inv) => inv.roomId !== roomId));
   }, []);
 
+  // Set the active chat user (keeps ref + state in sync)
+  const setActiveChatUser = useCallback((username: string | null) => {
+    activeChatUserRef.current = username;
+    setActiveChatUserState(username);
+  }, []);
+
   // Global WebSocket connection — connects when user is authenticated
   useEffect(() => {
     if (!myUsername) return;
@@ -172,7 +184,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             });
 
             // Track unread: only count messages from others (not self)
-            if (!payload.self) {
+            // and skip if the chat with this sender is currently open
+            if (!payload.self && payload.from !== activeChatUserRef.current) {
               const from = payload.from;
               const existing = unreadMapRef.current.get(from);
               unreadMapRef.current.set(from, {
@@ -238,6 +251,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         clearGameInvite,
         gameInviteEvents,
         isConnected,
+        activeChatUser,
+        setActiveChatUser,
       }}
     >
       {children}

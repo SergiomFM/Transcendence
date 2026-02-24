@@ -26,6 +26,10 @@ class GameRoom {
 		this.player2.connection = null;
 		this.spectators = new Set();
 
+		// In-room chat message buffer (last N messages)
+		this.chatMessages = [];
+		this.maxChatMessages = 50;
+
 		this.physics = new Physics(this);
 		this.events = new EventEmitter();
 
@@ -927,6 +931,71 @@ class GameRoom {
 				console.error("Error sending event to player2:", error);
 			}
 		}
+	}
+
+	addChatMessage(connection, content) {
+		// Sanitize and validate
+		if (!content || typeof content !== "string") return null;
+		const text = content.trim().slice(0, 200);
+		if (text.length === 0) return null;
+
+		// Determine sender info
+		const role = connection.role || "spectator";
+		const name = connection.userName || "Anonymous";
+		const avatar = connection.userAvatar || null;
+		const userId = connection.userId || null;
+
+		const message = {
+			id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+			userId,
+			name,
+			avatar,
+			role,
+			content: text,
+			timestamp: Date.now(),
+		};
+
+		this.chatMessages.push(message);
+		if (this.chatMessages.length > this.maxChatMessages) {
+			this.chatMessages.shift();
+		}
+
+		return message;
+	}
+
+	broadcastChatMessage(message) {
+		const payload = JSON.stringify({
+			type: "CHAT_MESSAGE",
+			message,
+		});
+
+		if (this.player1.connection) {
+			try {
+				this.player1.connection.send(payload);
+			} catch (error) {
+				console.error("Error sending CHAT_MESSAGE to player1:", error);
+			}
+		}
+
+		if (this.player2.connection) {
+			try {
+				this.player2.connection.send(payload);
+			} catch (error) {
+				console.error("Error sending CHAT_MESSAGE to player2:", error);
+			}
+		}
+
+		for (const spectator of this.spectators) {
+			try {
+				spectator.send(payload);
+			} catch (error) {
+				console.error("Error sending CHAT_MESSAGE to spectator:", error);
+			}
+		}
+	}
+
+	getChatHistory() {
+		return this.chatMessages;
 	}
 
 	cleanup() {

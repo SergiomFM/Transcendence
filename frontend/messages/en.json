@@ -218,7 +218,10 @@
     "inviteReceivedLabel": "Game Invite",
     "clickToJoinRoom": "Click to join the game room",
     "gameInvites": "Game Invites",
-    "joinGame": "Join"
+    "joinGame": "Join",
+    "roomChat": "Chat",
+    "noMessages": "No messages yet",
+    "chatPlaceholder": "Type a message..."
   },
   "chat": {
     "title": "Messages",

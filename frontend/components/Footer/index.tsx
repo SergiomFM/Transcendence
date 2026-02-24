@@ -8,7 +8,7 @@ export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="w-full border-t border-border/50 bg-background/80 backdrop-blur-md py-4 px-4 mt-auto">
+    <footer className="w-full shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-md py-4 px-4">
       <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>© {year} Transcendence. {t("rights")}</span>
         <div className="flex items-center gap-4">

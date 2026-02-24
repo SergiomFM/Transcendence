@@ -137,6 +137,12 @@ function handleServerMessage(
       handleCollision(pong, message);
       break;
 
+    case "CHAT_MESSAGE":
+      if (pong.onChatMessage && message.message) {
+        pong.onChatMessage(message.message);
+      }
+      break;
+
     default:
       console.log("Unknown message type:", message.type);
   }
