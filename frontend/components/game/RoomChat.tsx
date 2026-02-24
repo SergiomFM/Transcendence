@@ -24,7 +24,11 @@ export function RoomChat({
   onSend,
 }: RoomChatProps) {
   const t = useTranslations("game");
-  const [collapsed, setCollapsed] = useState(true);
+  // Start expanded on mobile, collapsed on desktop
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 768;
+  });
   const [input, setInput] = useState("");
   const [unread, setUnread] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -118,6 +122,10 @@ export function RoomChat({
           <div className="flex items-center gap-2 border-t border-neon-muted/20 p-2">
             <input
               type="text"
+              name="chat-message"
+              autoComplete="off"
+              autoCorrect="off"
+              data-form-type="other"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

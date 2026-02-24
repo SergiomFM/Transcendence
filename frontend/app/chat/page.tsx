@@ -446,12 +446,15 @@ export default function ChatPage() {
             <div className="px-3 sm:px-4 py-3 border-t border-border/50 shrink-0 flex gap-2">
               <Input
                 ref={inputRef}
+                name="chat-message"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={t("chat.inputPlaceholder")}
                 className="flex-1"
                 autoComplete="off"
+                autoCorrect="off"
+                data-form-type="other"
               />
               <Button
                 size="icon"
