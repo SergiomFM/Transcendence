@@ -3,6 +3,51 @@ const { GameRoomManager, GameRoom } = require("../../src/game");
 
 const USERS_BACKEND_URL = process.env.USERS_BACKEND_URL;
 
+// --- Guest identity generation ---
+
+const GUEST_ADJECTIVES = [
+	"Shadow", "Mystic", "Cosmic", "Phantom", "Arcane",
+	"Storm", "Neon", "Pixel", "Cyber", "Void",
+	"Crystal", "Ember", "Frost", "Thunder", "Solar",
+	"Lunar", "Iron", "Golden", "Silent", "Swift",
+];
+
+const GUEST_NOUNS = [
+	"Phoenix", "Dragon", "Wizard", "Knight", "Rogue",
+	"Warlock", "Serpent", "Falcon", "Wolf", "Raven",
+	"Titan", "Sphinx", "Golem", "Griffin", "Specter",
+	"Viper", "Hawk", "Panther", "Jaguar", "Lynx",
+];
+
+function generateGuestName() {
+	const adj = GUEST_ADJECTIVES[Math.floor(Math.random() * GUEST_ADJECTIVES.length)];
+	const noun = GUEST_NOUNS[Math.floor(Math.random() * GUEST_NOUNS.length)];
+	const num = Math.floor(Math.random() * 100);
+	return `${adj}${noun}${num}`;
+}
+
+function generateGuestAvatar(name) {
+	// Simple hash from the name to derive deterministic colors
+	let hash = 0;
+	for (let i = 0; i < name.length; i++) {
+		hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+	}
+	const hue = Math.abs(hash) % 360;
+	const bg = `hsl(${hue}, 60%, 30%)`;
+	const fg = `hsl(${(hue + 140) % 360}, 70%, 70%)`;
+	const initials = name.replace(/[0-9]/g, "").slice(0, 2).toUpperCase();
+
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+		<rect width="128" height="128" fill="${bg}" rx="8"/>
+		<text x="64" y="72" font-family="monospace" font-size="48" font-weight="bold"
+			  fill="${fg}" text-anchor="middle" dominant-baseline="middle">${initials}</text>
+	</svg>`;
+
+	return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+}
+
+// --- End guest identity generation ---
+
 async function resolveUserIdFromSession(req) {
 	const cookie = req.headers?.cookie;
 	if (!cookie) return null;
@@ -125,6 +170,13 @@ module.exports = async function (fastify, opts) {
 							connection.userId = session?.id || null;
 							connection.userName = session?.displayName || null;
 							connection.userAvatar = session?.avatar || null;
+						}
+
+						// Generate guest identity for unauthenticated users
+						if (!connection.userId && !connection.userName) {
+							connection.userName = generateGuestName();
+							connection.userAvatar = generateGuestAvatar(connection.userName);
+							connection.isGuest = true;
 						}
 
 						kickedPreviousSession = false;
