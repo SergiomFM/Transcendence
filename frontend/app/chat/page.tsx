@@ -457,7 +457,9 @@ export default function ChatPage() {
             <div className="px-3 sm:px-4 py-3 border-t border-border/50 shrink-0 flex gap-2">
               <Input
                 ref={inputRef}
+                type="text"
                 name="chat-message"
+                inputMode="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
@@ -465,7 +467,10 @@ export default function ChatPage() {
                 className="flex-1"
                 autoComplete="off"
                 autoCorrect="off"
+                autoCapitalize="off"
                 data-form-type="other"
+                data-lpignore="true"
+                data-1p-ignore="true"
               />
               <Button
                 size="icon"

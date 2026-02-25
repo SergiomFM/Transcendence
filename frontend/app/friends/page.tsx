@@ -327,11 +327,18 @@ const FriendsPage = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
+            type="search"
+            inputMode="search"
             className="pl-9 pr-4"
             placeholder={t("friends.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            data-form-type="other"
+            data-lpignore="true"
+            data-1p-ignore="true"
           />
           {searchLoading && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />

@@ -90,6 +90,7 @@ const ChangePasswordSection = () => {
             <Input
               id="currentPassword"
               type="password"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               disabled={isLoading}
@@ -100,6 +101,7 @@ const ChangePasswordSection = () => {
             <Input
               id="newPassword"
               type="password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={isLoading}
@@ -112,6 +114,7 @@ const ChangePasswordSection = () => {
             <Input
               id="confirmNewPassword"
               type="password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}

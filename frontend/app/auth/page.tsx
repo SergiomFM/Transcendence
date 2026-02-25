@@ -238,6 +238,7 @@ export default function AuthPage() {
                 <Input
                   id="username"
                   type="text"
+                  autoComplete="username"
                   placeholder={t("auth.placeholderUsername")}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -249,6 +250,7 @@ export default function AuthPage() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder={t("auth.placeholderEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -271,6 +273,7 @@ export default function AuthPage() {
                 <Input
                   id="signup-password"
                   type="password"
+                  autoComplete="new-password"
                   value={signupPassword}
                   onChange={(e) => setSignupPassword(e.target.value)}
                   disabled={isLoading}
@@ -283,6 +286,7 @@ export default function AuthPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
                   value={confirmPassword}
                    onChange={(e) => setConfirmPassword(e.target.value)}
                   disabled={isLoading}
@@ -350,6 +354,7 @@ export default function AuthPage() {
                 <Input
                   id="identifier"
                   type="text"
+                  autoComplete="username"
                   placeholder={t("auth.placeholderEmail")}
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
@@ -361,6 +366,7 @@ export default function AuthPage() {
                 <Input
                   id="login-password"
                   type="password"
+                  autoComplete="current-password"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   disabled={isLoading}

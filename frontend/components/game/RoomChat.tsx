@@ -126,10 +126,14 @@ export function RoomChat({
           <div className="flex items-center gap-2 border-t border-neon-muted/20 p-2">
             <input
               type="text"
+              inputMode="text"
               name="chat-message"
               autoComplete="off"
               autoCorrect="off"
+              autoCapitalize="off"
               data-form-type="other"
+              data-lpignore="true"
+              data-1p-ignore="true"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
