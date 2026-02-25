@@ -305,9 +305,9 @@ export default function AuthPage() {
                   className="text-sm font-normal leading-snug cursor-pointer"
                 >
                   {t("auth.termsAgreement")}{" "}
-                  <a href="/terms" target="_blank" className="underline hover:text-primary">{t("auth.termsLink")}</a>
+                  <a href="/terms-of-service" target="_blank" className="underline hover:text-primary">{t("auth.termsLink")}</a>
                   {" "}{t("auth.andThe")}{" "}
-                  <a href="/privacy" target="_blank" className="underline hover:text-primary">{t("auth.privacyLink")}</a>
+                  <a href="/privacy-policy" target="_blank" className="underline hover:text-primary">{t("auth.privacyLink")}</a>
                 </label>
               </div>
             </CardContent>
