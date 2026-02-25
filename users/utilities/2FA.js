@@ -1,5 +1,4 @@
 import speakeasy from "speakeasy";
-import argon2 from "argon2";
 import crypto from "node:crypto";
 
 //speakeasy consists of generating a TOTP, Time based One Time Password
@@ -28,7 +27,7 @@ export async function generateRecoveryCodes(count = 8){
 
 	for (let i = 0; i < count; i++) {
 		const code = crypto.randomBytes(5).toString("hex");
-		const hash = await argon2.hash(code);
+		const hash = await Bun.password.hash(code, { algorithm: "argon2id" });
 
 		codes.push({
 			code,
@@ -43,7 +42,7 @@ export async function generateRecoveryCodes(count = 8){
 //verify recovery codes
 export async function verifyRecoveryCode(code, storedCodes) {
 	for (const entry of storedCodes) {
-		const valid = await argon2.verify(entry.code_hash, code);
+		const valid = await Bun.password.verify(code, entry.code_hash);
 		if (valid) {
 			if (entry.used) return { alreadyUsed: true };
 			return {

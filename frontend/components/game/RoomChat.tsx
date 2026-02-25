@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Gamepad2, Eye, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/providers/auth-provider";
+import { UserPreviewModal } from "./UserPreviewModal";
 import type { ChatMessage } from "./types";
 
 interface RoomChatProps {
@@ -23,6 +24,7 @@ export function RoomChat({
   onSend,
 }: RoomChatProps) {
   const t = useTranslations("game");
+  const { user: currentUser } = useAuth();
   // Start expanded on mobile, collapsed on desktop
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -30,6 +32,7 @@ export function RoomChat({
   });
   const [input, setInput] = useState("");
   const [unread, setUnread] = useState(0);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef(messages.length);
 
@@ -87,6 +90,7 @@ export function RoomChat({
     <div className={cn("absolute bottom-4 right-4 z-50 select-none flex flex-col items-end overflow-hidden", className)}>
       <button
         onClick={() => setCollapsed((c) => !c)}
+        onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-2 px-3 py-1.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer shrink-0"
       >
         <span>{t("roomChat")}</span>
@@ -113,7 +117,7 @@ export function RoomChat({
               </p>
             )}
             {messages.map((msg) => (
-              <ChatEntry key={msg.id} message={msg} />
+              <ChatEntry key={msg.id} message={msg} currentUserId={currentUser?.id} onClickUser={setPreviewUserId} />
             ))}
             <div ref={messagesEndRef} />
           </div>
@@ -135,6 +139,7 @@ export function RoomChat({
             />
             <button
               onClick={handleSend}
+              onMouseDown={(e) => e.preventDefault()}
               disabled={!input.trim()}
               className="p-1.5 text-neon/60 hover:text-neon disabled:text-muted-foreground/30 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
@@ -143,12 +148,28 @@ export function RoomChat({
           </div>
         </div>
       )}
+
+      <UserPreviewModal
+        userId={previewUserId}
+        open={!!previewUserId}
+        onOpenChange={(open) => { if (!open) setPreviewUserId(null); }}
+      />
     </div>
   );
 }
 
-function ChatEntry({ message }: { message: ChatMessage }) {
+function ChatEntry({
+  message,
+  currentUserId,
+  onClickUser,
+}: {
+  message: ChatMessage;
+  currentUserId?: string;
+  onClickUser: (userId: string) => void;
+}) {
   const isPlayer = message.role === "player";
+  const isSelf = !!(currentUserId && message.userId === currentUserId);
+  const isClickable = !!(message.userId && !isSelf);
 
   const avatar = (
     <Avatar className="h-6 w-6 shrink-0 mt-0.5">
@@ -181,18 +202,18 @@ function ChatEntry({ message }: { message: ChatMessage }) {
 
   return (
     <div className="flex items-start gap-2 px-1">
-      {message.userId ? (
-        <Link href={`/users/${message.userId}`} className="shrink-0 hover:opacity-80 transition-opacity">
+      {isClickable ? (
+        <button onClick={() => onClickUser(message.userId!)} className="shrink-0 hover:opacity-80 transition-opacity cursor-pointer">
           {avatar}
-        </Link>
+        </button>
       ) : (
         avatar
       )}
       <div className="min-w-0 flex-1">
-        {message.userId ? (
-          <Link href={`/users/${message.userId}`} className="hover:opacity-80 transition-opacity">
+        {isClickable ? (
+          <button onClick={() => onClickUser(message.userId!)} className="hover:opacity-80 transition-opacity cursor-pointer">
             {nameAndIcon}
-          </Link>
+          </button>
         ) : (
           nameAndIcon
         )}

@@ -12,9 +12,10 @@ class GameRoom {
 	constructor(roomId) {
 		this.roomId = roomId;
 		this.createdAt = Date.now();
-		this.running = false;
+		this._running = false;
 		this.loaded = false;
 		this.startingRound = false;
+		this.onRunningChanged = null; // callback set by route layer
 
 		this.initializeBall();
 
@@ -47,6 +48,18 @@ class GameRoom {
 		// Broadcast throttling - decouple broadcast rate from physics tick rate
 		this.lastPlayerBroadcast = 0;
 		this.lastSpectatorBroadcast = 0;
+	}
+
+	get running() {
+		return this._running;
+	}
+
+	set running(value) {
+		const changed = this._running !== value;
+		this._running = value;
+		if (changed && this.onRunningChanged) {
+			this.onRunningChanged();
+		}
 	}
 
 	initializeBall() {
@@ -1155,6 +1168,7 @@ class GameRoomManager {
 		this.rooms = new Map();
 		this.waitingPlayers = [];
 		this.activeUsers = new Map();
+		this.onRoomChanged = null; // callback set by route layer
 	}
 
 	getActiveUserConnection(userId) {
@@ -1191,6 +1205,9 @@ class GameRoomManager {
 		// Create a new room and join as spectator
 		const roomId = this.generateRoomId();
 		const room = new GameRoom(roomId);
+		if (this.onRoomChanged) {
+			room.onRunningChanged = this.onRoomChanged;
+		}
 		this.rooms.set(roomId, room);
 
 		room.addSpectator(connection);

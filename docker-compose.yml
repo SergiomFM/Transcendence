@@ -66,6 +66,7 @@ services:
       NODE_ENV: production
       FRONTEND_URL: https://transcendence.pvcordeiro.dev
       GOOGLE_CALLBACK_URL: https://transcendence.pvcordeiro.dev/api/users/auth/google/callback
+      CHAT_BACKEND_URL: http://chat:3000
     env_file:
       - users/.env
     volumes:
@@ -74,15 +75,16 @@ services:
       - prod
 
   users-dev:
-    image: node:22.18.0
+    image: oven/bun:1
     working_dir: /app
-    command: sh -c "npm install && npx prisma generate && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && npm start"
+    command: sh -c "apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/* && bun install && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && bun run start"
     ports:
       - "3001:3000"
     environment:
       NODE_ENV: development
       FRONTEND_URL: http://localhost:3000
       GOOGLE_CALLBACK_URL: http://localhost:3001/auth/google/callback
+      CHAT_BACKEND_URL: http://chat-dev:3000
     env_file:
       - users/.env
     volumes:

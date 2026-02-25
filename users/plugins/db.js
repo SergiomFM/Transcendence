@@ -1,5 +1,5 @@
 import fp from 'fastify-plugin'
-import Database from 'better-sqlite3'
+import { Database } from 'bun:sqlite'
 import fs from 'fs' //filesystem
 import path from 'path' //path
 
@@ -18,7 +18,7 @@ async function dbPlugin(fastify){
 	//open the database file if it exists, create one if it doesn't
 	
 	const db = new Database(dbPath)
-	db.pragma('journal_mode = WAL') 
+	db.exec('PRAGMA journal_mode = WAL')
 	//"write ahead log", main advantage is that concurrent read/writes are now accepted
 	//and makes queries faster by not locking the database during inserts
 

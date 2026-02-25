@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, Volume2, Volume1, VolumeX } from "lucide-react";
-import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/config";
+import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL, LOBBY_WS_URL } from "@/lib/backend/config";
 import { GameMode } from "./types";
 import type { ChatMessage, RoomUser } from "./types";
 import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
@@ -25,7 +25,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(true);
-  const [_isTouchDevice, setIsTouchDevice] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [muted, setMuted] = useState<VolumeState>(getVolumeState());
   const [rooms, setRooms] = useState<
     Array<{
@@ -131,7 +131,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
         "landscape"
       );
     } catch (err) {
-      console.warn("Unable to lock orientation:", err);
     }
   };
 
@@ -141,7 +140,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
     try {
       (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
     } catch (err) {
-      console.warn("Unable to unlock orientation:", err);
     }
   };
 
@@ -213,34 +211,40 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
 
   useEffect(() => {
     if (gameMode !== "multiplayer" || selectedRoomId) return;
-    let active = true;
-    const loadRooms = async () => {
-      setRoomsLoading(true);
+
+    setRoomsLoading(true);
+    setRoomsError(null);
+
+    const ws = new WebSocket(LOBBY_WS_URL);
+
+    ws.onopen = () => {
+      setRoomsLoading(false);
       setRoomsError(null);
+    };
+
+    ws.onmessage = (event) => {
       try {
-        const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`);
-        if (!response.ok) {
-          throw new Error(t("game.failedToLoadRooms"));
-        }
-        const data = await response.json();
-        if (active) {
-          setRooms(data);
-        }
-      } catch (_error) {
-        if (active) {
-          setRoomsError(t("game.unableToLoadRooms"));
-        }
-      } finally {
-        if (active) {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "ROOM_LIST") {
+          setRooms(msg.rooms);
           setRoomsLoading(false);
         }
+      } catch {
+        // ignore malformed messages
       }
     };
-    loadRooms();
-    const interval = setInterval(loadRooms, 3000);
+
+    ws.onerror = () => {
+      setRoomsError(t("game.unableToLoadRooms"));
+      setRoomsLoading(false);
+    };
+
+    ws.onclose = () => {
+      // Connection lost — not necessarily an error if we're navigating away
+    };
+
     return () => {
-      active = false;
-      clearInterval(interval);
+      ws.close();
     };
   }, [gameMode, selectedRoomId, t]);
 
@@ -299,6 +303,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 {canFullscreen && (
                 <button
                   onClick={toggleFullscreen}
+                  onMouseDown={(e) => e.preventDefault()}
                   className="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none"
                   onContextMenu={(event) => event.preventDefault()}
                   title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
@@ -312,6 +317,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 )}
                 <button
                   onClick={handleToggleMute}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={cn(
                     "absolute top-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none",
                     canFullscreen ? "right-[3.75rem]" : "right-4"
@@ -345,10 +351,10 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 </button>
                 {/* Desktop (sm+): ConnectedPlayers bottom-left, Chat bottom-right as overlays */}
                 <div className="hidden sm:block">
-                  <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen} users={roomUsers} />
+                  <ConnectedPlayers roomId={selectedRoomId} hidden={isTouchDevice && isFullscreen} users={roomUsers} />
                   <RoomChat
                     roomId={selectedRoomId}
-                    hidden={isFullscreen}
+                    hidden={isTouchDevice && isFullscreen}
                     messages={chatMessages}
                     onSend={handleSendChat}
                   />

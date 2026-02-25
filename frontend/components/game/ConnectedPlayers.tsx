@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Gamepad2, Eye, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { FriendInviteModal } from "./FriendInviteModal";
+import { UserPreviewModal } from "./UserPreviewModal";
 import type { RoomUser } from "./types";
 
 interface ConnectedPlayersProps {
@@ -20,9 +20,10 @@ interface ConnectedPlayersProps {
 
 export function ConnectedPlayers({ roomId, hidden, className, users = [] }: ConnectedPlayersProps) {
   const t = useTranslations("game");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user: currentUser } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
   const players = users.filter((u) => u.role === "player");
   const spectators = users.filter((u) => u.role === "spectator");
@@ -38,6 +39,7 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
     >
       <button
         onClick={() => setCollapsed((c) => !c)}
+        onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-2 px-3 py-1.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer"
       >
         <span>{t("connectedPlayers")}</span>
@@ -62,10 +64,10 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
           ) : (
             <>
               {players.map((user, i) => (
-                <PlayerEntry key={`p-${user.id || i}`} user={user} t={t} />
+                <PlayerEntry key={`p-${user.id || i}`} user={user} t={t} currentUserId={currentUser?.id} onClickUser={setPreviewUserId} />
               ))}
               {spectators.map((user, i) => (
-                <PlayerEntry key={`s-${user.id || i}`} user={user} t={t} />
+                <PlayerEntry key={`s-${user.id || i}`} user={user} t={t} currentUserId={currentUser?.id} onClickUser={setPreviewUserId} />
               ))}
             </>
           )}
@@ -75,11 +77,12 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
       {isAuthenticated && (
         <>
           <Button
-            size="sm"
-            variant="ghost"
-            className="mt-1.5 w-full text-xs text-neon/70 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm"
-            onClick={() => setInviteOpen(true)}
-          >
+             size="sm"
+             variant="ghost"
+             className="mt-1.5 w-full text-xs text-neon/70 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm"
+             onClick={() => setInviteOpen(true)}
+             onMouseDown={(e) => e.preventDefault()}
+           >
             <UserPlus className="h-3.5 w-3.5 mr-1.5" />
             {t("inviteFriend")}
           </Button>
@@ -90,6 +93,12 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
           />
         </>
       )}
+
+      <UserPreviewModal
+        userId={previewUserId}
+        open={!!previewUserId}
+        onOpenChange={(open) => { if (!open) setPreviewUserId(null); }}
+      />
     </div>
   );
 }
@@ -97,13 +106,19 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
 function PlayerEntry({
   user,
   t,
+  currentUserId,
+  onClickUser,
 }: {
   user: RoomUser;
   t: ReturnType<typeof useTranslations>;
+  currentUserId?: string;
+  onClickUser: (userId: string) => void;
 }) {
   const isPlayer = user.role === "player";
+  const isSelf = !!(currentUserId && user.id === currentUserId);
   const displayName =
     user.name || (isPlayer ? `${t("player")} ${user.playerSlot}` : t("spectator"));
+  const isClickable = !!(user.id && !isSelf);
 
   const avatarAndName = (
     <>
@@ -135,13 +150,13 @@ function PlayerEntry({
           : "border-muted-foreground/20"
       )}
     >
-      {user.id ? (
-        <Link
-          href={`/users/${user.id}`}
-          className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
+      {isClickable ? (
+        <button
+          onClick={() => onClickUser(user.id!)}
+          className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
         >
           {avatarAndName}
-        </Link>
+        </button>
       ) : (
         <div className="flex items-center gap-2.5 min-w-0">
           {avatarAndName}

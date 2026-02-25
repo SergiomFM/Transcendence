@@ -1,5 +1,6 @@
 import { hashPassword, verifyPassword } from "../utilities/password_hasher.js";
 import { validateUsername, validatePassword, validateEmail } from "../utilities/validation_regex.js";
+import { registerChatUser } from "../utilities/chat_register.js";
 import crypto from 'node:crypto'
 
 
@@ -62,6 +63,8 @@ export default async function localAuthRoutes(fastify) {
 
 		await request.login(user)
 
+		registerChatUser(user)
+
 		reply.send({ message: 'Registration successful!', 
 			user: {
 				id : user.id,
@@ -103,6 +106,8 @@ export default async function localAuthRoutes(fastify) {
 
 		await request.login(user)
 	
+		registerChatUser(user)
+
 		reply.send({ message: 'Logged in successfully!', 
 			user: {
 				id : user.id,

@@ -1,18 +1,28 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { GameMenu, GameScreen, GameMode } from "@/components/game";
 
 export default function PongPage() {
   const searchParams = useSearchParams();
-  const roomParam = useMemo(() => searchParams.get("room"), [searchParams]);
+  const roomParam = searchParams.get("room");
+  const prevRoomParam = useRef(roomParam);
   const [gameMode, setGameMode] = useState<GameMode>(() =>
     roomParam ? "multiplayer" : "menu"
   );
   const [initialRoomId, setInitialRoomId] = useState<string | null>(
     () => roomParam
   );
+
+  // React to search param changes (e.g. clicking an invite while already on /pong)
+  useEffect(() => {
+    if (roomParam && roomParam !== prevRoomParam.current) {
+      setGameMode("multiplayer");
+      setInitialRoomId(roomParam);
+    }
+    prevRoomParam.current = roomParam;
+  }, [roomParam]);
 
   useEffect(() => {
     const handleReset = () => {

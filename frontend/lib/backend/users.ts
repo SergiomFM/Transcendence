@@ -34,7 +34,6 @@ export const Users = {
 
   googleOAuthUrl: () => `${USERS_BACKEND_URL}/auth/google`,
 
-  // TODO: endpoint POST /me/password not yet implemented on backend
   changePassword: (currentPassword: string, newPassword: string) =>
     usersBackend("me/password", Method.POST, { currentPassword, newPassword }),
 

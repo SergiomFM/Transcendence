@@ -89,6 +89,37 @@ async function resolveUserIdFromSession(req) {
 
 // Global room manager
 const roomManager = new GameRoomManager();
+roomManager.onRoomChanged = () => broadcastRoomList();
+
+// --- WebSocket infrastructure for room list updates ---
+const lobbyClients = new Set();
+
+function serializeRooms() {
+	return Array.from(roomManager.rooms.values()).map((room) => ({
+		id: room.roomId,
+		players:
+			(room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
+		spectators: room.spectators.size,
+		running: room.running,
+		score: {
+			player1: room.player1.score,
+			player2: room.player2.score,
+		},
+	}));
+}
+
+function broadcastRoomList() {
+	if (lobbyClients.size === 0) return;
+	const msg = JSON.stringify({ type: "ROOM_LIST", rooms: serializeRooms() });
+	for (const ws of lobbyClients) {
+		if (ws.readyState === 1) { // WebSocket.OPEN
+			ws.send(msg);
+		} else {
+			lobbyClients.delete(ws);
+		}
+	}
+}
+// --- End lobby WebSocket infrastructure ---
 
 module.exports = async function (fastify, opts) {
 	// WebSocket endpoint for Pong game
@@ -280,6 +311,7 @@ module.exports = async function (fastify, opts) {
 						sendReadyStatusToConnection(currentRoom, connection);
 						notifyGameReadyIfFull(currentRoom);
 						currentRoom.broadcastRoomUsers();
+						broadcastRoomList();
 
 						break;
 					}
@@ -337,6 +369,7 @@ module.exports = async function (fastify, opts) {
 									}
 								}
 								currentRoom.broadcastRoomUsers();
+								broadcastRoomList();
 								} else {
 									connection.send(
 										JSON.stringify({
@@ -404,6 +437,7 @@ module.exports = async function (fastify, opts) {
 								ready: false,
 							});
 							currentRoom.broadcastRoomUsers();
+							broadcastRoomList();
 						}
 						break;
 
@@ -455,6 +489,7 @@ module.exports = async function (fastify, opts) {
 			if (currentRoom && !currentRoom.isEmpty()) {
 				currentRoom.broadcastRoomUsers();
 			}
+			broadcastRoomList();
 		});
 
 		// Handle errors
@@ -490,24 +525,34 @@ module.exports = async function (fastify, opts) {
 
 	// REST endpoint to list rooms for UI
 	fastify.get("/rooms", async (request, reply) => {
-		return Array.from(roomManager.rooms.values()).map((room) => ({
-			id: room.roomId,
-			players:
-				(room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
-			spectators: room.spectators.size,
-			running: room.running,
-			score: {
-				player1: room.player1.score,
-				player2: room.player2.score,
-			},
-		}));
+		return serializeRooms();
+	});
+
+	// WebSocket endpoint for real-time room list updates (lobby)
+	fastify.get("/rooms/ws", { websocket: true }, (connection, req) => {
+		lobbyClients.add(connection);
+		console.log(`[lobby] client connected (total: ${lobbyClients.size})`);
+
+		// Send current room list immediately
+		connection.send(JSON.stringify({ type: "ROOM_LIST", rooms: serializeRooms() }));
+
+		connection.on("close", () => {
+			lobbyClients.delete(connection);
+			console.log(`[lobby] client disconnected (total: ${lobbyClients.size})`);
+		});
+
+		connection.on("error", () => {
+			lobbyClients.delete(connection);
+		});
 	});
 
 	// REST endpoint to create a room
 	fastify.post("/rooms", async (request, reply) => {
 		const roomId = roomManager.generateRoomId();
 		const room = new GameRoom(roomId);
+		room.onRunningChanged = broadcastRoomList;
 		roomManager.rooms.set(roomId, room);
+		broadcastRoomList();
 		return { id: roomId };
 	});
 

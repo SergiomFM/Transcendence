@@ -90,6 +90,8 @@ const Pong = ({
   const handlePongReady = useCallback((pong: PongInstance) => {
     pongInstanceRef.current = pong;
     setPongInstance(pong);
+    // Auto-focus canvas so keyboard input works immediately
+    canvasRef.current?.focus();
   }, []);
 
   // Swap UI text for touch devices in fullscreen (button names instead of key names)
@@ -129,6 +131,11 @@ const Pong = ({
     };
     onSocketReady(send);
   }, [pongInstance, onSocketReady]);
+
+  // Re-focus canvas when clicking anywhere on the game area
+  const handleGameAreaClick = useCallback(() => {
+    canvasRef.current?.focus();
+  }, []);
 
   const pongTranslations = useMemo<PongTranslations>(() => ({
     welcomeWarlock: t("pong.welcomeWarlock"),
@@ -184,7 +191,7 @@ const Pong = ({
   }, [online, serverUrl, gameServerUrl, roomId, onSessionReplaced, pongTranslations, handlePongReady]);
 
   return (
-    <div className={cn("relative w-full h-full", className)}>
+    <div className={cn("relative w-full h-full", className)} onClick={handleGameAreaClick}>
       <div className="w-full h-full flex items-center justify-center bg-black">
         <div
           ref={gameWrapperRef}
@@ -193,7 +200,8 @@ const Pong = ({
         >
           <canvas
             ref={canvasRef}
-            className="block"
+            tabIndex={0}
+            className="block outline-none"
             style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />

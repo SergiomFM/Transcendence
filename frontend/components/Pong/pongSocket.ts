@@ -414,7 +414,6 @@ function handleSessionReplaced(
 }
 
 function handleRoomNotFound(pong: Pong, message: ServerMessage) {
-  console.warn("Room not found:", message.roomId);
   disconnectFromServer(pong);
 }
 
