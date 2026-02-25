@@ -36,7 +36,7 @@ services:
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_SITE_URL: https://transcendence.pvcordeiro.dev
+      NEXT_PUBLIC_SITE_URL: https://42.pvcordeiro.dev
     profiles:
       - prod
 
@@ -64,8 +64,8 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: production
-      FRONTEND_URL: https://transcendence.pvcordeiro.dev
-      GOOGLE_CALLBACK_URL: https://transcendence.pvcordeiro.dev/api/users/auth/google/callback
+      FRONTEND_URL: https://42.pvcordeiro.dev
+      GOOGLE_CALLBACK_URL: https://42.pvcordeiro.dev/api/users/auth/google/callback
       CHAT_BACKEND_URL: http://chat:3000
     env_file:
       - users/.env
@@ -137,7 +137,7 @@ services:
     environment:
       NODE_ENV: production
       USERS_BACKEND_URL: http://users:3000
-      FRONTEND_URL: https://transcendence.pvcordeiro.dev
+      FRONTEND_URL: https://42.pvcordeiro.dev
     profiles:
       - prod
 
