@@ -12,7 +12,6 @@ This document describes the technical implementation of each service in the Tran
 4. [Game Service](#game-service) -- Tiago (3D, customization) & Paulo (sockets, remote play, spectator)
 5. [Frontend](#frontend) -- Afonso (framework, components) & Tiago (game/3D)
 6. [Nginx Proxy & Infrastructure](#nginx-proxy--infrastructure) -- Sergio & Paulo
-7. [Shared Constants](#shared-constants)
 
 ---
 
@@ -190,7 +189,7 @@ Win/loss stats are computed live on each request -- there is no cached aggregate
 
 ## Chat Service
 
-**Responsible:** Lourenco
+**Responsible:** Sergio
 
 **Stack:** Fastify 5 + Bun + TypeScript + Prisma ORM + SQLite
 
@@ -584,20 +583,3 @@ Key targets:
 - `make status` -- show all container status
 
 Production images are pushed to `ghcr.io/pvcordeiro/transcendence-*`.
-
----
-
-## Shared Constants
-
-**File:** `shared/constants.js` + `shared/constants.d.ts`
-
-A dual-export module (CommonJS + ESM) consumed by both the frontend (Next.js/TypeScript) and the game backend (Bun/CommonJS).
-
-Contains:
-
-- All game physics constants (ball speed, paddle drag, tick rates, etc.)
-- Spell definitions (cooldowns, durations, effects, type classifications, cycle orders)
-- Utility functions (`degreesToRadians`, `radiansToDegrees`)
-- Placeholder values (`null`) for constants loaded dynamically from the GLB model at runtime
-
-The TypeScript declarations file (`constants.d.ts`) provides full type safety for the frontend.
