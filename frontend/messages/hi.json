@@ -213,6 +213,8 @@
     "inviteLoginRequired": "मित्रों को आमंत्रित करने के लिए लॉग इन करें",
     "invite": "आमंत्रित करें",
     "inviteSent": "भेजा गया",
+    "alreadyInRoom": "पहले से कमरे में है",
+    "waitingForPlayers": "खिलाड़ियों की प्रतीक्षा...",
     "inviteToGame": "गेम में आमंत्रित करें",
     "inviteSentLabel": "गेम आमंत्रण भेजा गया",
     "inviteReceivedLabel": "गेम आमंत्रण",

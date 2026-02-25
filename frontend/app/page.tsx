@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 
 export default async function Home() {
   const t = await getTranslations();
+  // eslint-disable-next-line react-hooks/purity -- decorative random count is intentional
+  const repeatCount = Math.floor(Math.random() * 10) + 3;
 
   return (
     <div className="relative flex flex-col gap-10 items-center justify-center px-4 min-h-[calc(100dvh-3.5rem)] overflow-hidden">
@@ -23,7 +25,7 @@ export default async function Home() {
         {/* Decorative repeating text - the "glitch" feel */}
         <div className="w-full max-w-2xl overflow-hidden opacity-10 dark:opacity-15 select-none" aria-hidden="true">
           <p className="font-['pongFont1'] text-xs sm:text-sm text-primary text-center leading-relaxed break-all">
-            {Array.from({ length: Math.floor(Math.random() * 10) + 3 })
+            {Array.from({ length: repeatCount })
               .map(() => "Transcendence")
               .join(" ")}
           </p>

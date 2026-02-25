@@ -3,17 +3,13 @@ import {
   Vector3,
   PointLight,
   Material,
-  MeshBuilder,
   TransformNode,
   Color3,
   Texture,
-  ShadowGenerator,
-  GlowLayer,
   StandardMaterial,
   DynamicTexture,
   RectAreaLight,
   Tools,
-  Mesh,
   PBRMaterial,
 } from "@babylonjs/core";
 import { AppendSceneAsync } from "@babylonjs/core/Loading/sceneLoader";
@@ -21,7 +17,6 @@ import {
   createCandleParticles,
   createWallParticles,
   createBallParticles,
-  WALL_VFX,
 } from "./pongVFX";
 import { animateAttribute, animateMeshes } from "./pongAnimations";
 import "@babylonjs/loaders/glTF/2.0";
@@ -37,7 +32,7 @@ const CANDLE_FLICKER_DURATION = 300; // time in ms
 // Creates and populates a Scene
 export async function createScene(pong: Pong): Promise<Scene> {
   // Instantiating a scene
-  let scene = new Scene(pong.engine);
+  const scene = new Scene(pong.engine);
 
   // Linking the scene to the entire window instead of only the canva
   scene.attachControl(true, true, true);
@@ -145,11 +140,11 @@ function candleFlicker(scene: Scene, light: PointLight) {
 function litCandles(scene: Scene) {
   // Iterating all "candle" meshes to create a fire particle
   for (let i = 1; i <= 100; i++) {
-    let candleMesh = scene.getMeshByName("candle" + i);
+    const candleMesh = scene.getMeshByName("candle" + i);
     if (!candleMesh) break;
 
     // Creating and starting a fire particles for the candles
-    let newFireParticle = createCandleParticles(
+    const newFireParticle = createCandleParticles(
       scene,
       candleMesh.absolutePosition
     );
@@ -159,11 +154,11 @@ function litCandles(scene: Scene) {
 
   // Iterating all "candleBase" meshes to create a light source
   for (let i = 1; i <= 100; i++) {
-    let candleBaseMesh = scene.getMeshByName("candleBase" + i);
+    const candleBaseMesh = scene.getMeshByName("candleBase" + i);
     if (!candleBaseMesh) break;
 
     // Creating a light source
-    let candleLight = new PointLight(
+    const candleLight = new PointLight(
       "candle",
       candleBaseMesh.absolutePosition,
       scene
@@ -176,15 +171,13 @@ function litCandles(scene: Scene) {
   }
 }
 
-let vector = new Vector3();
-
 // Adds particles to the walls
 function createWalls(scene: Scene, pong: Pong) {
   // Getting the corner positions
-  let frontRight = scene.getMeshByName("frontRight")!.position;
-  let frontLeft = scene.getMeshByName("frontLeft")!.position;
-  let backRight = scene.getMeshByName("backRight")!.position;
-  let backLeft = scene.getMeshByName("backLeft")!.position;
+  const frontRight = scene.getMeshByName("frontRight")!.position;
+  const frontLeft = scene.getMeshByName("frontLeft")!.position;
+  const backRight = scene.getMeshByName("backRight")!.position;
+  const backLeft = scene.getMeshByName("backLeft")!.position;
 
   // Getting the mesh's reference to the map limits
   pong.heightLimit = frontRight.x;
@@ -213,7 +206,7 @@ function lightWall(
   side: boolean
 ) {
   // Creating a thin line of light
-  let light = new RectAreaLight(name, Vector3.Zero(), width, 0.01, scene);
+  const light = new RectAreaLight(name, Vector3.Zero(), width, 0.01, scene);
   light.intensity = 3.5;
   light.diffuse = scene.getLightByName("ball")!.diffuse;
 
@@ -233,7 +226,7 @@ function lightWall(
 // Creating all ball special effects
 function createBall(scene: Scene, position: Vector3) {
   createBallParticles(scene, position);
-  let ballLight = new PointLight("ball", position, scene);
+  const ballLight = new PointLight("ball", position, scene);
   ballLight.intensity = 0.03;
   ballLight.diffuse = new Color3(0, 0, 0);
 }
@@ -253,7 +246,7 @@ function createPlayers(scene: Scene) {
 // Lighting unlit areas for better ambience
 function lightAmbience(scene: Scene) {
   // Creating a low intensity hemispheric light to light unlit areas
-  let light = new PointLight(
+  const light = new PointLight(
     "candle",
     new Vector3(0, 0, 1.25),
     scene

@@ -1,64 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { GAME_BACKEND_URL } from "@/lib/backend/config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Gamepad2, Eye, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { FriendInviteModal } from "./FriendInviteModal";
-
-interface RoomUser {
-  id: string | null;
-  name: string | null;
-  avatar: string | null;
-  role: "player" | "spectator";
-  playerSlot: number | null;
-}
+import { UserPreviewModal } from "./UserPreviewModal";
+import type { RoomUser } from "./types";
 
 interface ConnectedPlayersProps {
   roomId: string;
   hidden?: boolean;
   className?: string;
+  users?: RoomUser[];
 }
 
-export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayersProps) {
+export function ConnectedPlayers({ roomId, hidden, className, users = [] }: ConnectedPlayersProps) {
   const t = useTranslations("game");
-  const { isAuthenticated } = useAuth();
-  const [users, setUsers] = useState<RoomUser[]>([]);
+  const { isAuthenticated, user: currentUser } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch(
-          `${GAME_BACKEND_URL}/pong/rooms/${encodeURIComponent(roomId)}/users`
-        );
-        if (!response.ok) return;
-        const data = await response.json();
-        if (active) setUsers(data);
-      } catch {
-        // silently ignore fetch errors
-      }
-    };
-
-    fetchUsers();
-    const interval = setInterval(fetchUsers, 3000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [roomId]);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
 
   const players = users.filter((u) => u.role === "player");
   const spectators = users.filter((u) => u.role === "spectator");
 
-  if (users.length === 0 || hidden) return null;
+  if (hidden) return null;
 
   return (
     <div
@@ -69,6 +39,7 @@ export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayers
     >
       <button
         onClick={() => setCollapsed((c) => !c)}
+        onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-2 px-3 py-1.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer"
       >
         <span>{t("connectedPlayers")}</span>
@@ -85,23 +56,33 @@ export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayers
 
       {!collapsed && (
         <div className="flex flex-col gap-1.5 max-h-64 overflow-y-auto scrollbar-thin">
-          {players.map((user, i) => (
-            <PlayerEntry key={`p-${user.id || i}`} user={user} t={t} />
-          ))}
-          {spectators.map((user, i) => (
-            <PlayerEntry key={`s-${user.id || i}`} user={user} t={t} />
-          ))}
+          {users.length === 0 ? (
+            <div className="flex items-center gap-2 px-2.5 py-1.5 bg-black/60 border border-neon-muted/30 pixel-corners-sm">
+              <User className="h-4 w-4 text-muted-foreground/50" />
+              <span className="text-xs text-muted-foreground">{t("waitingForPlayers")}</span>
+            </div>
+          ) : (
+            <>
+              {players.map((user, i) => (
+                <PlayerEntry key={`p-${user.id || i}`} user={user} t={t} currentUserId={currentUser?.id} onClickUser={setPreviewUserId} />
+              ))}
+              {spectators.map((user, i) => (
+                <PlayerEntry key={`s-${user.id || i}`} user={user} t={t} currentUserId={currentUser?.id} onClickUser={setPreviewUserId} />
+              ))}
+            </>
+          )}
         </div>
       )}
 
       {isAuthenticated && (
         <>
           <Button
-            size="sm"
-            variant="ghost"
-            className="mt-1.5 w-full text-xs text-neon/70 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm"
-            onClick={() => setInviteOpen(true)}
-          >
+             size="sm"
+             variant="ghost"
+             className="mt-1.5 w-full text-xs text-neon/70 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm"
+             onClick={() => setInviteOpen(true)}
+             onMouseDown={(e) => e.preventDefault()}
+           >
             <UserPlus className="h-3.5 w-3.5 mr-1.5" />
             {t("inviteFriend")}
           </Button>
@@ -112,6 +93,12 @@ export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayers
           />
         </>
       )}
+
+      <UserPreviewModal
+        userId={previewUserId}
+        open={!!previewUserId}
+        onOpenChange={(open) => { if (!open) setPreviewUserId(null); }}
+      />
     </div>
   );
 }
@@ -119,23 +106,22 @@ export function ConnectedPlayers({ roomId, hidden, className }: ConnectedPlayers
 function PlayerEntry({
   user,
   t,
+  currentUserId,
+  onClickUser,
 }: {
   user: RoomUser;
   t: ReturnType<typeof useTranslations>;
+  currentUserId?: string;
+  onClickUser: (userId: string) => void;
 }) {
   const isPlayer = user.role === "player";
+  const isSelf = !!(currentUserId && user.id === currentUserId);
   const displayName =
     user.name || (isPlayer ? `${t("player")} ${user.playerSlot}` : t("spectator"));
+  const isClickable = !!(user.id && !isSelf);
 
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2.5 px-2.5 py-1.5 bg-black/60 border pixel-corners-sm",
-        isPlayer
-          ? "border-neon-muted/40"
-          : "border-muted-foreground/20"
-      )}
-    >
+  const avatarAndName = (
+    <>
       <Avatar className="h-8 w-8 shrink-0">
         {user.avatar ? (
           <AvatarImage src={user.avatar} alt={displayName} />
@@ -152,6 +138,30 @@ function PlayerEntry({
       >
         {displayName}
       </span>
+    </>
+  );
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2.5 px-2.5 py-1.5 bg-black/60 border pixel-corners-sm",
+        isPlayer
+          ? "border-neon-muted/40"
+          : "border-muted-foreground/20"
+      )}
+    >
+      {isClickable ? (
+        <button
+          onClick={() => onClickUser(user.id!)}
+          className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity cursor-pointer"
+        >
+          {avatarAndName}
+        </button>
+      ) : (
+        <div className="flex items-center gap-2.5 min-w-0">
+          {avatarAndName}
+        </div>
+      )}
       {isPlayer ? (
         <Gamepad2 className="h-4 w-4 shrink-0 text-neon/50" />
       ) : (

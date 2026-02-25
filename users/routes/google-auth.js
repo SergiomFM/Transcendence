@@ -1,4 +1,5 @@
 import fastifyPassport from '@fastify/passport'
+import { registerChatUser } from '../utilities/chat_register.js'
 
 export default async function (fastify){
 
@@ -38,6 +39,7 @@ export default async function (fastify){
 		}
 	
 		await req.logIn(user);
+		registerChatUser(user);
 		return reply.redirect(FRONTEND_URL);
 		}
 	);

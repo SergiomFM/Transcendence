@@ -15,17 +15,32 @@ model User {
   username        String  @unique
   sentMessages    Message[] @relation("sender")
   receivedMessages Message[] @relation("receiver")
+  sentInvites     GameInvite[] @relation("inviteSender")
+  receivedInvites GameInvite[] @relation("inviteReceiver")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
 model Message {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   content     String
   senderId    Int
   receiverId  Int
-  sender      User    @relation("sender", fields: [senderId], references: [id])
-  receiver    User    @relation("receiver", fields: [receiverId], references: [id])
+  read        Boolean  @default(false)
+  sender      User     @relation("sender", fields: [senderId], references: [id])
+  receiver    User     @relation("receiver", fields: [receiverId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GameInvite {
+  id          Int      @id @default(autoincrement())
+  roomId      String
+  senderId    Int
+  receiverId  Int
+  accepted    Boolean  @default(false)
+  sender      User     @relation("inviteSender", fields: [senderId], references: [id])
+  receiver    User     @relation("inviteReceiver", fields: [receiverId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

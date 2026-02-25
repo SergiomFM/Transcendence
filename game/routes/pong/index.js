@@ -89,6 +89,37 @@ async function resolveUserIdFromSession(req) {
 
 // Global room manager
 const roomManager = new GameRoomManager();
+roomManager.onRoomChanged = () => broadcastRoomList();
+
+// --- WebSocket infrastructure for room list updates ---
+const lobbyClients = new Set();
+
+function serializeRooms() {
+	return Array.from(roomManager.rooms.values()).map((room) => ({
+		id: room.roomId,
+		players:
+			(room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
+		spectators: room.spectators.size,
+		running: room.running,
+		score: {
+			player1: room.player1.score,
+			player2: room.player2.score,
+		},
+	}));
+}
+
+function broadcastRoomList() {
+	if (lobbyClients.size === 0) return;
+	const msg = JSON.stringify({ type: "ROOM_LIST", rooms: serializeRooms() });
+	for (const ws of lobbyClients) {
+		if (ws.readyState === 1) { // WebSocket.OPEN
+			ws.send(msg);
+		} else {
+			lobbyClients.delete(ws);
+		}
+	}
+}
+// --- End lobby WebSocket infrastructure ---
 
 module.exports = async function (fastify, opts) {
 	// WebSocket endpoint for Pong game
@@ -279,6 +310,8 @@ module.exports = async function (fastify, opts) {
 						currentRoom.sendStateToConnection(connection);
 						sendReadyStatusToConnection(currentRoom, connection);
 						notifyGameReadyIfFull(currentRoom);
+						currentRoom.broadcastRoomUsers();
+						broadcastRoomList();
 
 						break;
 					}
@@ -323,18 +356,20 @@ module.exports = async function (fastify, opts) {
 									broadcastReadyStatus(currentRoom);
 									notifySeatAvailability(currentRoom);
 									if (isRoomFull(currentRoom)) {
+								currentRoom.broadcastEvent({
+										type: "GAME_READY",
+									});
+									if (
+										currentRoom.player1.ready &&
+										currentRoom.player2.ready
+									) {
 										currentRoom.broadcastEvent({
-											type: "GAME_READY",
+											type: "GAME_START",
 										});
-										if (
-											currentRoom.player1.ready &&
-											currentRoom.player2.ready
-										) {
-											currentRoom.broadcastEvent({
-												type: "GAME_START",
-											});
-										}
 									}
+								}
+								currentRoom.broadcastRoomUsers();
+								broadcastRoomList();
 								} else {
 									connection.send(
 										JSON.stringify({
@@ -401,6 +436,8 @@ module.exports = async function (fastify, opts) {
 								playerId: 2,
 								ready: false,
 							});
+							currentRoom.broadcastRoomUsers();
+							broadcastRoomList();
 						}
 						break;
 
@@ -449,6 +486,10 @@ module.exports = async function (fastify, opts) {
 				});
 				notifySeatAvailability(currentRoom);
 			}
+			if (currentRoom && !currentRoom.isEmpty()) {
+				currentRoom.broadcastRoomUsers();
+			}
+			broadcastRoomList();
 		});
 
 		// Handle errors
@@ -484,24 +525,34 @@ module.exports = async function (fastify, opts) {
 
 	// REST endpoint to list rooms for UI
 	fastify.get("/rooms", async (request, reply) => {
-		return Array.from(roomManager.rooms.values()).map((room) => ({
-			id: room.roomId,
-			players:
-				(room.player1.connection ? 1 : 0) + (room.player2.connection ? 1 : 0),
-			spectators: room.spectators.size,
-			running: room.running,
-			score: {
-				player1: room.player1.score,
-				player2: room.player2.score,
-			},
-		}));
+		return serializeRooms();
+	});
+
+	// WebSocket endpoint for real-time room list updates (lobby)
+	fastify.get("/rooms/ws", { websocket: true }, (connection, req) => {
+		lobbyClients.add(connection);
+		console.log(`[lobby] client connected (total: ${lobbyClients.size})`);
+
+		// Send current room list immediately
+		connection.send(JSON.stringify({ type: "ROOM_LIST", rooms: serializeRooms() }));
+
+		connection.on("close", () => {
+			lobbyClients.delete(connection);
+			console.log(`[lobby] client disconnected (total: ${lobbyClients.size})`);
+		});
+
+		connection.on("error", () => {
+			lobbyClients.delete(connection);
+		});
 	});
 
 	// REST endpoint to create a room
 	fastify.post("/rooms", async (request, reply) => {
 		const roomId = roomManager.generateRoomId();
 		const room = new GameRoom(roomId);
+		room.onRunningChanged = broadcastRoomList;
 		roomManager.rooms.set(roomId, room);
+		broadcastRoomList();
 		return { id: roomId };
 	});
 
@@ -512,40 +563,7 @@ module.exports = async function (fastify, opts) {
 			return reply.code(404).send({ error: "Room not found" });
 		}
 
-		const users = [];
-
-		// Add players
-		if (room.player1.connection) {
-			users.push({
-				id: room.player1.connection.userId || null,
-				name: room.player1.name || null,
-				avatar: room.player1.connection.userAvatar || null,
-				role: "player",
-				playerSlot: 1,
-			});
-		}
-		if (room.player2.connection) {
-			users.push({
-				id: room.player2.connection.userId || null,
-				name: room.player2.name || null,
-				avatar: room.player2.connection.userAvatar || null,
-				role: "player",
-				playerSlot: 2,
-			});
-		}
-
-		// Add spectators
-		for (const spectator of room.spectators) {
-			users.push({
-				id: spectator.userId || null,
-				name: spectator.userName || null,
-				avatar: spectator.userAvatar || null,
-				role: "spectator",
-				playerSlot: null,
-			});
-		}
-
-		return users;
+		return room.getRoomUsers();
 	});
 
 	// REST endpoint to get chat history for a room

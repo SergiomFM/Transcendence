@@ -59,7 +59,7 @@ export class PongCamera extends ArcRotateCamera {
     this.topView = topView;
 
     let target: number[];
-    this.topView ? target = this.topTarget : target = this.sideTarget;
+    if (this.topView) { target = this.topTarget; } else { target = this.sideTarget; }
 
     if (!animate) {
       this.alpha = target[ALPHA];

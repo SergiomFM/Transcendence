@@ -36,7 +36,7 @@ const FriendsPage = () => {
   const t = useTranslations();
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { sendGameInvite } = useChat();
+  const { sendGameInvite, onlineUsers } = useChat();
 
   // lists
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -576,7 +576,7 @@ const FriendsPage = () => {
                           variant="outline"
                           className="h-8 w-8 p-0 border-neon/30 hover:border-neon hover:text-neon"
                           onClick={() => handleInviteToGame(friend)}
-                          disabled={invitingId === friend.user_id}
+                          disabled={invitingId === friend.user_id || !onlineUsers.has(friend.display_name)}
                           title={t("game.inviteToGame")}
                         >
                           {invitingId === friend.user_id ? (

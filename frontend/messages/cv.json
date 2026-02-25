@@ -213,6 +213,8 @@
     "inviteLoginRequired": "Entra pa konvida amigus",
     "invite": "Konvida",
     "inviteSent": "Enviadu",
+    "alreadyInRoom": "Ja sta na sala",
+    "waitingForPlayers": "Sperandu djugadoris...",
     "inviteToGame": "Konvida pa Djuga",
     "inviteSentLabel": "Konvite Enviadu",
     "inviteReceivedLabel": "Konvite di Djugu",

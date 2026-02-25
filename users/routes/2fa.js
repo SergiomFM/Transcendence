@@ -1,5 +1,6 @@
 import QRCode from "qrcode";
 import { generate2FASecret, verify2FA, generateRecoveryCodes, verifyRecoveryCode } from "../utilities/2FA.js";
+import { registerChatUser } from "../utilities/chat_register.js";
 
 //begins 2FA setup and generates QR code
 export default async function twoFARoutes(fastify, opts){
@@ -137,6 +138,8 @@ export default async function twoFARoutes(fastify, opts){
 
 		delete req.session.pending2FA;
 		await req.login(user);
+
+		registerChatUser(user);
 
 		reply.send({ message: "2FA verification successful!"});
 	})

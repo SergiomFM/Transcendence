@@ -2,7 +2,6 @@
 
 const path = require('node:path')
 const AutoLoad = require('@fastify/autoload')
-const prisma = require('./utilities/prisma_setup')
 
 // Pass --options via CLI arguments in command to enable these options.
 const options = {}

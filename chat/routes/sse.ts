@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { findOrCreateUser } from "./messages.ts";
+import { findOrCreateUser, getUnreadSummary, getPendingGameInvites } from "./messages.ts";
 import { verifyAuth } from "../utils/authVerify.ts";
 
 // Map username → SSE reply stream
@@ -98,6 +98,24 @@ export async function sseRoutes(fastify: FastifyInstance) {
         type: "online_users",
         users: getOnlineUsers(),
       });
+
+      // Send unread message summary (messages received while offline)
+      const unreadSummary = await getUnreadSummary(requestedUsername);
+      if (unreadSummary.length > 0) {
+        sendSSE(reply, "unread_summary", {
+          type: "unread_summary",
+          entries: unreadSummary,
+        });
+      }
+
+      // Send pending game invites (not yet accepted)
+      const pendingInvites = await getPendingGameInvites(requestedUsername);
+      if (pendingInvites.length > 0) {
+        sendSSE(reply, "pending_game_invites", {
+          type: "pending_game_invites",
+          invites: pendingInvites,
+        });
+      }
 
       // Notify all others that this user is now online
       broadcastExcept(requestedUsername, "user_online", {

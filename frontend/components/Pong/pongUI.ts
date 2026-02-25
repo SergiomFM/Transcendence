@@ -228,25 +228,25 @@ export class GUI {
     }
   }
 
-  createNewText(attributes: any) {
+  createNewText(attributes: (string | number)[]) {
     // Creating a Text Block
     const textBlock = new UIElement();
-    textBlock.text = attributes[1];
-    textBlock.color = attributes[2];
-    textBlock.fontSize = attributes[3];
-    textBlock.fontFamily = attributes[4];
-    textBlock.outlineWidth = attributes[5];
-    textBlock.outlineColor = attributes[6];
-    textBlock.top = attributes[7];
-    textBlock.left = attributes[8];
-    textBlock.textHorizontalAlignment = attributes[9];
-    textBlock.textVerticalAlignment = attributes[10];
+    textBlock.text = attributes[1] as string;
+    textBlock.color = attributes[2] as string;
+    textBlock.fontSize = attributes[3] as number;
+    textBlock.fontFamily = attributes[4] as string;
+    textBlock.outlineWidth = attributes[5] as number;
+    textBlock.outlineColor = attributes[6] as string;
+    textBlock.top = attributes[7] as number;
+    textBlock.left = attributes[8] as number;
+    textBlock.textHorizontalAlignment = attributes[9] as number;
+    textBlock.textVerticalAlignment = attributes[10] as number;
     textBlock.isVisible = false;
     textBlock.alpha = 0;
 
     // Adding the Text Block to the interface and map
     this.GUI.addControl(textBlock);
-    this.textBlocks.set(attributes[0], textBlock);
+    this.textBlocks.set(attributes[0] as string, textBlock);
   }
 
   // Resets all texts to an hidden state and deactivates all UI effects
@@ -264,7 +264,7 @@ export class GUI {
   }
 
   textFadeIn(name: string, duration?: number) {
-    let text = this.textBlocks.get(name);
+    const text = this.textBlocks.get(name);
     if (!text) {
       return;
     }
@@ -280,7 +280,7 @@ export class GUI {
   }
 
   textFadeOut(name: string) {
-    let text = this.textBlocks.get(name);
+    const text = this.textBlocks.get(name);
     if (!text) {
       return;
     }
@@ -292,7 +292,7 @@ export class GUI {
 
   // Blink a Text Block
   toggleTextBlink(scene: Scene, name: string) {
-    let text = this.textBlocks.get(name);
+    const text = this.textBlocks.get(name);
     if (!text) {
       return;
     }

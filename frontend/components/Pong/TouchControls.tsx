@@ -34,8 +34,11 @@ function TouchButton({
   const imgRef = useRef<HTMLImageElement>(null);
   const onPressStartRef = useRef(onPressStart);
   const onPressEndRef = useRef(onPressEnd);
-  onPressStartRef.current = onPressStart;
-  onPressEndRef.current = onPressEnd;
+
+  useEffect(() => {
+    onPressStartRef.current = onPressStart;
+    onPressEndRef.current = onPressEnd;
+  });
 
   const isPressed = forcePressed || pressed;
 
@@ -103,6 +106,7 @@ function TouchButton({
   );
 
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imgRef}
       src={isPressed && pressedSrc ? pressedSrc : normalSrc}

@@ -12,9 +12,10 @@ class GameRoom {
 	constructor(roomId) {
 		this.roomId = roomId;
 		this.createdAt = Date.now();
-		this.running = false;
+		this._running = false;
 		this.loaded = false;
 		this.startingRound = false;
+		this.onRunningChanged = null; // callback set by route layer
 
 		this.initializeBall();
 
@@ -47,6 +48,18 @@ class GameRoom {
 		// Broadcast throttling - decouple broadcast rate from physics tick rate
 		this.lastPlayerBroadcast = 0;
 		this.lastSpectatorBroadcast = 0;
+	}
+
+	get running() {
+		return this._running;
+	}
+
+	set running(value) {
+		const changed = this._running !== value;
+		this._running = value;
+		if (changed && this.onRunningChanged) {
+			this.onRunningChanged();
+		}
 	}
 
 	initializeBall() {
@@ -187,14 +200,15 @@ class GameRoom {
 					this._angleActive = true;
 					this.physics.setBallAngle(Math.PI - this.ball.angle);
 					break;
-				case "ballShot":
-					this._shotActive = true;
-					this.ball.speed *= SPELL_CONSTANTS.ballShotSpeedBoost;
-					if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
-						this.physics.setBallAngle(degreesToRadians(90));
-					} else {
-						this.physics.setBallAngle(degreesToRadians(270));
-					}
+			case "ballShot":
+				this._shotActive = true;
+				this._shotOriginalSpeed = this.ball.speed;
+				this.ball.speed *= SPELL_CONSTANTS.ballShotSpeedBoost;
+				if (this.ball.angle > 0 && this.ball.angle < Math.PI) {
+					this.physics.setBallAngle(degreesToRadians(90));
+				} else {
+					this.physics.setBallAngle(degreesToRadians(270));
+				}
 					break;
 				case "ballPortal":
 					this._portalActive = true;
@@ -366,6 +380,45 @@ class GameRoom {
 		}
 	}
 
+	getRoomUsers() {
+		const users = [];
+		if (this.player1.connection) {
+			users.push({
+				id: this.player1.connection.userId || null,
+				name: this.player1.name || null,
+				avatar: this.player1.connection.userAvatar || null,
+				role: "player",
+				playerSlot: 1,
+			});
+		}
+		if (this.player2.connection) {
+			users.push({
+				id: this.player2.connection.userId || null,
+				name: this.player2.name || null,
+				avatar: this.player2.connection.userAvatar || null,
+				role: "player",
+				playerSlot: 2,
+			});
+		}
+		for (const spectator of this.spectators) {
+			users.push({
+				id: spectator.userId || null,
+				name: spectator.userName || null,
+				avatar: spectator.userAvatar || null,
+				role: "spectator",
+				playerSlot: null,
+			});
+		}
+		return users;
+	}
+
+	broadcastRoomUsers() {
+		this.broadcastEvent({
+			type: "ROOM_USERS",
+			users: this.getRoomUsers(),
+		});
+	}
+
 	isEmpty() {
 		return (
 			!this.player1.connection &&
@@ -496,6 +549,8 @@ class GameRoom {
 			if (this._shotDuration >= 500) {
 				this._shotActive = false;
 				this._shotDuration = 0;
+				this.ball.speed = Math.min(this._shotOriginalSpeed, GAME_CONSTANTS.BALL_MAX_SPEED);
+				this._shotOriginalSpeed = 0;
 				this.broadcastSpellEndedIfNoneActive();
 			}
 		}
@@ -773,6 +828,7 @@ class GameRoom {
 				seatsAvailable:
 					(this.player1.connection ? 0 : 1) + (this.player2.connection ? 0 : 1),
 			});
+			this.broadcastRoomUsers();
 		}
 	}
 
@@ -1076,6 +1132,7 @@ class GameRoom {
 
 		this._angleDuration = 0;
 		this._shotDuration = 0;
+		this._shotOriginalSpeed = 0;
 		this._backDuration = 0;
 		this._stopDuration = 0;
 		this._imanDuration = 0;
@@ -1111,6 +1168,7 @@ class GameRoomManager {
 		this.rooms = new Map();
 		this.waitingPlayers = [];
 		this.activeUsers = new Map();
+		this.onRoomChanged = null; // callback set by route layer
 	}
 
 	getActiveUserConnection(userId) {
@@ -1147,6 +1205,9 @@ class GameRoomManager {
 		// Create a new room and join as spectator
 		const roomId = this.generateRoomId();
 		const room = new GameRoom(roomId);
+		if (this.onRoomChanged) {
+			room.onRunningChanged = this.onRoomChanged;
+		}
 		this.rooms.set(roomId, room);
 
 		room.addSpectator(connection);

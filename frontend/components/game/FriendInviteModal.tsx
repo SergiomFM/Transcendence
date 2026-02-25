@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useChat } from "@/components/providers/chat-provider";
 import { Friends as FriendsApi } from "@/lib/backend/friends";
+import { GAME_BACKEND_URL } from "@/lib/backend/config";
 import type { Friend } from "@/lib/backend/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -40,20 +41,48 @@ export function FriendInviteModal({ open, onOpenChange, roomId }: FriendInviteMo
   const { onlineUsers, sendGameInvite } = useChat();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(false);
-  const [sentTo, setSentTo] = useState<Set<string>>(new Set());
+  const [sentTo, setSentTo] = useState<Set<string>>(() => new Set());
+  const [roomUserNames, setRoomUserNames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!open || !isAuthenticated) return;
+    let active = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
-    FriendsApi.list()
-      .then((res) => setFriends(res.data.friends))
-      .catch(() => setFriends([]))
-      .finally(() => setLoading(false));
-  }, [open, isAuthenticated]);
+
+    // Fetch friends and room users in parallel
+    const fetchFriends = FriendsApi.list()
+      .then((res) => { if (active) setFriends(res.data.friends); })
+      .catch(() => { if (active) setFriends([]); });
+
+    const fetchRoomUsers = fetch(
+      `${GAME_BACKEND_URL}/pong/rooms/${encodeURIComponent(roomId)}/users`
+    )
+      .then((res) => res.ok ? res.json() : [])
+      .then((users: { name: string | null }[]) => {
+        if (active) {
+          const names = new Set<string>();
+          for (const u of users) {
+            if (u.name) names.add(u.name);
+          }
+          setRoomUserNames(names);
+        }
+      })
+      .catch(() => { if (active) setRoomUserNames(new Set()); });
+
+    Promise.all([fetchFriends, fetchRoomUsers]).finally(() => {
+      if (active) setLoading(false);
+    });
+
+    return () => { active = false; };
+  }, [open, isAuthenticated, roomId]);
 
   // Reset sent state when modal opens
   useEffect(() => {
-    if (open) setSentTo(new Set());
+    if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSentTo(new Set());
+    }
   }, [open]);
 
   const handleInvite = (friend: Friend) => {
@@ -93,6 +122,7 @@ export function FriendInviteModal({ open, onOpenChange, roomId }: FriendInviteMo
             friends.map((friend) => {
               const isOnline = onlineUsers.has(friend.display_name);
               const wasSent = sentTo.has(friend.display_name);
+              const alreadyInRoom = roomUserNames.has(friend.display_name);
               return (
                 <div
                   key={friend.user_id}
@@ -119,13 +149,15 @@ export function FriendInviteModal({ open, onOpenChange, roomId }: FriendInviteMo
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{friend.display_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {isOnline ? t("chat.online") : t("chat.offline")}
+                      {alreadyInRoom
+                        ? t("game.alreadyInRoom")
+                        : isOnline ? t("chat.online") : t("chat.offline")}
                     </p>
                   </div>
                   <Button
                     size="sm"
                     variant={wasSent ? "ghost" : "outline"}
-                    disabled={wasSent}
+                    disabled={wasSent || !isOnline || alreadyInRoom}
                     onClick={() => handleInvite(friend)}
                     className="shrink-0"
                   >

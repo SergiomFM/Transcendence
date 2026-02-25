@@ -43,6 +43,8 @@ export default function ChatPage() {
     gameInviteEvents,
     unreadEntries,
     setActiveChatUser,
+    clearGameInvite,
+    gameInvites,
   } = useChat();
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -167,7 +169,7 @@ export default function ChatPage() {
     } finally {
       setInvitingGame(false);
     }
-  }, [activeFriend, invitingGame, sendGameInvite]);
+  }, [activeFriend, invitingGame, sendGameInvite, router]);
 
   // ── go back to friend list (mobile) ────────────────────────────────────────
   const handleBack = () => {
@@ -248,6 +250,10 @@ export default function ChatPage() {
               const isOnline = onlineUsers.has(friend.display_name);
               const isActive = activeFriend?.user_id === friend.user_id;
               const unread = unreadEntries.find((e) => e.from === friend.display_name);
+              const friendInvites = gameInvites.filter((inv) => inv.from === friend.display_name);
+              const msgCount = unread?.count ?? 0;
+              const invCount = friendInvites.length;
+              const totalBadge = msgCount + invCount;
               return (
                 <button
                   key={friend.user_id}
@@ -281,11 +287,15 @@ export default function ChatPage() {
                       <p className="text-sm font-medium truncate">
                         {friend.display_name}
                       </p>
-                      {unread && unread.count > 0 && (
+                      {totalBadge > 0 && (
                         <span className="shrink-0 flex items-center gap-1 rounded-full bg-neon px-1.5 py-0.5 animate-pulse-glow">
-                          <Bell className="h-2.5 w-2.5 text-background" />
+                          {invCount > 0 ? (
+                            <Gamepad2 className="h-2.5 w-2.5 text-background" />
+                          ) : (
+                            <Bell className="h-2.5 w-2.5 text-background" />
+                          )}
                           <span className="text-[10px] font-bold text-background leading-none">
-                            {unread.count > 99 ? "99+" : unread.count}
+                            {totalBadge > 99 ? "99+" : totalBadge}
                           </span>
                         </span>
                       )}
@@ -353,7 +363,7 @@ export default function ChatPage() {
                 variant="outline"
                 className="shrink-0 text-xs gap-1.5"
                 onClick={handleInviteToGame}
-                disabled={invitingGame}
+                disabled={invitingGame || !onlineUsers.has(activeFriend.display_name)}
                 title={t("game.inviteToGame")}
               >
                 <Gamepad2 className="h-3.5 w-3.5" />
@@ -383,6 +393,7 @@ export default function ChatPage() {
                       >
                         <button
                           onClick={() => {
+                            clearGameInvite(inv.roomId);
                             router.push(`/pong?room=${encodeURIComponent(inv.roomId)}`);
                           }}
                           className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-3 py-2 text-sm break-words cursor-pointer transition-colors ${
@@ -402,7 +413,7 @@ export default function ChatPage() {
                           <p className="text-xs text-muted-foreground mt-1">
                             {t("game.clickToJoinRoom")}
                           </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
+                          <p className="text-xs text-muted-foreground mt-0.5 text-right">
                             {new Date(inv.timestamp).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -428,7 +439,7 @@ export default function ChatPage() {
                         }`}
                       >
                         <p>{msg.content}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
+                        <p className="text-xs text-muted-foreground mt-0.5 text-right">
                           {new Date(msg.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",

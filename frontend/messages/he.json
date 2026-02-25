@@ -213,6 +213,8 @@
     "inviteLoginRequired": "התחבר כדי להזמין חברים",
     "invite": "הזמן",
     "inviteSent": "נשלח",
+    "alreadyInRoom": "כבר בחדר",
+    "waitingForPlayers": "ממתין לשחקנים...",
     "inviteToGame": "הזמן למשחק",
     "inviteSentLabel": "הזמנה למשחק נשלחה",
     "inviteReceivedLabel": "הזמנה למשחק",

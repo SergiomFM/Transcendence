@@ -111,6 +111,7 @@ export function Navbar() {
   };
 
   const switchLocale = (newLocale: string) => {
+    // eslint-disable-next-line react-hooks/immutability
     document.cookie = `locale=${newLocale};path=/;max-age=31536000`;
     window.location.reload();
   };

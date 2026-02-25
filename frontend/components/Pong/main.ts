@@ -7,7 +7,7 @@ import { initAudio, startMusic, stopMusic, disposeAudio } from "./pongAudio";
 import { GamepadManager } from "./pongGamepad";
 
 // Fetch game constants from backend
-async function fetchGameConstants(gameServerUrl: string) {
+async function _fetchGameConstants(gameServerUrl: string) {
   try {
     const response = await fetch(`${gameServerUrl}/constants`);
     if (!response.ok) {
@@ -56,7 +56,7 @@ export const startPong = async (
     labelYou: "(YOU)",
     labelOpponent: "(HIM)",
   };
-  let pong = new Pong(canvas, options?.translations ?? defaultTranslations);
+  const pong = new Pong(canvas, options?.translations ?? defaultTranslations);
   await pong.initPong();
 
   // Connect to multiplayer server if online mode

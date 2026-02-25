@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { startPong } from "./main";
 import type { PongTranslations } from "./pongUI";
 import type { Pong as PongInstance } from "./pong";
-import type { ChatMessage } from "@/components/game/types";
+import type { ChatMessage, RoomUser } from "@/components/game/types";
 import TouchControls from "./TouchControls";
 
 interface PongProps {
@@ -19,6 +19,7 @@ interface PongProps {
   isFullscreen?: boolean;
   onChatMessage?: (message: ChatMessage) => void;
   onSocketReady?: (send: (content: string) => void) => void;
+  onRoomUsers?: (users: RoomUser[]) => void;
 }
 
 const Pong = ({
@@ -31,10 +32,12 @@ const Pong = ({
   isFullscreen = false,
   onChatMessage,
   onSocketReady,
+  onRoomUsers,
 }: PongProps) => {
   const t = useTranslations();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameWrapperRef = useRef<HTMLDivElement>(null);
+  const pongInstanceRef = useRef<PongInstance | null>(null);
   const [pongInstance, setPongInstance] = useState<PongInstance | null>(null);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
 
@@ -43,6 +46,7 @@ const Pong = ({
     const hasTouch =
       "ontouchstart" in window ||
       navigator.maxTouchPoints > 0;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time detection on mount
     setIsTouchDevice(hasTouch);
   }, []);
 
@@ -84,7 +88,10 @@ const Pong = ({
   }, []);
 
   const handlePongReady = useCallback((pong: PongInstance) => {
+    pongInstanceRef.current = pong;
     setPongInstance(pong);
+    // Auto-focus canvas so keyboard input works immediately
+    canvasRef.current?.focus();
   }, []);
 
   // Swap UI text for touch devices in fullscreen (button names instead of key names)
@@ -95,12 +102,23 @@ const Pong = ({
 
   // Wire chat message callback from pong engine to React
   useEffect(() => {
-    if (!pongInstance) return;
-    pongInstance.onChatMessage = onChatMessage;
+    const pong = pongInstanceRef.current;
+    if (!pong) return;
+    pong.onChatMessage = onChatMessage;
     return () => {
-      pongInstance.onChatMessage = undefined;
+      pong.onChatMessage = undefined;
     };
   }, [pongInstance, onChatMessage]);
+
+  // Wire room users callback from pong engine to React
+  useEffect(() => {
+    const pong = pongInstanceRef.current;
+    if (!pong) return;
+    pong.onRoomUsers = onRoomUsers;
+    return () => {
+      pong.onRoomUsers = undefined;
+    };
+  }, [pongInstance, onRoomUsers]);
 
   // Expose send function that lazily uses the pong socket
   useEffect(() => {
@@ -113,6 +131,11 @@ const Pong = ({
     };
     onSocketReady(send);
   }, [pongInstance, onSocketReady]);
+
+  // Re-focus canvas when clicking anywhere on the game area
+  const handleGameAreaClick = useCallback(() => {
+    canvasRef.current?.focus();
+  }, []);
 
   const pongTranslations = useMemo<PongTranslations>(() => ({
     welcomeWarlock: t("pong.welcomeWarlock"),
@@ -168,7 +191,7 @@ const Pong = ({
   }, [online, serverUrl, gameServerUrl, roomId, onSessionReplaced, pongTranslations, handlePongReady]);
 
   return (
-    <div className={cn("relative w-full h-full", className)}>
+    <div className={cn("relative w-full h-full", className)} onClick={handleGameAreaClick}>
       <div className="w-full h-full flex items-center justify-center bg-black">
         <div
           ref={gameWrapperRef}
@@ -177,7 +200,8 @@ const Pong = ({
         >
           <canvas
             ref={canvasRef}
-            className="block"
+            tabIndex={0}
+            className="block outline-none"
             style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />

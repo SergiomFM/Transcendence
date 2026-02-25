@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "node --test test/**/*.test.js",
+    "test": "bun test test/**/*.test.js",
     "start": "fastify start -l info app.js",
     "dev": "fastify start -w -l info -P app.js",
     "resetDB": "rm -f database/app.db"
@@ -21,17 +21,11 @@
     "@fastify/passport": "^3.0.2",
     "@fastify/secure-session": "^8.3.0",
     "@fastify/sensible": "^6.0.0",
-    "@prisma/adapter-d1": "^7.2.0",
-    "@prisma/client": "^7.2.0",
-    "@prisma/internals": "^7.2.0",
-    "argon2": "^0.44.0",
-    "better-sqlite3": "^12.5.0",
     "dotenv": "^17.2.3",
     "fastify": "^5.0.0",
     "fastify-cli": "^7.4.1",
     "fastify-plugin": "^5.0.0",
     "passport-google-oauth20": "^2.0.0",
-    "prisma": "^7.2.0",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0"
   }

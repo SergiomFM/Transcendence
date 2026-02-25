@@ -5,9 +5,9 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Maximize, Minimize, Volume2, Volume1, VolumeX } from "lucide-react";
-import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL } from "@/lib/backend/config";
+import { GAME_WS_URL, GAME_HTTP_URL, GAME_BACKEND_URL, LOBBY_WS_URL } from "@/lib/backend/config";
 import { GameMode } from "./types";
-import type { ChatMessage } from "./types";
+import type { ChatMessage, RoomUser } from "./types";
 import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
 import type { VolumeState } from "@/components/Pong/pongAudio";
 import { ConnectedPlayers } from "./ConnectedPlayers";
@@ -46,6 +46,13 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const sendChatRef = useRef<((content: string) => void) | null>(null);
 
+  // Room users state (driven by WebSocket ROOM_USERS events)
+  const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
+
+  const handleRoomUsers = useCallback((users: RoomUser[]) => {
+    setRoomUsers(users);
+  }, []);
+
   const handleChatMessage = useCallback((message: ChatMessage) => {
     setChatMessages((prev) => {
       // Deduplicate by message id
@@ -68,6 +75,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   useEffect(() => {
     if (!selectedRoomId) {
       setChatMessages([]);
+      setRoomUsers([]);
       sendChatRef.current = null;
       return;
     }
@@ -123,7 +131,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
         "landscape"
       );
     } catch (err) {
-      console.warn("Unable to lock orientation:", err);
     }
   };
 
@@ -133,7 +140,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
     try {
       (screen.orientation as ScreenOrientation & { unlock: () => void }).unlock();
     } catch (err) {
-      console.warn("Unable to unlock orientation:", err);
     }
   };
 
@@ -205,34 +211,40 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
 
   useEffect(() => {
     if (gameMode !== "multiplayer" || selectedRoomId) return;
-    let active = true;
-    const loadRooms = async () => {
-      setRoomsLoading(true);
+
+    setRoomsLoading(true);
+    setRoomsError(null);
+
+    const ws = new WebSocket(LOBBY_WS_URL);
+
+    ws.onopen = () => {
+      setRoomsLoading(false);
       setRoomsError(null);
+    };
+
+    ws.onmessage = (event) => {
       try {
-        const response = await fetch(`${GAME_BACKEND_URL}/pong/rooms`);
-        if (!response.ok) {
-          throw new Error(t("game.failedToLoadRooms"));
-        }
-        const data = await response.json();
-        if (active) {
-          setRooms(data);
-        }
-      } catch (error) {
-        if (active) {
-          setRoomsError(t("game.unableToLoadRooms"));
-        }
-      } finally {
-        if (active) {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "ROOM_LIST") {
+          setRooms(msg.rooms);
           setRoomsLoading(false);
         }
+      } catch {
+        // ignore malformed messages
       }
     };
-    loadRooms();
-    const interval = setInterval(loadRooms, 3000);
+
+    ws.onerror = () => {
+      setRoomsError(t("game.unableToLoadRooms"));
+      setRoomsLoading(false);
+    };
+
+    ws.onclose = () => {
+      // Connection lost — not necessarily an error if we're navigating away
+    };
+
     return () => {
-      active = false;
-      clearInterval(interval);
+      ws.close();
     };
   }, [gameMode, selectedRoomId, t]);
 
@@ -284,32 +296,31 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                     isFullscreen={isFullscreen}
                     onChatMessage={handleChatMessage}
                     onSocketReady={handleSocketReady}
+                    onRoomUsers={handleRoomUsers}
                   />
                 </Suspense>
 
                 {canFullscreen && (
-                <Button
+                <button
                   onClick={toggleFullscreen}
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none"
                   onContextMenu={(event) => event.preventDefault()}
                   title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
                 >
                   {isFullscreen ? (
-                    <Minimize className="w-5 h-5" />
+                    <Minimize className="w-4 h-4" />
                   ) : (
-                    <Maximize className="w-5 h-5" />
+                    <Maximize className="w-4 h-4" />
                   )}
-                </Button>
+                </button>
                 )}
-                <Button
+                <button
                   onClick={handleToggleMute}
-                  variant="ghost"
-                  size="icon"
+                  onMouseDown={(e) => e.preventDefault()}
                   className={cn(
-                    "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
-                    canFullscreen ? "right-14" : "right-4"
+                    "absolute top-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none",
+                    canFullscreen ? "right-[3.75rem]" : "right-4"
                   )}
                   onContextMenu={(event) => event.preventDefault()}
                   title={
@@ -321,30 +332,29 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                   }
                 >
                   {muted === "all-muted" ? (
-                    <VolumeX className="w-5 h-5" />
+                    <VolumeX className="w-4 h-4" />
                   ) : muted === "music-muted" ? (
-                    <Volume1 className="w-5 h-5" />
+                    <Volume1 className="w-4 h-4" />
                   ) : (
-                    <Volume2 className="w-5 h-5" />
+                    <Volume2 className="w-4 h-4" />
                   )}
-                </Button>
-                <Button
+                </button>
+                <button
                   onClick={async () => {
                     await exitFullscreen();
                     setSelectedRoomId(null);
                   }}
-                  variant="ghost"
-                  className="absolute top-4 left-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+                  className="absolute top-4 left-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none"
                   onContextMenu={(event) => event.preventDefault()}
                 >
                   {t("game.backToRooms")}
-                </Button>
+                </button>
                 {/* Desktop (sm+): ConnectedPlayers bottom-left, Chat bottom-right as overlays */}
                 <div className="hidden sm:block">
-                  <ConnectedPlayers roomId={selectedRoomId} hidden={isFullscreen} />
+                  <ConnectedPlayers roomId={selectedRoomId} hidden={isTouchDevice && isFullscreen} users={roomUsers} />
                   <RoomChat
                     roomId={selectedRoomId}
-                    hidden={isFullscreen}
+                    hidden={isTouchDevice && isFullscreen}
                     messages={chatMessages}
                     onSend={handleSendChat}
                   />
@@ -359,6 +369,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
               <ConnectedPlayers
                 roomId={selectedRoomId}
                 className="static w-full shrink-0"
+                users={roomUsers}
               />
               <RoomChat
                 roomId={selectedRoomId}
@@ -397,7 +408,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                   if (data?.id) {
                     setSelectedRoomId(data.id);
                   }
-                } catch (error) {
+                } catch (_error) {
                   setRoomsError(t("game.unableToCreateRoom"));
                 }
               }}
@@ -498,28 +509,24 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
           </Suspense>
 
           {canFullscreen && (
-          <Button
+          <button
             onClick={toggleFullscreen}
-            variant="ghost"
-            size="icon"
-            className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none"
+            className="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none"
             onContextMenu={(event) => event.preventDefault()}
             title={isFullscreen ? t("game.exitFullscreen") : t("game.enterFullscreen")}
           >
             {isFullscreen ? (
-              <Minimize className="w-5 h-5" />
+              <Minimize className="w-4 h-4" />
             ) : (
-              <Maximize className="w-5 h-5" />
+              <Maximize className="w-4 h-4" />
             )}
-          </Button>
+          </button>
           )}
-          <Button
+          <button
             onClick={handleToggleMute}
-            variant="ghost"
-            size="icon"
             className={cn(
-              "absolute top-4 z-50 bg-black/50 hover:bg-black/70 text-white touch-none select-none",
-              canFullscreen ? "right-14" : "right-4"
+              "absolute top-4 z-50 flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer touch-none select-none",
+              canFullscreen ? "right-[3.75rem]" : "right-4"
             )}
             onContextMenu={(event) => event.preventDefault()}
             title={
@@ -531,13 +538,13 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
             }
           >
             {muted === "all-muted" ? (
-              <VolumeX className="w-5 h-5" />
+              <VolumeX className="w-4 h-4" />
             ) : muted === "music-muted" ? (
-              <Volume1 className="w-5 h-5" />
+              <Volume1 className="w-4 h-4" />
             ) : (
-              <Volume2 className="w-5 h-5" />
+              <Volume2 className="w-4 h-4" />
             )}
-          </Button>
+          </button>
         </div>
       </div>
 

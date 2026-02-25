@@ -21,7 +21,7 @@ enum PLAYER_KEYS {
   OFFENSIVE_SPELL,
 }
 
-let player1Keys = [
+const player1Keys = [
   "w", // UP
   "a", // LEFT
   "s", // DOWN
@@ -30,7 +30,7 @@ let player1Keys = [
   "e", // OFFENSIVE SPELL
 ];
 
-let player2Keys = [
+const player2Keys = [
   "arrowup", // UP
   "arrowleft", // LEFT
   "arrowdown", // DOWN
@@ -44,14 +44,15 @@ enum MENU_KEY {
   ACTION,
 }
 
-let menuKeys = [
+const menuKeys = [
   " ", // READY
   "c", // ACTION
 ];
 
+// eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Events {
   // Key status
-  export let keyStatus: { [key: string]: boolean } = {
+  export const keyStatus: { [key: string]: boolean } = {
     [player1Keys[0]]: false,
     [player1Keys[1]]: false,
     [player1Keys[2]]: false,
@@ -70,7 +71,7 @@ export namespace Events {
     camera: PongCamera,
     event: ActionEvent,
   ) {
-    let key = event.sourceEvent.key.toLowerCase();
+    const key = event.sourceEvent.key.toLowerCase();
     if (key in keyStatus && keyStatus[key] != true) {
       PlayerDirectionEvent(key, pong, true);
     } else if (key == menuKeys[MENU_KEY.ACTION]) {
@@ -127,7 +128,7 @@ export namespace Events {
     }
   }
 
-  function waitingForStartEvents(key: any, pong: Pong) {
+  function waitingForStartEvents(key: string, pong: Pong) {
     if (key == menuKeys[MENU_KEY.READY]) {
       if (pong.online) {
         if (pong.running || pong.localReady) {
@@ -161,7 +162,7 @@ export namespace Events {
     return direction;
   }
 
-  function PlayerDirectionEvent(key: any, pong: Pong, isKeyDown: boolean) {
+  function PlayerDirectionEvent(key: string, pong: Pong, isKeyDown: boolean) {
     keyStatus[key] = isKeyDown;
 
     if (player1KeysSlice.includes(key)) {
@@ -179,18 +180,14 @@ export namespace Events {
     }
   }
 
-  function playerSwitchSpellEvent(key: any, pong: Pong) {
+  function playerSwitchSpellEvent(key: string, pong: Pong) {
     if (pong.online && pong.isSpectator) {
       return;
     }
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
-      pong.online
-        ? sendSwitchSpell(pong, false)
-        : pong.player1.counterSpell.switchSpell();
+      if (pong.online) { sendSwitchSpell(pong, false); } else { pong.player1.counterSpell.switchSpell(); }
     } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
-      pong.online
-        ? sendSwitchSpell(pong, true)
-        : pong.player1.offensiveSpell.switchSpell();
+      if (pong.online) { sendSwitchSpell(pong, true); } else { pong.player1.offensiveSpell.switchSpell(); }
     }
 
     // Dont check for player 2 inputs if the game is online
@@ -203,18 +200,14 @@ export namespace Events {
     }
   }
 
-  function playerUseSpellEvent(key: any, pong: Pong) {
+  function playerUseSpellEvent(key: string, pong: Pong) {
     if (pong.online && pong.isSpectator) {
       return;
     }
     if (key == player1Keys[PLAYER_KEYS.COUNTER_SPELL]) {
-      pong.online
-        ? sendUseSpell(pong, false)
-        : pong.player1.counterSpell.useSpell(false);
+      if (pong.online) { sendUseSpell(pong, false); } else { pong.player1.counterSpell.useSpell(false); }
     } else if (key == player1Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
-      pong.online
-        ? sendUseSpell(pong, true)
-        : pong.player1.offensiveSpell.useSpell(true);
+      if (pong.online) { sendUseSpell(pong, true); } else { pong.player1.offensiveSpell.useSpell(true); }
     }
 
     if (!pong.online) {
@@ -227,7 +220,7 @@ export namespace Events {
 
   // Key release input
   export function keyReleaseEvent(pong: Pong, event: ActionEvent) {
-    let key = event.sourceEvent.key.toLowerCase();
+    const key = event.sourceEvent.key.toLowerCase();
     if (key in keyStatus && keyStatus[key] != false) {
       PlayerDirectionEvent(key, pong, false);
     }

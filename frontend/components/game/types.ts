@@ -9,3 +9,11 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
 }
+
+export interface RoomUser {
+  id: string | null;
+  name: string | null;
+  avatar: string | null;
+  role: "player" | "spectator";
+  playerSlot: number | null;
+}
