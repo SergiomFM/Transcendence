@@ -9,6 +9,7 @@ import { Ball, Player, Pong } from "./pong";
 import { Spell, getNewSpell } from "./pongSpells";
 import { GAME_CONSTANTS } from "@/shared/constants";
 import { sfxPaddleHit, sfxWallHit, sfxScore, sfxLostRound, sfxSpellReady } from "./pongAudio";
+import { updateAI, resetAI } from "./pongAI";
 
 export function gameLogic(pong: Pong, delta: number) {
   if (pong.online) {
@@ -19,10 +20,18 @@ export function gameLogic(pong: Pong, delta: number) {
 }
 
 function localGameLogic(pong: Pong, delta: number) {
+  const deltaMs = delta * 1000;
+
   if (!pong.running) {
     if (!pong.loaded) {
       return;
     }
+
+    // In AI mode, auto-ready player 2 when player 1 is ready
+    if (pong.aiMode && pong.player1.ready && !pong.player2.ready) {
+      pong.player2.ready = true;
+    }
+
     if (!pong.player1.ready && !pong.player2.ready) {
       return;
     } else if (!pong.startingRound) {
@@ -31,9 +40,17 @@ function localGameLogic(pong: Pong, delta: number) {
       setTimeout(() => {
         pong.running = true;
         pong.startingRound = false;
+        if (pong.aiMode) {
+          resetAI();
+        }
       }, GAME_CONSTANTS.ROUND_START_DELAY);
     }
     return;
+  }
+
+  // Update AI before moving paddles (so direction is set)
+  if (pong.aiMode) {
+    updateAI(pong, deltaMs);
   }
 
   movePadle(pong, delta, pong.player2);

@@ -246,8 +246,8 @@ export namespace GamepadManager {
       const gamepad = gamepads[i];
       if (!gamepad || !gamepad.connected) continue;
 
-      if (pong.online) {
-        // Online: all gamepads control Player 1 (the local player)
+      if (pong.online || pong.aiMode) {
+        // Online / AI: all gamepads control Player 1 (the local player)
         processGamepad(gamepad, pong, player1Keys);
       } else {
         // Local: first-press assignment

@@ -24,6 +24,7 @@ export const startPong = async (
   canvas: HTMLCanvasElement,
   options?: {
     online?: boolean;
+    aiMode?: boolean;
     serverUrl?: string;
     gameServerUrl?: string;
     roomId?: string;
@@ -71,6 +72,11 @@ export const startPong = async (
       options.onSessionReplaced,
     );
     pong.camera.instantSwitchCameraPOV();
+  }
+
+  // Set AI mode flag
+  if (options?.aiMode) {
+    pong.aiMode = true;
   }
   switchPlayerHandsPosition(pong, pong.camera.topView, true);
 

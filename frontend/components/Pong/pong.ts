@@ -149,6 +149,7 @@ export class Pong {
   running = false;
   loaded = false;
   online = false;
+  aiMode = false;
   startingRound = false;
 
   // Multiplayer properties

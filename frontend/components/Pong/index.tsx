@@ -13,6 +13,7 @@ import { useInputMethod } from "@/lib/useInputMethod";
 interface PongProps {
   className?: string;
   online?: boolean;
+  aiMode?: boolean;
   serverUrl?: string;
   gameServerUrl?: string;
   roomId?: string;
@@ -26,6 +27,7 @@ interface PongProps {
 const Pong = ({
   className,
   online = false,
+  aiMode = false,
   serverUrl,
   gameServerUrl,
   roomId,
@@ -170,6 +172,7 @@ const Pong = ({
 
     startPong(canvas, {
       online,
+      aiMode,
       serverUrl,
       gameServerUrl,
       roomId,
@@ -184,7 +187,7 @@ const Pong = ({
       setPongInstance(null);
       if (cleanup) cleanup();
     };
-  }, [online, serverUrl, gameServerUrl, roomId, onSessionReplaced, pongTranslations, handlePongReady]);
+  }, [online, aiMode, serverUrl, gameServerUrl, roomId, onSessionReplaced, pongTranslations, handlePongReady]);
 
   return (
     <div className={cn("relative w-full h-full", className)} onClick={handleGameAreaClick}>
@@ -201,7 +204,7 @@ const Pong = ({
             style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />
-          {inputMethod === "touch" && <TouchControls pong={pongInstance} />}
+          {inputMethod === "touch" && (online || aiMode) && <TouchControls pong={pongInstance} />}
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-export type GameMode = "menu" | "local" | "online" | "multiplayer";
+export type GameMode = "menu" | "local" | "local-2p" | "local-ai" | "online" | "multiplayer";
 
 export interface ChatMessage {
   id: string;

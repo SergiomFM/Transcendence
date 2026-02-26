@@ -118,7 +118,9 @@ export namespace Events {
         return;
       } else if (!pong.online) {
         pong.player1.ready = true;
-        pong.player2.ready = true;
+        if (!pong.aiMode) {
+          pong.player2.ready = true;
+        }
         sfxReady();
       }
     } else if (pong.loaded && !pong.running) {
@@ -138,7 +140,9 @@ export namespace Events {
         sendPlayerReady(pong);
       } else {
         pong.player1.ready = true;
-        pong.player2.ready = true;
+        if (!pong.aiMode) {
+          pong.player2.ready = true;
+        }
       }
     } else {
       playerSwitchSpellEvent(key, pong);
@@ -190,8 +194,8 @@ export namespace Events {
       if (pong.online) { sendSwitchSpell(pong, true); } else { pong.player1.offensiveSpell.switchSpell(); }
     }
 
-    // Dont check for player 2 inputs if the game is online
-    if (!pong.online) {
+    // Dont check for player 2 inputs if the game is online or AI mode
+    if (!pong.online && !pong.aiMode) {
       if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL]) {
         pong.player2.counterSpell.switchSpell();
       } else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL]) {
@@ -210,7 +214,7 @@ export namespace Events {
       if (pong.online) { sendUseSpell(pong, true); } else { pong.player1.offensiveSpell.useSpell(true); }
     }
 
-    if (!pong.online) {
+    if (!pong.online && !pong.aiMode) {
       if (key == player2Keys[PLAYER_KEYS.COUNTER_SPELL])
         pong.player2.counterSpell.useSpell(false);
       else if (key == player2Keys[PLAYER_KEYS.OFFENSIVE_SPELL])
@@ -266,6 +270,9 @@ export namespace Events {
     if (pong.online) {
       pong.player1.keys = player1Keys;
       pong.player2.keys = []; // No keys for player 2 in online mode
+    } else if (pong.aiMode) {
+      pong.player1.keys = player1Keys;
+      pong.player2.keys = []; // AI controls player 2 directly
     } else {
       pong.player1.keys = player1Keys;
       pong.player2.keys = player2Keys;

@@ -524,6 +524,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
             <Pong
               className="w-full h-full min-w-full min-h-full"
               online={gameMode === "online"}
+              aiMode={gameMode === "local-ai"}
               serverUrl={GAME_WS_URL}
               gameServerUrl={GAME_HTTP_URL}
               isFullscreen={isFullscreen}
@@ -575,7 +576,11 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
           <p className="text-sm text-muted-foreground">
             {gameMode === "online"
               ? t("game.onlineMode")
-              : t("game.localMode")}
+              : gameMode === "local-ai"
+                ? t("game.vsAIMode")
+                : gameMode === "local-2p"
+                  ? t("game.twoPlayersMode")
+                  : t("game.localMode")}
           </p>
         </div>
       )}

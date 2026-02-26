@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { GameMode } from "./types";
@@ -10,6 +11,7 @@ interface GameMenuProps {
 
 export function GameMenu({ onSelectMode }: GameMenuProps) {
   const t = useTranslations();
+  const [showLocalOptions, setShowLocalOptions] = useState(false);
 
   return (
     <div className="w-full min-h-[80dvh] flex flex-col overflow-y-auto">
@@ -17,22 +19,54 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
         <h1 className="text-3xl sm:text-5xl text-primary text-glow-strong tracking-wide mb-2 sm:mb-4 text-center">{t("game.selectMode")}</h1>
 
         <div className="flex flex-col gap-4 w-full max-w-md">
-          <Button
-            size="lg"
-            onClick={() => onSelectMode("local")}
-            className="text-lg py-6 animate-pulse-glow"
-          >
-            {t("game.singlePlayer")}
-          </Button>
+          {!showLocalOptions ? (
+            <>
+              <Button
+                size="lg"
+                onClick={() => setShowLocalOptions(true)}
+                className="text-lg py-6 animate-pulse-glow"
+              >
+                {t("game.singlePlayer")}
+              </Button>
 
-          <Button
-            size="lg"
-            onClick={() => onSelectMode("multiplayer")}
-            className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all"
-            variant="secondary"
-          >
-            {t("game.multiplayer")}
-          </Button>
+              <Button
+                size="lg"
+                onClick={() => onSelectMode("multiplayer")}
+                className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all"
+                variant="secondary"
+              >
+                {t("game.multiplayer")}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                size="lg"
+                onClick={() => onSelectMode("local-ai")}
+                className="text-lg py-6 animate-pulse-glow"
+              >
+                {t("game.vsAI")}
+              </Button>
+
+              <Button
+                size="lg"
+                onClick={() => onSelectMode("local-2p")}
+                className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all"
+                variant="secondary"
+              >
+                {t("game.twoPlayers")}
+              </Button>
+
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowLocalOptions(false)}
+                className="text-sm"
+              >
+                {t("game.backToMenu")}
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Game Instructions */}
