@@ -63,7 +63,15 @@ function localGameLogic(pong: Pong, delta: number) {
 
   movePadle(pong, delta, pong.player2);
   movePadle(pong, delta, pong.player1);
-  moveBall(pong, delta, pong.ball);
+
+  // Skip ball physics when BallStop is active — matches server behavior
+  // (server skips updateBall entirely when _stopActive is true in game.js)
+  const stopActive =
+    (pong.player1.counterSpell.active && pong.player1.counterSpell.spellType === "ballStop") ||
+    (pong.player2.counterSpell.active && pong.player2.counterSpell.spellType === "ballStop");
+  if (!stopActive) {
+    moveBall(pong, delta, pong.ball);
+  }
 }
 
 function onlineGameLogic(pong: Pong) {
@@ -260,7 +268,7 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
   const Xlimit = pong.heightLimit;
 
   let oldX = ball.x;
-  const oldZ = ball.z;
+  let oldZ = ball.z;
 
   // Moving the ball
   let newX = oldX + ball.cos * ball.speed * delta;
@@ -291,8 +299,10 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     ball.x = Xlimit * sign - (newX - Xlimit * sign);
     ball.setAngle(Math.PI - ball.angle);
     
-    // Update oldX and newX for paddle collision check (ball bounced from wall)
+    // Update old position to wall collision point for correct paddle interpolation.
+    // The post-bounce trajectory is from (wallX, collisionZ) to (ball.x, newZ).
     oldX = Xlimit * sign;
+    oldZ = collisionZ;
     newX = ball.x;
   }
 
