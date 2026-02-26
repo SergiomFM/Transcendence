@@ -53,14 +53,17 @@ function localGameLogic(pong: Pong, delta: number) {
     updateAI(pong, deltaMs);
   }
 
-  movePadle(pong, delta, pong.player2);
-  movePadle(pong, delta, pong.player1);
-  moveBall(pong, delta, pong.ball);
-
+  // Run spell effects BEFORE ball movement so that angle changes from spells
+  // (especially BallIman) are applied before the collision check uses them.
+  // This matches the server-side execution order in game.js.
   pong.player1.counterSpell.spellLoop(delta);
   pong.player2.counterSpell.spellLoop(delta);
   pong.player1.offensiveSpell.spellLoop(delta);
   pong.player2.offensiveSpell.spellLoop(delta);
+
+  movePadle(pong, delta, pong.player2);
+  movePadle(pong, delta, pong.player1);
+  moveBall(pong, delta, pong.ball);
 }
 
 function onlineGameLogic(pong: Pong) {
@@ -173,13 +176,23 @@ function paddleCollision(
   pong: Pong,
   paddle: Player,
   signal: number,
+  oldX: number,
+  oldZ: number,
 ) {
   const ball = pong.ball;
 
-  // Calculating the collision point using the ball angle
-  const deltaZ = ball.z - paddle.z;
-  const deltaX = deltaZ * (ball.cos / ball.sin);
-  const collisionX = ball.x - deltaX;
+  // Interpolate the ball's actual X position at the paddle's Z line
+  // using the real movement trajectory (oldX,oldZ -> ball.x,ball.z).
+  // This is robust against spells that change the ball angle mid-flight
+  // (e.g. BallIman), unlike the old back-projection via ball.cos/ball.sin.
+  const moveZ = ball.z - oldZ;
+  let collisionX: number;
+  if (Math.abs(moveZ) > 1e-8) {
+    const t = (paddle.z - oldZ) / moveZ;
+    collisionX = oldX + (ball.x - oldX) * t;
+  } else {
+    collisionX = ball.x;
+  }
 
   if (
     collisionX <= paddle.x + paddle.size &&
@@ -283,11 +296,11 @@ function moveBall(pong: Pong, delta: number, ball: Ball) {
     newX = ball.x;
   }
 
-  // Paddle collisions
+  // Paddle collisions (pass old position for trajectory interpolation)
   if (newZ >= pong.player1.z) {
-    paddleCollision(pong, pong.player1, -1);
+    paddleCollision(pong, pong.player1, -1, oldX, oldZ);
   } else if (newZ <= pong.player2.z) {
-    paddleCollision(pong, pong.player2, 1);
+    paddleCollision(pong, pong.player2, 1, oldX, oldZ);
   }
 
   // Goal scoring condidion
