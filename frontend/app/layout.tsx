@@ -9,6 +9,8 @@ export const viewport: Viewport = {
   themeColor: "#18181b",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export const metadata: Metadata = {
@@ -19,6 +21,9 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Transcendence",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],

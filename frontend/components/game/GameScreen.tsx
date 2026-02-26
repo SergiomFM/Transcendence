@@ -12,6 +12,7 @@ import { cycleVolume, getVolumeState } from "@/components/Pong/pongAudio";
 import type { VolumeState } from "@/components/Pong/pongAudio";
 import { ConnectedPlayers } from "./ConnectedPlayers";
 import { RoomChat } from "./RoomChat";
+import { useInputMethod } from "@/lib/useInputMethod";
 
 const Pong = lazy(() => import("@/components/Pong"));
 
@@ -25,8 +26,10 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
   const t = useTranslations();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(true);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [muted, setMuted] = useState<VolumeState>(getVolumeState());
+  
+  // Detect active input method (keyboard, gamepad, or touch)
+  const inputMethod = useInputMethod(isFullscreen);
   const [rooms, setRooms] = useState<
     Array<{
       id: string;
@@ -113,13 +116,6 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
     const standard = typeof document.fullscreenEnabled !== "undefined" && document.fullscreenEnabled;
     const webkit = typeof el.webkitRequestFullscreen === "function";
     setCanFullscreen(standard || webkit);
-  }, []);
-
-  // Detect touch device
-  useEffect(() => {
-    const hasTouch =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    setIsTouchDevice(hasTouch);
   }, []);
 
   const lockLandscape = async () => {
@@ -351,10 +347,10 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 </button>
                 {/* Desktop (sm+): ConnectedPlayers bottom-left, Chat bottom-right as overlays */}
                 <div className="hidden sm:block">
-                  <ConnectedPlayers roomId={selectedRoomId} hidden={isTouchDevice && isFullscreen} users={roomUsers} />
+                  <ConnectedPlayers roomId={selectedRoomId} hidden={inputMethod === "touch"} users={roomUsers} />
                   <RoomChat
                     roomId={selectedRoomId}
-                    hidden={isTouchDevice && isFullscreen}
+                    hidden={inputMethod === "touch"}
                     messages={chatMessages}
                     onSend={handleSendChat}
                   />

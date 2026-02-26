@@ -8,6 +8,7 @@ import type { PongTranslations } from "./pongUI";
 import type { Pong as PongInstance } from "./pong";
 import type { ChatMessage, RoomUser } from "@/components/game/types";
 import TouchControls from "./TouchControls";
+import { useInputMethod } from "@/lib/useInputMethod";
 
 interface PongProps {
   className?: string;
@@ -39,16 +40,9 @@ const Pong = ({
   const gameWrapperRef = useRef<HTMLDivElement>(null);
   const pongInstanceRef = useRef<PongInstance | null>(null);
   const [pongInstance, setPongInstance] = useState<PongInstance | null>(null);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-
-  // Detect touch device
-  useEffect(() => {
-    const hasTouch =
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time detection on mount
-    setIsTouchDevice(hasTouch);
-  }, []);
+  
+  // Detect active input method (keyboard, gamepad, or touch)
+  const inputMethod = useInputMethod(isFullscreen);
 
   // Maintain 16:9 aspect ratio and scale canvas within parent container
   useEffect(() => {
@@ -94,11 +88,11 @@ const Pong = ({
     canvasRef.current?.focus();
   }, []);
 
-  // Swap UI text for touch devices in fullscreen (button names instead of key names)
+  // Update UI text based on active input method
   useEffect(() => {
     if (!pongInstance?.GUI) return;
-    pongInstance.GUI.setTouchMode(isTouchDevice && isFullscreen);
-  }, [pongInstance, isTouchDevice, isFullscreen]);
+    pongInstance.GUI.setInputMode(inputMethod);
+  }, [pongInstance, inputMethod]);
 
   // Wire chat message callback from pong engine to React
   useEffect(() => {
@@ -140,8 +134,11 @@ const Pong = ({
   const pongTranslations = useMemo<PongTranslations>(() => ({
     welcomeWarlock: t("pong.welcomeWarlock"),
     pressSpaceReady: t("pong.pressSpaceReady"),
+    pressAReady: t("pong.pressAReady"),
     pressReadyTouch: t("pong.pressReadyTouch"),
     pressPlayClaimSeat: t("pong.pressPlayClaimSeat"),
+    pressClaimSeat: t("pong.pressClaimSeat"),
+    pressBClaimSeat: t("pong.pressBClaimSeat"),
     youWon: t("pong.youWon"),
     player1Wins: t("pong.player1Wins"),
     youLost: t("pong.youLost"),
@@ -156,7 +153,6 @@ const Pong = ({
     opponentConnected: t("pong.opponentConnected"),
     waitingForOpponentReady: t("pong.waitingForOpponentReady"),
     spectating: t("pong.spectating"),
-    pressClaimSeat: t("pong.pressClaimSeat"),
     otherPlayerReady: t("pong.otherPlayerReady"),
     labelYou: t("pong.labelYou"),
     labelOpponent: t("pong.labelOpponent"),
@@ -205,7 +201,7 @@ const Pong = ({
             style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />
-          {isTouchDevice && isFullscreen && <TouchControls pong={pongInstance} />}
+          {inputMethod === "touch" && <TouchControls pong={pongInstance} />}
         </div>
       </div>
     </div>

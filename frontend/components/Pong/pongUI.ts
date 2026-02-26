@@ -8,8 +8,11 @@ import { sfxCountdown, sfxFight } from "./pongAudio";
 export interface PongTranslations {
   welcomeWarlock: string;
   pressSpaceReady: string;
+  pressAReady: string;
   pressReadyTouch: string;
   pressPlayClaimSeat: string;
+  pressClaimSeat: string;
+  pressBClaimSeat: string;
   youWon: string;
   player1Wins: string;
   youLost: string;
@@ -24,7 +27,6 @@ export interface PongTranslations {
   opponentConnected: string;
   waitingForOpponentReady: string;
   spectating: string;
-  pressClaimSeat: string;
   otherPlayerReady: string;
   labelYou: string;
   labelOpponent: string;
@@ -215,16 +217,28 @@ export class GUI {
     this.createNewText(configs.SPECTATOR_PLAYER2_NAME);
   }
 
-  // Swap text for touch devices in fullscreen (show button names instead of keys)
-  setTouchMode(enabled: boolean) {
+  // Swap text based on input mode: keyboard, gamepad, or touch
+  setInputMode(mode: "keyboard" | "gamepad" | "touch") {
     const t = this.translations;
     const readyText = this.textBlocks.get("PRESS_READY");
     if (readyText) {
-      readyText.text = enabled ? t.pressReadyTouch : t.pressSpaceReady;
+      if (mode === "touch") {
+        readyText.text = t.pressReadyTouch;
+      } else if (mode === "gamepad") {
+        readyText.text = t.pressAReady;
+      } else {
+        readyText.text = t.pressSpaceReady;
+      }
     }
     const seatText = this.textBlocks.get("SPECTATOR_SEAT_PROMPT");
     if (seatText) {
-      seatText.text = enabled ? t.pressPlayClaimSeat : t.pressClaimSeat;
+      if (mode === "touch") {
+        seatText.text = t.pressPlayClaimSeat;
+      } else if (mode === "gamepad") {
+        seatText.text = t.pressBClaimSeat;
+      } else {
+        seatText.text = t.pressClaimSeat;
+      }
     }
   }
 

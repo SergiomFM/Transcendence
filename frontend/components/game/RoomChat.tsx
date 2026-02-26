@@ -100,7 +100,7 @@ export function RoomChat({
         <span
           className={cn(
             "inline-block text-[10px] transition-transform",
-            collapsed ? "" : "rotate-180",
+            collapsed ? "rotate-180" : "",
           )}
         >
           &#9660;
