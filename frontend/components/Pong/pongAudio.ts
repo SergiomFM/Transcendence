@@ -552,6 +552,17 @@ export type VolumeState = "unmuted" | "music-muted" | "all-muted";
 /** Initialize audio context (call on first user interaction) */
 export function initAudio() {
   getCtx();
+  // Suspend audio when app is minimized / screen locked, resume when visible
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (!audioCtx) return;
+      if (document.hidden) {
+        audioCtx.suspend();
+      } else {
+        audioCtx.resume();
+      }
+    });
+  }
 }
 
 /** Start background music */

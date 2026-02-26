@@ -51,20 +51,4 @@ export function hasTouchCapability(): boolean {
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
 
-/**
- * Detects if a gamepad is currently connected.
- * Returns true if at least one gamepad is connected and active.
- */
-export function hasGamepadConnected(): boolean {
-  if (typeof navigator === "undefined" || !navigator.getGamepads) return false;
-  const gamepads = navigator.getGamepads();
-  if (!gamepads) return false;
-  
-  // Check if any gamepad is connected
-  for (let i = 0; i < gamepads.length; i++) {
-    if (gamepads[i]?.connected) return true;
-  }
-  
-  return false;
-}
 

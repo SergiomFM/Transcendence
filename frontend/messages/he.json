@@ -290,8 +290,10 @@
   "pong": {
     "welcomeWarlock": "ברוך הבא קוסם",
     "pressSpaceReady": "(לחץ על רווח כשמוכן)",
+    "pressAReady": "(לחץ A כשמוכן)",
     "pressReadyTouch": "(לחץ מוכן)",
     "pressPlayClaimSeat": "לחץ על שחק כדי לתפוס מקום",
+    "pressBClaimSeat": "לחץ B כדי לתפוס מקום",
     "youWon": "ניצחת!",
     "player1Wins": "שחקן 1 ניצח!",
     "youLost": "הפסדת!",

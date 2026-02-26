@@ -290,8 +290,10 @@
   "pong": {
     "welcomeWarlock": "स्वागत है जादूगर",
     "pressSpaceReady": "(तैयार होने पर स्पेस दबाएं)",
+    "pressAReady": "(तैयार होने पर A दबाएं)",
     "pressReadyTouch": "(तैयार दबाएं)",
     "pressPlayClaimSeat": "सीट लेने के लिए प्ले दबाएं",
+    "pressBClaimSeat": "सीट लेने के लिए B दबाएं",
     "youWon": "आप जीत गए!",
     "player1Wins": "खिलाड़ी 1 जीता!",
     "youLost": "आप हार गए!",

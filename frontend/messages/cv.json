@@ -290,8 +290,10 @@
   "pong": {
     "welcomeWarlock": "Ben Vindu Feitiseru",
     "pressSpaceReady": "(Aperta espaço kantu bu sta prontu)",
+    "pressAReady": "(Aperta A kantu bu sta prontu)",
     "pressReadyTouch": "(Aperta ready)",
     "pressPlayClaimSeat": "Aperta play pa okupa un lugar",
+    "pressBClaimSeat": "Aperta B pa okupa un lugar",
     "youWon": "Bu Ganha!",
     "player1Wins": "Djugador 1 Ganha!",
     "youLost": "Bu Perdi!",
