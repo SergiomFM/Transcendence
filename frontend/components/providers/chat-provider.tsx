@@ -186,11 +186,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     let destroyed = false;
     let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    let currentEventSource: EventSource | null = null;
 
     const connect = () => {
       if (destroyed) return;
 
       const eventSource = new EventSource(Chat.sseUrl(myUsername));
+      currentEventSource = eventSource;
 
       eventSource.onopen = () => {
         console.log("[chat] SSE connected");
@@ -297,17 +299,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           retryTimeout = setTimeout(connect, 2000);
         }
       };
-
-      // Store reference for cleanup
-      return eventSource;
     };
 
-    const eventSource = connect();
+    connect();
 
     return () => {
       destroyed = true;
       if (retryTimeout) clearTimeout(retryTimeout);
-      eventSource?.close();
+      currentEventSource?.close();
+      currentEventSource = null;
       setIsConnected(false);
       setOnlineUsers(new Set());
     };

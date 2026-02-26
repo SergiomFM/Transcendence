@@ -435,6 +435,12 @@ export class GUI {
     this.toggleTextBlink(this.GUI.getScene()!, "WAITING");
   }
 
+  showDisconnectedUI() {
+    this.resetTexts(this.GUI.getScene()!);
+    this.textFadeIn("DISCONNECTED");
+    this.toggleTextBlink(this.GUI.getScene()!, "DISCONNECTED");
+  }
+
   spectatorModeUI(seatsAvailable: number) {
     this.resetTexts(this.GUI.getScene()!);
     this.textFadeIn("SPECTATING");

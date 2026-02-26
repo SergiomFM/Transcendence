@@ -132,9 +132,18 @@ export async function sseRoutes(fastify: FastifyInstance) {
         reply.raw.write(": heartbeat\n\n");
       }, 30000);
 
-      // Handle disconnect
+      // Handle disconnect — only clean up if this is still the active connection
+      // (a newer connection may have already replaced us in the map)
       request.raw.on("close", () => {
         clearInterval(heartbeat);
+
+        const current = connectionsMap.get(requestedUsername);
+        if (current !== reply) {
+          // A newer connection replaced us — don't delete it or broadcast offline
+          console.log(`[chat] ${requestedUsername} old SSE connection closed (replaced by newer connection)`);
+          return;
+        }
+
         connectionsMap.delete(requestedUsername);
         console.log(`[chat] ${requestedUsername} disconnected from SSE (total: ${connectionsMap.size})`);
 

@@ -211,36 +211,58 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
     setRoomsLoading(true);
     setRoomsError(null);
 
-    const ws = new WebSocket(LOBBY_WS_URL);
+    let ws: WebSocket | null = null;
+    let closed = false; // set true on cleanup
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 5;
+    const BASE_DELAY = 1000;
+    const MAX_DELAY = 15000;
 
-    ws.onopen = () => {
-      setRoomsLoading(false);
-      setRoomsError(null);
-    };
+    function connect() {
+      if (closed) return;
+      ws = new WebSocket(LOBBY_WS_URL);
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "ROOM_LIST") {
-          setRooms(msg.rooms);
-          setRoomsLoading(false);
+      ws.onopen = () => {
+        attempts = 0; // reset on success
+        setRoomsLoading(false);
+        setRoomsError(null);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "ROOM_LIST") {
+            setRooms(msg.rooms);
+            setRoomsLoading(false);
+          }
+        } catch {
+          // ignore malformed messages
         }
-      } catch {
-        // ignore malformed messages
-      }
-    };
+      };
 
-    ws.onerror = () => {
-      setRoomsError(t("game.unableToLoadRooms"));
-      setRoomsLoading(false);
-    };
+      ws.onerror = () => {
+        setRoomsError(t("game.unableToLoadRooms"));
+        setRoomsLoading(false);
+      };
 
-    ws.onclose = () => {
-      // Connection lost — not necessarily an error if we're navigating away
-    };
+      ws.onclose = () => {
+        if (closed) return;
+        // Attempt reconnect with exponential backoff
+        if (attempts < MAX_ATTEMPTS) {
+          const delay = Math.min(BASE_DELAY * Math.pow(2, attempts), MAX_DELAY);
+          attempts++;
+          reconnectTimer = setTimeout(connect, delay);
+        }
+      };
+    }
+
+    connect();
 
     return () => {
-      ws.close();
+      closed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
     };
   }, [gameMode, selectedRoomId, t]);
 

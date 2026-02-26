@@ -12,6 +12,27 @@ import {
   sfxOpponentReady, sfxSpellSwitch,
 } from "./pongAudio";
 
+// --- Reconnection configuration ---
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_BASE_DELAY = 1000; // 1 second
+const RECONNECT_MAX_DELAY = 15000; // 15 seconds
+
+// Track whether the disconnect was intentional (user-initiated)
+let intentionalClose = false;
+// Track whether we should NOT reconnect (session replaced, room not found)
+let suppressReconnect = false;
+// Reconnection state
+let reconnectAttempts = 0;
+let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function clearReconnectState() {
+  reconnectAttempts = 0;
+  if (reconnectTimeout) {
+    clearTimeout(reconnectTimeout);
+    reconnectTimeout = null;
+  }
+}
+
 export function connectToGameServer(
   pong: Pong,
   serverUrl: string = GAME_WS_URL,
@@ -21,10 +42,16 @@ export function connectToGameServer(
   const wsUrl = roomId ? `${serverUrl}?roomId=${roomId}` : serverUrl;
   console.log("Connecting to game server:", wsUrl);
 
+  // Reset flags for a fresh connection
+  intentionalClose = false;
+  suppressReconnect = false;
+
   pong.socket = new WebSocket(wsUrl);
 
   pong.socket.onopen = () => {
-    console.log("✅ Connected to game server");
+    console.log("Connected to game server");
+    // Reset reconnection counter on successful connect
+    clearReconnectState();
 
     pong.isSpectator = true;
 
@@ -59,8 +86,29 @@ export function connectToGameServer(
   };
 
   pong.socket.onclose = () => {
-    console.log("❌ Disconnected from game server");
+    console.log("Disconnected from game server");
     pong.online = false;
+
+    // Attempt reconnection if the close was not intentional
+    if (!intentionalClose && !suppressReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      const delay = Math.min(
+        RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts),
+        RECONNECT_MAX_DELAY,
+      );
+      reconnectAttempts++;
+      console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+
+      if (pong.GUI) {
+        pong.GUI.showDisconnectedUI();
+      }
+
+      reconnectTimeout = setTimeout(() => {
+        // Only reconnect if we still have a valid pong instance and haven't been cleaned up
+        if (!intentionalClose && !suppressReconnect) {
+          connectToGameServer(pong, serverUrl, roomId, onSessionReplaced);
+        }
+      }, delay);
+    }
   };
 }
 
@@ -407,6 +455,7 @@ function handleSessionReplaced(
   onSessionReplaced?: () => void,
 ) {
   console.log("Session replaced by another tab");
+  suppressReconnect = true;
   disconnectFromServer(pong);
   if (onSessionReplaced) {
     onSessionReplaced();
@@ -414,6 +463,7 @@ function handleSessionReplaced(
 }
 
 function handleRoomNotFound(pong: Pong, message: ServerMessage) {
+  suppressReconnect = true;
   disconnectFromServer(pong);
 }
 
@@ -564,6 +614,8 @@ export function sendBecomeSpectator(pong: Pong) {
 }
 
 export function disconnectFromServer(pong: Pong) {
+  intentionalClose = true;
+  clearReconnectState();
   if (pong.socket) {
     pong.socket.close();
     pong.socket = undefined;

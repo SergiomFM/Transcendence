@@ -3,6 +3,9 @@ const { GameRoomManager, GameRoom } = require("../../src/game");
 
 const USERS_BACKEND_URL = process.env.USERS_BACKEND_URL;
 
+// --- WebSocket heartbeat configuration ---
+const PING_INTERVAL = 30000; // Send ping every 30 seconds; terminate if previous ping unanswered
+
 // --- Guest identity generation ---
 
 const GUEST_ADJECTIVES = [
@@ -93,6 +96,8 @@ roomManager.onRoomChanged = () => broadcastRoomList();
 
 // --- WebSocket infrastructure for room list updates ---
 const lobbyClients = new Set();
+// Track all game connections for heartbeat
+const gameClients = new Set();
 
 function serializeRooms() {
 	return Array.from(roomManager.rooms.values()).map((room) => ({
@@ -121,6 +126,35 @@ function broadcastRoomList() {
 }
 // --- End lobby WebSocket infrastructure ---
 
+// --- WebSocket heartbeat ---
+// Ping all connected WebSocket clients periodically.
+// If a client doesn't respond with pong within PONG_TIMEOUT, terminate it.
+const heartbeatInterval = setInterval(() => {
+	for (const ws of gameClients) {
+		if (ws._pongPending) {
+			// Previous ping was never answered — connection is dead
+			ws.terminate();
+			gameClients.delete(ws);
+			continue;
+		}
+		ws._pongPending = true;
+		try { ws.ping(); } catch { /* ignore send errors */ }
+	}
+	for (const ws of lobbyClients) {
+		if (ws._pongPending) {
+			ws.terminate();
+			lobbyClients.delete(ws);
+			continue;
+		}
+		ws._pongPending = true;
+		try { ws.ping(); } catch { /* ignore send errors */ }
+	}
+}, PING_INTERVAL);
+
+// Prevent the interval from keeping the process alive on shutdown
+if (heartbeatInterval.unref) heartbeatInterval.unref();
+// --- End WebSocket heartbeat ---
+
 module.exports = async function (fastify, opts) {
 	// WebSocket endpoint for Pong game
 	fastify.get("/", { websocket: true }, (connection, req) => {
@@ -128,6 +162,11 @@ module.exports = async function (fastify, opts) {
 		let playerId = null;
 		let playerName = null;
 		let kickedPreviousSession = false;
+
+		// Register for heartbeat tracking
+		gameClients.add(connection);
+		connection._pongPending = false;
+		connection.on("pong", () => { connection._pongPending = false; });
 
 		const getSeatsAvailable = (room) =>
 			(room.player1.connection ? 0 : 1) + (room.player2.connection ? 0 : 1);
@@ -467,6 +506,7 @@ module.exports = async function (fastify, opts) {
 
 		// Handle connection close
 		connection.on("close", () => {
+			gameClients.delete(connection);
 			console.log(
 				`Disconnected: id=${playerId || "?"}, name=${playerName || "?"}, room=${
 					currentRoom ? currentRoom.roomId : "?"
@@ -531,6 +571,8 @@ module.exports = async function (fastify, opts) {
 	// WebSocket endpoint for real-time room list updates (lobby)
 	fastify.get("/rooms/ws", { websocket: true }, (connection, req) => {
 		lobbyClients.add(connection);
+		connection._pongPending = false;
+		connection.on("pong", () => { connection._pongPending = false; });
 		console.log(`[lobby] client connected (total: ${lobbyClients.size})`);
 
 		// Send current room list immediately
