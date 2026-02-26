@@ -106,7 +106,7 @@ function buildTextConfig(t: PongTranslations) {
       Control.HORIZONTAL_ALIGNMENT_CENTER, Control.VERTICAL_ALIGNMENT_CENTER,
     ],
     OTHER_PLAYER_READY: [
-      "OTHER_PLAYER_READY", t.otherPlayerReady, "white", "6%", "pongFont1", 2, "black", "10%", "5%",
+      "OTHER_PLAYER_READY", t.otherPlayerReady, "white", "6%", "pongFont1", 2, "black", "18%", "5%",
       Control.HORIZONTAL_ALIGNMENT_LEFT, Control.VERTICAL_ALIGNMENT_TOP,
     ],
     PLAYER_1_SCORE: [

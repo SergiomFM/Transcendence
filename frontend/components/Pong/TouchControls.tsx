@@ -226,7 +226,7 @@ export default function TouchControls({ pong }: TouchControlsProps) {
       {!isSpectator && !isRunning && (
         <div
           className="absolute pointer-events-auto"
-          style={{ top: "50%", left: "2%", transform: "translateY(-50%)" }}
+          style={{ top: "60%", left: "2%", transform: "translateY(-50%)" }}
         >
           <TouchButton
             normalSrc="/buttons/ready.png"
@@ -243,7 +243,7 @@ export default function TouchControls({ pong }: TouchControlsProps) {
       {pong.online && (
         <div
           className="absolute pointer-events-auto"
-          style={{ top: "50%", right: "2%", transform: "translateY(-50%)" }}
+          style={{ top: "60%", right: "2%", transform: "translateY(-50%)" }}
         >
           {isSpectator ? (
             // Spectator sees "Play" button (claim seat)

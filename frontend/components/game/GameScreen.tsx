@@ -367,6 +367,10 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
                 >
                   {t("game.backToRooms")}
                 </button>
+                {/* Top-center: Room name label */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-neon/60 bg-black/60 border border-neon-muted/30 pixel-corners-sm select-none pointer-events-none truncate max-w-[40%]">
+                  {selectedRoomId}
+                </div>
                 {/* Desktop (sm+): ConnectedPlayers bottom-left, Chat bottom-right as overlays */}
                 <div className="hidden sm:block">
                   <ConnectedPlayers roomId={selectedRoomId} hidden={inputMethod === "touch"} users={roomUsers} />
