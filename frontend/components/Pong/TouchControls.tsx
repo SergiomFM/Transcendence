@@ -134,23 +134,28 @@ export default function TouchControls({ pong }: TouchControlsProps) {
   const [seatsAvailable, setSeatsAvailable] = useState(0);
   const [localReady, setLocalReady] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll pong state to keep spectator/player/ready/running status in sync
+  // Refs to track previous values — only setState when something actually changed
+  const prevRef = useRef({ isSpectator: false, seatsAvailable: 0, localReady: false, isRunning: false });
+
+  // Poll pong state, but only trigger React re-renders when values change
   useEffect(() => {
     if (!pong) return;
 
     const sync = () => {
-      setIsSpectator(pong.isSpectator);
-      setSeatsAvailable(pong.seatsAvailable);
-      setLocalReady(pong.localReady);
-      setIsRunning(pong.running);
+      const prev = prevRef.current;
+      const s = pong.isSpectator;
+      const a = pong.seatsAvailable;
+      const r = pong.localReady;
+      const g = pong.running;
+      if (s !== prev.isSpectator) { prev.isSpectator = s; setIsSpectator(s); }
+      if (a !== prev.seatsAvailable) { prev.seatsAvailable = a; setSeatsAvailable(a); }
+      if (r !== prev.localReady) { prev.localReady = r; setLocalReady(r); }
+      if (g !== prev.isRunning) { prev.isRunning = g; setIsRunning(g); }
     };
     sync();
-    intervalRef.current = setInterval(sync, 200);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
+    const id = setInterval(sync, 200);
+    return () => clearInterval(id);
   }, [pong]);
 
   const simulateDown = useCallback(

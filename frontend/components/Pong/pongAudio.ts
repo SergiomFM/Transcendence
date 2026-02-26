@@ -550,12 +550,15 @@ function stopMusicLoop() {
 
 export type VolumeState = "unmuted" | "music-muted" | "all-muted";
 
+// Store reference so we can remove it on dispose
+let _visibilityHandler: (() => void) | null = null;
+
 /** Initialize audio context (call on first user interaction) */
 export function initAudio() {
   getCtx();
   // Pause all audio when app is minimized / screen locked, resume when visible
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
+  if (typeof document !== "undefined" && !_visibilityHandler) {
+    _visibilityHandler = () => {
       if (!audioCtx) return;
       if (document.hidden) {
         _musicWasPlayingBeforeHidden = musicPlaying;
@@ -568,7 +571,8 @@ export function initAudio() {
           }
         });
       }
-    });
+    };
+    document.addEventListener("visibilitychange", _visibilityHandler);
   }
 }
 
@@ -668,6 +672,10 @@ export function setMusicVolume(v: number) {
 /** Clean up audio resources */
 export function disposeAudio() {
   stopMusicLoop();
+  if (_visibilityHandler) {
+    document.removeEventListener("visibilitychange", _visibilityHandler);
+    _visibilityHandler = null;
+  }
   if (audioCtx) {
     audioCtx.close();
     audioCtx = null;

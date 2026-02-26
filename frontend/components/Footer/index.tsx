@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { useVirtualKeyboard } from "@/lib/useVirtualKeyboard";
 
 export function Footer() {
   const t = useTranslations("footer");
   const year = new Date().getFullYear();
+  const keyboardOpen = useVirtualKeyboard();
 
   return (
-    <footer className="w-full shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-md py-4 px-4">
+    <footer className={`w-full shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-md py-4 px-4${keyboardOpen ? " hidden" : ""}`}>
       <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>© {year} Transcendence. {t("rights")}</span>
         <div className="flex items-center gap-4">

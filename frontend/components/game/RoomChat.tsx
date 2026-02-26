@@ -89,7 +89,12 @@ export function RoomChat({
   return (
     <div className={cn("absolute bottom-4 right-4 z-50 select-none flex flex-col items-end overflow-hidden", className)}>
       <button
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => {
+          setCollapsed((c) => !c);
+          // Blur active element to prevent keyboard from opening on mobile
+          // when the panel expands and the chat input enters the DOM
+          (document.activeElement as HTMLElement)?.blur?.();
+        }}
         onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-2 px-3 py-1.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer shrink-0"
       >

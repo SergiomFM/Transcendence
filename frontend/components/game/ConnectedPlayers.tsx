@@ -38,7 +38,12 @@ export function ConnectedPlayers({ roomId, hidden, className, users = [] }: Conn
       )}
     >
       <button
-        onClick={() => setCollapsed((c) => !c)}
+        onClick={() => {
+          setCollapsed((c) => !c);
+          // Blur active element to prevent focus from cascading to the chat
+          // input on mobile when the panel content mounts/unmounts
+          (document.activeElement as HTMLElement)?.blur?.();
+        }}
         onMouseDown={(e) => e.preventDefault()}
         className="flex items-center gap-2 px-3 py-1.5 mb-1.5 text-xs font-bold uppercase tracking-wider text-neon/80 hover:text-neon bg-black/60 border border-neon-muted/30 hover:border-neon-muted/60 pixel-corners-sm transition-colors cursor-pointer"
       >

@@ -17,6 +17,10 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_BASE_DELAY = 1000; // 1 second
 const RECONNECT_MAX_DELAY = 15000; // 15 seconds
 
+// Connection generation counter — prevents stale reconnect timers from
+// a previous connection from interfering with a new one
+let connectionGeneration = 0;
+
 // Track whether the disconnect was intentional (user-initiated)
 let intentionalClose = false;
 // Track whether we should NOT reconnect (session replaced, room not found)
@@ -42,9 +46,13 @@ export function connectToGameServer(
   const wsUrl = roomId ? `${serverUrl}?roomId=${roomId}` : serverUrl;
   console.log("Connecting to game server:", wsUrl);
 
+  // Bump generation — any pending reconnect from previous connection is now stale
+  const gen = ++connectionGeneration;
+
   // Reset flags for a fresh connection
   intentionalClose = false;
   suppressReconnect = false;
+  clearReconnectState();
 
   pong.socket = new WebSocket(wsUrl);
 
@@ -89,6 +97,9 @@ export function connectToGameServer(
     console.log("Disconnected from game server");
     pong.online = false;
 
+    // If a new connection was started, this close is for a stale socket — don't reconnect
+    if (gen !== connectionGeneration) return;
+
     // Attempt reconnection if the close was not intentional
     if (!intentionalClose && !suppressReconnect && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       const delay = Math.min(
@@ -104,7 +115,7 @@ export function connectToGameServer(
 
       reconnectTimeout = setTimeout(() => {
         // Only reconnect if we still have a valid pong instance and haven't been cleaned up
-        if (!intentionalClose && !suppressReconnect) {
+        if (gen === connectionGeneration && !intentionalClose && !suppressReconnect) {
           connectToGameServer(pong, serverUrl, roomId, onSessionReplaced);
         }
       }, delay);

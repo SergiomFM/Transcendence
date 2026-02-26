@@ -477,6 +477,7 @@ export default function ChatPage() {
               <Button
                 size="icon"
                 onClick={handleSend}
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={!input.trim()}
                 className="shrink-0"
               >

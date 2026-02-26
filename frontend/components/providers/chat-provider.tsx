@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useAuth } from "./auth-provider";
@@ -313,25 +314,30 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     };
   }, [myUsername, syncUnreadState]);
 
+  const contextValue = useMemo<ChatContextType>(() => ({
+    onlineUsers,
+    messages,
+    setMessages,
+    unreadCount,
+    unreadEntries,
+    clearUnread,
+    sendMessage,
+    sendGameInvite,
+    gameInvites,
+    clearGameInvite,
+    gameInviteEvents,
+    isConnected,
+    activeChatUser,
+    setActiveChatUser,
+  }), [
+    onlineUsers, messages, unreadCount, unreadEntries,
+    clearUnread, sendMessage, sendGameInvite, gameInvites,
+    clearGameInvite, gameInviteEvents, isConnected,
+    activeChatUser, setActiveChatUser,
+  ]);
+
   return (
-    <ChatContext.Provider
-      value={{
-        onlineUsers,
-        messages,
-        setMessages,
-        unreadCount,
-        unreadEntries,
-        clearUnread,
-        sendMessage,
-        sendGameInvite,
-        gameInvites,
-        clearGameInvite,
-        gameInviteEvents,
-        isConnected,
-        activeChatUser,
-        setActiveChatUser,
-      }}
-    >
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );

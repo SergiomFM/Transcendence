@@ -383,7 +383,7 @@ export function GameScreen({ gameMode, onBackToMenu, initialRoomId }: GameScreen
 
           {/* Mobile (<sm): show below the game frame, outside fullscreen container */}
           {!isFullscreen && (
-            <div className="sm:hidden px-2 pb-2 flex flex-col gap-1 flex-1 min-h-0 overflow-hidden">
+            <div className="sm:hidden px-2 pb-2 flex flex-col gap-1 flex-1 min-h-0 overflow-y-auto">
               <ConnectedPlayers
                 roomId={selectedRoomId}
                 className="static w-full shrink-0"
