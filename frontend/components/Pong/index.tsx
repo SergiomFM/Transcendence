@@ -204,7 +204,7 @@ const Pong = ({
             style={{ width: "854px", height: "480px", imageRendering: "pixelated" }}
             onContextMenu={(e) => e.preventDefault()}
           />
-          {inputMethod === "touch" && (online || aiMode) && <TouchControls pong={pongInstance} />}
+          {inputMethod === "touch" && (online || aiMode) && <TouchControls pong={pongInstance} aiMode={aiMode} />}
         </div>
       </div>
     </div>

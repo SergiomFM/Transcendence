@@ -6,6 +6,7 @@ import { Events } from "./pongEvents";
 
 interface TouchControlsProps {
   pong: Pong | null;
+  aiMode?: boolean;
 }
 
 /**
@@ -129,7 +130,7 @@ function TouchButton({
   );
 }
 
-export default function TouchControls({ pong }: TouchControlsProps) {
+export default function TouchControls({ pong, aiMode = false }: TouchControlsProps) {
   const [isSpectator, setIsSpectator] = useState(false);
   const [seatsAvailable, setSeatsAvailable] = useState(0);
   const [localReady, setLocalReady] = useState(false);
@@ -239,25 +240,35 @@ export default function TouchControls({ pong }: TouchControlsProps) {
         </div>
       )}
 
-      {/* Middle-right: Play / Spectate toggle */}
-      {pong.online && (
+      {/* Middle-right: Play / Spectate toggle (online) or Camera switch (local) */}
+      {(pong.online || aiMode) && (
         <div
           className="absolute pointer-events-auto"
           style={{ top: "60%", right: "2%", transform: "translateY(-50%)" }}
         >
-          {isSpectator ? (
-            // Spectator sees "Play" button (claim seat)
-            seatsAvailable > 0 ? (
+          {pong.online ? (
+            // Online: spectate/play toggle
+            isSpectator ? (
+              seatsAvailable > 0 ? (
+                <TouchButton
+                  normalSrc="/buttons/play.png"
+                  pressedSrc="/buttons/play.png"
+                  onPressStart={() => simulateDown("c")}
+                  onPressEnd={() => simulateUp("c")}
+                  style={{ width: "clamp(60px, 10vw, 100px)", height: "auto" }}
+                />
+              ) : null
+            ) : (
               <TouchButton
-                normalSrc="/buttons/play.png"
-                pressedSrc="/buttons/play.png"
+                normalSrc="/buttons/spectate.png"
+                pressedSrc="/buttons/spectate.png"
                 onPressStart={() => simulateDown("c")}
                 onPressEnd={() => simulateUp("c")}
                 style={{ width: "clamp(60px, 10vw, 100px)", height: "auto" }}
               />
-            ) : null
+            )
           ) : (
-            // Player sees "Spectate" button
+            // Local/AI: camera switch
             <TouchButton
               normalSrc="/buttons/spectate.png"
               pressedSrc="/buttons/spectate.png"

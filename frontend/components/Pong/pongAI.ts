@@ -29,6 +29,7 @@ const AI_CENTER_DEAD_ZONE = 0.15; // dead zone when drifting back to center
 const AI_SPELL_CHECK_INTERVAL = 3000; // ms between spell usage checks
 const AI_DEFENSIVE_SPELL_CHANCE = 0.45; // chance to use defensive spell when conditions are right
 const AI_OFFENSIVE_SPELL_CHANCE = 0.35; // chance to use offensive spell when conditions are right
+const AI_PORTAL_SPELL_CHANCE = 0.15; // portal is very strong — AI uses it rarely to keep it fair
 const AI_DEFENSIVE_PROXIMITY = 0.4; // ball must be within this fraction of field distance to AI before defensive spell
 const AI_SWITCH_SPELL_INTERVAL = 10000; // ms between considering spell switches
 const AI_SWITCH_SPELL_CHANCE = 0.25; // chance to switch spell type
@@ -196,13 +197,31 @@ function handleAISpells(pong: Pong, player2: Player, now: number): void {
   // --- Offensive spell ---
   // Only use when ball is heading toward opponent AND has crossed past midfield
   if (player2.offensiveSpell.ready && ball.sin > 0) {
-    const distanceToPlayer1 = Math.abs(ball.z - pong.player1.z);
-    const proximityRatio = distanceToPlayer1 / fieldLength;
+    const isPortal = player2.offensiveSpell.spellType === "ballPortal";
 
-    // Use offensive spell when ball is in opponent's half (closer to player 1)
-    if (proximityRatio < 0.5) {
-      if (Math.random() < AI_OFFENSIVE_SPELL_CHANCE) {
-        player2.offensiveSpell.useSpell(true);
+    if (isPortal) {
+      // Portal only makes sense when the ball is about to hit a wall
+      // (it teleports the ball to the opposite side on wall bounce).
+      // Check that the ball has a significant horizontal component AND is near a wall.
+      const wallProximity = Math.abs(ball.x) / pong.heightLimit;
+      const movingTowardWall = (ball.x > 0 && ball.cos > 0) || (ball.x < 0 && ball.cos < 0);
+      const hasHorizontalSpeed = Math.abs(ball.cos) > 0.3;
+
+      if (movingTowardWall && hasHorizontalSpeed && wallProximity > 0.5) {
+        // Use sparingly — portal is very strong and hard for humans to react to
+        if (Math.random() < AI_PORTAL_SPELL_CHANCE) {
+          player2.offensiveSpell.useSpell(true);
+        }
+      }
+    } else {
+      // Non-portal offensive spells: use when ball is in opponent's half
+      const distanceToPlayer1 = Math.abs(ball.z - pong.player1.z);
+      const proximityRatio = distanceToPlayer1 / fieldLength;
+
+      if (proximityRatio < 0.5) {
+        if (Math.random() < AI_OFFENSIVE_SPELL_CHANCE) {
+          player2.offensiveSpell.useSpell(true);
+        }
       }
     }
   }
