@@ -39,16 +39,20 @@ class Physics {
 			};
 		}
 
-		// Paddle collision check
+		// Paddle collision check (pass old position for trajectory interpolation)
 		const player1Collision = this.checkPaddleCollision(
 			this.gameState.player1,
 			-1,
+			oldX,
+			oldZ,
 		);
 		if (player1Collision) return player1Collision;
 
 		const player2Collision = this.checkPaddleCollision(
 			this.gameState.player2,
 			1,
+			oldX,
+			oldZ,
 		);
 		if (player2Collision) return player2Collision;
 
@@ -60,7 +64,7 @@ class Physics {
 		return null;
 	}
 
-	checkPaddleCollision(paddle, signal) {
+	checkPaddleCollision(paddle, signal, oldX, oldZ) {
 		const ball = this.gameState.ball;
 
 		// Check if ball is at paddle's Z position
@@ -70,14 +74,27 @@ class Physics {
 
 		if (!atPaddleZ) return null;
 
+		// Interpolate the ball's actual X position at the paddle's Z line
+		// using the real movement trajectory (oldX,oldZ -> ball.x,ball.z).
+		// This is robust against spells that change the ball angle mid-flight
+		// (e.g. BallIman), unlike using ball.x directly.
+		const moveZ = ball.z - oldZ;
+		let collisionX;
+		if (Math.abs(moveZ) > 1e-8) {
+			const t = (paddle.z - oldZ) / moveZ;
+			collisionX = oldX + (ball.x - oldX) * t;
+		} else {
+			collisionX = ball.x;
+		}
+
 		// Check if ball is within paddle width
 		if (
-			ball.x <= paddle.x + paddle.size &&
-			ball.x >= paddle.x - paddle.size &&
+			collisionX <= paddle.x + paddle.size &&
+			collisionX >= paddle.x - paddle.size &&
 			!paddle.failed
 		) {
 			// Calculate bounce angle based on hit position
-			const hitOffset = (ball.x - paddle.x) / paddle.size;
+			const hitOffset = (collisionX - paddle.x) / paddle.size;
 			const deviation = Math.max(-1, Math.min(1, hitOffset));
 			const bounceAngle =
 				90 - deviation * GAME_CONSTANTS.PADDLE_MAX_DEVIATION_ANGLE;
@@ -97,7 +114,7 @@ class Physics {
 
 			return {
 				type: "COLLISION",
-				x: ball.x,
+				x: collisionX,
 				z: paddle.z,
 				speed: ball.speed,
 				angle: ball.angle,
