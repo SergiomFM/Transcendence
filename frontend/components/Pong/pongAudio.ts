@@ -13,6 +13,7 @@ let _muted = false;
 let _musicMuted = false;
 let _sfxVolume = 0.35;
 let _musicVolume = 0.08;
+let _musicWasPlayingBeforeHidden = false;
 
 function getCtx(): AudioContext {
   if (!audioCtx) {
@@ -552,14 +553,20 @@ export type VolumeState = "unmuted" | "music-muted" | "all-muted";
 /** Initialize audio context (call on first user interaction) */
 export function initAudio() {
   getCtx();
-  // Suspend audio when app is minimized / screen locked, resume when visible
+  // Pause all audio when app is minimized / screen locked, resume when visible
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       if (!audioCtx) return;
       if (document.hidden) {
+        _musicWasPlayingBeforeHidden = musicPlaying;
+        stopMusicLoop();
         audioCtx.suspend();
       } else {
-        audioCtx.resume();
+        audioCtx.resume().then(() => {
+          if (_musicWasPlayingBeforeHidden && !_musicMuted && !_muted) {
+            startMusicLoop();
+          }
+        });
       }
     });
   }
