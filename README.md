@@ -18,7 +18,7 @@ A modern web application featuring real-time multiplayer 3D Pong, chat system, a
 
 ## Project Overview
 
-ft_transcendence is a comprehensive web application that brings the classic Pong game into the modern era with 3D graphics, real-time multiplayer capabilities, and a complete social platform. Users can play against each other in real-time, chat with friends, customize their game experience, and track their statistics.
+ft_transcendence is a comprehensive web application that brings the classic Pong game into the modern era with 3D graphics, real-time multiplayer capabilities, and a complete social platform. Users can play against each other in real-time, chat with friends, and track their statistics.
 
 ## Features
 
@@ -27,12 +27,12 @@ ft_transcendence is a comprehensive web application that brings the classic Pong
 - **3D Multiplayer Pong Game**
   - Real-time gameplay using WebSocket connections
   - 3D graphics powered by Babylon.js
-  - Customizable paddles, balls, and environments
+  - Spell system with offensive and counter abilities
   - Spectator mode for watching live matches
-  - Tournament system with matchmaking
+  - Room-based multiplayer with in-game chat
 
 - **User Management**
-  - Email/password authentication with secure Argon2id hashing
+  - Username or email/password authentication with secure Argon2id hashing
   - Google OAuth integration
   - Two-Factor Authentication (2FA) support
   - User profiles with avatars and statistics
@@ -47,15 +47,13 @@ ft_transcendence is a comprehensive web application that brings the classic Pong
 - **Social Features**
   - Friend requests and management
   - User profiles with game statistics
-  - Leaderboards
-  - Activity tracking
+  - Match history tracking
 
 ### Additional Features
 
 - Responsive design (mobile, tablet, desktop)
 - Multi-language support (internationalization)
 - Dark/light theme support
-- Accessibility features
 
 ## Architecture
 
@@ -76,7 +74,7 @@ The application follows a **microservices architecture** with four main services
                    |        |               |        |
               +----v---+ +--v-----+ +------v--+ +---v-------+
               | Users  | |  Game  | |  Chat   | | Frontend  |
-              | :3001  | | :3002  | |  :3003  | |  :3000    |
+              | :3000  | | :3000  | |  :3000  | |  :3000    |
               +--------+ +--------+ +---------+ +-----------+
 ```
 
@@ -98,9 +96,9 @@ The application follows a **microservices architecture** with four main services
 3. **Game Service** (Fastify)
    - WebSocket game server
    - Game room management
-   - Matchmaking
+   - Spell system (6 spells in offensive/counter categories)
    - Spectator mode
-   - Game statistics
+   - Match result reporting
 
 4. **Chat Service** (Fastify)
    - Direct messaging
@@ -119,7 +117,7 @@ The application follows a **microservices architecture** with four main services
 
 - **Runtime**: Bun
 - **Framework**: Fastify 5
-- **Database**: SQLite with Prisma ORM
+- **Database**: SQLite (Users: raw `bun:sqlite`, Chat: Prisma ORM)
 - **Authentication**: @fastify/passport, @fastify/secure-session
 - **Password Hashing**: Argon2id
 - **2FA**: Speakeasy (TOTP)
@@ -157,8 +155,6 @@ cd transcendence
 
 ### 2. Environment Variables
 
-Each service has an `.env.example` file that you can copy to create your own `.env` file with custom configuration.
-
 #### Users Service (`users/.env`)
 
 **Required** - Create this file with your Google OAuth credentials:
@@ -175,24 +171,6 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 ```
 
-#### Chat Service (`chat/.env`)
-
-**Optional** - Defaults work for development:
-
-```bash
-cp chat/.env.example chat/.env
-# Edit if needed
-```
-
-#### Game Service (`game/.env`)
-
-**Optional** - Defaults work for development:
-
-```bash
-cp game/.env.example game/.env
-# Edit if needed
-```
-
 #### Frontend (`frontend/.env`)
 
 **Optional** - Defaults work for development:
@@ -202,7 +180,7 @@ cp frontend/.env.example frontend/.env
 # Edit if needed
 ```
 
-**Note**: The Makefile will automatically create `users/.env` with placeholder values if it doesn't exist when running production mode.
+**Note**: Chat and Game service environment variables are configured inline in `docker-compose.yml`. The Makefile will automatically create `users/.env` with placeholder values if it doesn't exist when running production mode.
 
 ### 3. Start the Application
 
@@ -323,11 +301,10 @@ All user inputs are validated on both frontend and backend:
 - Email format validation
 - Password strength requirements (min 8 chars, uppercase, lowercase, number, special char)
 - Username validation (3-20 alphanumeric characters)
-- Form sanitization
 
 ### Database Security
 
-- Parameterized queries via Prisma ORM (SQL injection prevention)
+- Parameterized queries preventing SQL injection (prepared statements in Users service, Prisma ORM in Chat service)
 - Database credentials stored in environment variables
 - Separate databases for different concerns (users, chat)
 
@@ -345,7 +322,7 @@ All user inputs are validated on both frontend and backend:
 
 ## Team
 
-This project was developed by a team of 6 contributors:
+This project was developed by a team of 5 contributors:
 
 - **Paulo Victor Cordeiro** (pvcordeiro) - Infrastructure, Game Service
 - **Lourenço Saraiva** - Authentication, 2FA, OAuth
