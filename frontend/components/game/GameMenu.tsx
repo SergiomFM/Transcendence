@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { GameMode } from "./types";
@@ -9,9 +9,60 @@ interface GameMenuProps {
   onSelectMode: (mode: GameMode) => void;
 }
 
+/**
+ * Touch-only devices (no keyboard, no gamepads) cannot play 2P local.
+ */
+function useHasTwoPlayerInput() {
+  const [hasKeyboard, setHasKeyboard] = useState(false);
+  const [gamepadCount, setGamepadCount] = useState(0);
+
+  useEffect(() => {
+    const isDesktopLike =
+      window.matchMedia("(pointer: fine)").matches &&
+      window.matchMedia("(hover: hover)").matches;
+    if (isDesktopLike) {
+      setHasKeyboard(true);
+    }
+
+    const onKeyDown = () => {
+      setHasKeyboard(true);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+    window.addEventListener("keydown", onKeyDown);
+
+    // Count connected gamepads
+    const countGamepads = () => {
+      const gamepads = navigator.getGamepads?.() ?? [];
+      let count = 0;
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]?.connected) count++;
+      }
+      setGamepadCount(count);
+    };
+
+    countGamepads();
+
+    const onConnect = () => countGamepads();
+    const onDisconnect = () => countGamepads();
+    window.addEventListener("gamepadconnected", onConnect);
+    window.addEventListener("gamepaddisconnected", onDisconnect);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("gamepadconnected", onConnect);
+      window.removeEventListener("gamepaddisconnected", onDisconnect);
+    };
+  }, []);
+
+  if (hasKeyboard) return true;
+  if (gamepadCount >= 2) return true;
+  return false;
+}
+
 export function GameMenu({ onSelectMode }: GameMenuProps) {
   const t = useTranslations();
   const [showLocalOptions, setShowLocalOptions] = useState(false);
+  const canPlay2P = useHasTwoPlayerInput();
 
   return (
     <div className="w-full min-h-[80dvh] flex flex-col overflow-y-auto">
@@ -48,14 +99,22 @@ export function GameMenu({ onSelectMode }: GameMenuProps) {
                 {t("game.vsAI")}
               </Button>
 
-              <Button
-                size="lg"
-                onClick={() => onSelectMode("local-2p")}
-                className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all"
-                variant="secondary"
-              >
-                {t("game.twoPlayers")}
-              </Button>
+              <div className="flex flex-col items-center gap-1">
+                <Button
+                  size="lg"
+                  onClick={() => onSelectMode("local-2p")}
+                  disabled={!canPlay2P}
+                  className="text-lg py-6 border-neon-muted/40 hover:border-glow transition-all w-full"
+                  variant="secondary"
+                >
+                  {t("game.twoPlayers")}
+                </Button>
+                {!canPlay2P && (
+                  <p className="text-xs text-muted-foreground/70 italic text-center">
+                    {t("game.needs2Inputs")}
+                  </p>
+                )}
+              </div>
 
               <Button
                 size="sm"

@@ -1,13 +1,6 @@
 import { Pong, Player } from "./pong";
+import { SPELL_CONSTANTS } from "@/shared/constants";
 
-/**
- * AI controller for Player 2 in local vs-AI mode.
- *
- * Design goals:
- * - Beatable but not trivial — the AI makes human-like mistakes.
- * - No jittering — uses a wide dead zone and smooth target transitions.
- * - Spells are used contextually, not spammed on cooldown.
- */
 
 // --- Difficulty tuning ---
 // Movement
@@ -26,10 +19,10 @@ const AI_RETURN_SPEED_FACTOR = 0.5; // how aggressively AI returns to center (fr
 const AI_CENTER_DEAD_ZONE = 0.15; // dead zone when drifting back to center
 
 // Spell usage
-const AI_SPELL_CHECK_INTERVAL = 3000; // ms between spell usage checks
-const AI_DEFENSIVE_SPELL_CHANCE = 0.45; // chance to use defensive spell when conditions are right
-const AI_OFFENSIVE_SPELL_CHANCE = 0.35; // chance to use offensive spell when conditions are right
-const AI_PORTAL_SPELL_CHANCE = 0.15; // portal is very strong — AI uses it rarely to keep it fair
+const AI_SPELL_CHECK_INTERVAL = 1500; // ms between spell usage checks
+const AI_DEFENSIVE_SPELL_CHANCE = 0.30; // chance to use defensive spell when conditions are right
+const AI_OFFENSIVE_SPELL_CHANCE = 0.25; // chance to use offensive spell when conditions are right
+const AI_PORTAL_SPELL_CHANCE = 0.4; // portal is strong but conditions are narrow, so chance needs to be reasonable
 const AI_DEFENSIVE_PROXIMITY = 0.4; // ball must be within this fraction of field distance to AI before defensive spell
 const AI_SWITCH_SPELL_INTERVAL = 10000; // ms between considering spell switches
 const AI_SWITCH_SPELL_CHANCE = 0.25; // chance to switch spell type
@@ -200,17 +193,19 @@ function handleAISpells(pong: Pong, player2: Player, now: number): void {
     const isPortal = player2.offensiveSpell.spellType === "ballPortal";
 
     if (isPortal) {
-      // Portal only makes sense when the ball is about to hit a wall
-      // (it teleports the ball to the opposite side on wall bounce).
-      // Check that the ball has a significant horizontal component AND is near a wall.
-      const wallProximity = Math.abs(ball.x) / pong.heightLimit;
       const movingTowardWall = (ball.x > 0 && ball.cos > 0) || (ball.x < 0 && ball.cos < 0);
-      const hasHorizontalSpeed = Math.abs(ball.cos) > 0.3;
+      const horizontalSpeed = Math.abs(ball.cos) * ball.speed;
 
-      if (movingTowardWall && hasHorizontalSpeed && wallProximity > 0.5) {
-        // Use sparingly — portal is very strong and hard for humans to react to
-        if (Math.random() < AI_PORTAL_SPELL_CHANCE) {
-          player2.offensiveSpell.useSpell(true);
+      if (movingTowardWall && horizontalSpeed > 0.01) {
+        const distToWall = pong.heightLimit - Math.abs(ball.x);
+        const timeToWall = distToWall / horizontalSpeed; // seconds
+        const portalWindow = SPELL_CONSTANTS.ballPortalDuration / 1000; // 0.75s
+
+        // Only use if the ball will hit the wall within the portal duration
+        if (timeToWall <= portalWindow) {
+          if (Math.random() < AI_PORTAL_SPELL_CHANCE) {
+            player2.offensiveSpell.useSpell(true);
+          }
         }
       }
     } else {

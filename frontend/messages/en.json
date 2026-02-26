@@ -163,6 +163,7 @@
     "localMode": "Local Mode",
     "vsAI": "vs AI",
     "twoPlayers": "2 Players",
+    "needs2Inputs": "Requires a keyboard or 2 controllers",
     "vsAIMode": "vs AI Mode",
     "twoPlayersMode": "2 Players Mode",
     "failedToLoadRooms": "Failed to load rooms",

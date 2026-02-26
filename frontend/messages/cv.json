@@ -163,6 +163,7 @@
     "localMode": "Modu Lokal",
     "vsAI": "kontra IA",
     "twoPlayers": "2 Djugadoris",
+    "needs2Inputs": "Presiza di un tekladu o 2 kontrólus",
     "vsAIMode": "Modu kontra IA",
     "twoPlayersMode": "Modu 2 Djugadoris",
     "failedToLoadRooms": "Ka konsigi karrega salas",
