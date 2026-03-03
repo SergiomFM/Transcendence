@@ -16,8 +16,9 @@ services:
 
   proxy-dev:
     image: nginx:1.27-alpine
+    command: sh -c "apk add --no-cache openssl && mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt -subj '/CN=localhost' && nginx -g 'daemon off;'"
     ports:
-      - "3000:80"
+      - "3000:443"
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -47,7 +48,7 @@ services:
     environment:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: https://localhost:3000
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
@@ -82,8 +83,8 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: development
-      FRONTEND_URL: http://localhost:3000
-      GOOGLE_CALLBACK_URL: http://localhost:3001/auth/google/callback
+      FRONTEND_URL: https://localhost:3000
+      GOOGLE_CALLBACK_URL: https://localhost:3000/api/users/auth/google/callback
       CHAT_BACKEND_URL: http://chat-dev:3000
     env_file:
       - users/.env
@@ -150,7 +151,7 @@ services:
     environment:
       NODE_ENV: development
       USERS_BACKEND_URL: http://users-dev:3000
-      FRONTEND_URL: http://localhost:3000
+      FRONTEND_URL: https://localhost:3000
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached
