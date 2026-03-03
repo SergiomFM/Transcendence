@@ -80,6 +80,7 @@ clean: dev-down prod-down
 fclean: clean
 	docker compose --profile dev down -v --rmi all
 	docker compose --profile prod down -v --rmi all
+	docker volume prune -f
 	rm -fr node_modules/
 
 re: fclean all
