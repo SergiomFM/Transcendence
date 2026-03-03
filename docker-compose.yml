@@ -78,7 +78,7 @@ services:
   users-dev:
     image: oven/bun:1
     working_dir: /app
-    command: sh -c "apt-get update && apt-get install -y --no-install-recommends python3 openssl make g++ && rm -rf /var/lib/apt/lists/* && bun install && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && bun run start"
+    command: sh -c "(apt-get update && apt-get install -y --no-install-recommends python3 openssl make g++ && rm -rf /var/lib/apt/lists/* && bun install && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key)) && bun run start"
     ports:
       - "3001:3000"
     environment:
