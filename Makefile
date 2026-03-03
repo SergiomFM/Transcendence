@@ -1,6 +1,7 @@
 all: dev
 
 dev:
+	@mkdir -p users/database chat/data
 	docker compose --profile dev up
 
 dev-down:
@@ -22,6 +23,7 @@ dev-logs-game:
 	docker compose --profile dev logs -f game-dev
 
 prod: ensure-users-env
+	@mkdir -p users/database chat/data
 	docker compose --profile prod up -d --pull=always --no-build
 
 ensure-users-env:
