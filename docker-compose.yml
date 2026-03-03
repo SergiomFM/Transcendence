@@ -16,7 +16,7 @@ services:
 
   proxy-dev:
     image: nginx:1.27-alpine
-    command: sh -c "apk add --no-cache openssl && mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt -subj '/CN=localhost' && nginx -g 'daemon off;'"
+    command: sh -c "apk add --no-cache openssl && mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,DNS:proxy-dev' && nginx -g 'daemon off;'"
     ports:
       - "3000:443"
     volumes:
@@ -49,6 +49,7 @@ services:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_SITE_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
@@ -82,9 +83,10 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: development
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       FRONTEND_URL: https://localhost:3000
       GOOGLE_CALLBACK_URL: https://localhost:3000/api/users/auth/google/callback
-      CHAT_BACKEND_URL: http://chat-dev:3000
+      CHAT_BACKEND_URL: https://proxy-dev:443/api/chat
     env_file:
       - users/.env
     volumes:
@@ -116,8 +118,9 @@ services:
       - "3003:3000"
     environment:
       NODE_ENV: development
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       DATABASE_URL: file:./data/dev.db
-      USERS_SERVICE_URL: http://users-dev:3000
+      USERS_SERVICE_URL: https://proxy-dev:443/api/users
     volumes:
       - ./chat:/app:cached
     profiles:
@@ -145,7 +148,8 @@ services:
       - "3002:3000"
     environment:
       NODE_ENV: development
-      USERS_BACKEND_URL: http://users-dev:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      USERS_BACKEND_URL: https://proxy-dev:443/api/users
       FRONTEND_URL: https://localhost:3000
     volumes:
       - ./game:/app:cached
