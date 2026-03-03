@@ -4,13 +4,13 @@ WORKDIR /app
 
 # sodium-native requires native compilation
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 make g++ \
+  && apt-get install -y --no-install-recommends python3 make g++ openssl\
   && rm -rf /var/lib/apt/lists/*
-
 COPY users/package.json ./
 RUN bun install
 
 FROM oven/bun:1 AS runner
+
 
 WORKDIR /app
 
