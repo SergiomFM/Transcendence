@@ -52,7 +52,6 @@ services:
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
-      - frontend_node_modules:/app/node_modules
     profiles:
       - dev
 
@@ -71,7 +70,7 @@ services:
     env_file:
       - users/.env
     volumes:
-      - users_db:/app/database
+      - ./users/database:/app/database
     profiles:
       - prod
 
@@ -90,8 +89,6 @@ services:
       - users/.env
     volumes:
       - ./users:/app:cached
-      - users_node_modules:/app/node_modules
-      - users_db:/app/database
     profiles:
       - dev
 
@@ -107,7 +104,7 @@ services:
       DATABASE_URL: file:./data/dev.db
       USERS_SERVICE_URL: http://users:3000
     volumes:
-      - chat_db:/app/data
+      - ./chat/data:/app/data
     profiles:
       - prod
 
@@ -123,8 +120,6 @@ services:
       USERS_SERVICE_URL: http://users-dev:3000
     volumes:
       - ./chat:/app:cached
-      - chat_node_modules:/app/node_modules
-      - chat_db:/app/data
     profiles:
       - dev
 
@@ -156,14 +151,5 @@ services:
       - ./game:/app:cached
       - ./shared:/app/shared:cached
       - ./frontend/public/models:/app/public/models
-      - game_node_modules:/app/node_modules
     profiles:
       - dev
-
-volumes:
-  frontend_node_modules:
-  users_node_modules:
-  game_node_modules:
-  chat_node_modules:
-  users_db:
-  chat_db:
