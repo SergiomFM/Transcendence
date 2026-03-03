@@ -6,6 +6,15 @@ import { verifyAuth } from "../utils/authVerify.ts";
 
 const prisma = new PrismaClient();
 
+function matchesUser(authData: { username?: string | null; alias?: string }, requested: string): boolean {
+  const req = requested.toLowerCase();
+  const username = authData.username || authData.alias;
+  return (
+    (!!username && username.toLowerCase() === req) ||
+    (!!authData.alias && authData.alias.toLowerCase() === req)
+  );
+}
+
 export async function findOrCreateUser(username: string): Promise<User> {
   const existing = await prisma.user.findUnique({ where: { username } });
   if (existing) return existing;
@@ -153,7 +162,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
     const { senderUsername, receiverUsername, content } = request.body;
 
     // Ensure authenticated user matches the sender (case-insensitive)
-    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+    if (!matchesUser(authData, senderUsername)) {
       return reply.code(403).send({ error: "Forbidden - cannot send messages as another user" });
     }
 
@@ -216,7 +225,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
     const { senderUsername, receiverUsername, roomId } = request.body;
 
     // Ensure authenticated user matches the sender (case-insensitive)
-    if (authenticatedUsername.toLowerCase() !== senderUsername.toLowerCase()) {
+    if (!matchesUser(authData, senderUsername)) {
       return reply.code(403).send({ error: "Forbidden - cannot send invites as another user" });
     }
 
@@ -309,7 +318,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
     const { user: userName, otherUser: otherUserName, n } = request.query;
 
     // Ensure authenticated user is requesting their own messages (case-insensitive)
-    if (authenticatedUsername.toLowerCase() !== userName.toLowerCase()) {
+    if (!matchesUser(authData, userName)) {
       return reply.code(403).send({ error: "Forbidden - cannot view another user's messages" });
     }
 
@@ -351,7 +360,7 @@ export async function messageRoutes(fastify: FastifyInstance) {
       const { username } = request.body;
 
       // Ensure authenticated user matches the username to register (case-insensitive)
-      if (authenticatedUsername.toLowerCase() !== username.toLowerCase()) {
+      if (!matchesUser(authData, username)) {
         return reply.code(403).send({ error: "Forbidden - cannot register another user" });
       }
 

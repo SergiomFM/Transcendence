@@ -5,7 +5,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:443"
     depends_on:
       - frontend
       - users
@@ -16,8 +16,9 @@ services:
 
   proxy-dev:
     image: nginx:1.27-alpine
+    command: sh -c "apk add --no-cache openssl && mkdir -p /etc/nginx/ssl && openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,DNS:proxy-dev' && nginx -g 'daemon off;'"
     ports:
-      - "3000:80"
+      - "3000:443"
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -36,7 +37,8 @@ services:
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_SITE_URL: https://42.pvcordeiro.dev
+      NEXT_PUBLIC_SITE_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     profiles:
       - prod
 
@@ -47,11 +49,11 @@ services:
     environment:
       NODE_ENV: development
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_SITE_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     volumes:
       - ./frontend:/app:cached
       - ./shared:/app/shared:cached
-      - frontend_node_modules:/app/node_modules
     profiles:
       - dev
 
@@ -64,33 +66,33 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: production
-      FRONTEND_URL: https://42.pvcordeiro.dev
-      GOOGLE_CALLBACK_URL: https://42.pvcordeiro.dev/api/users/auth/google/callback
-      CHAT_BACKEND_URL: http://chat:3000
+      FRONTEND_URL: https://localhost:3000
+      GOOGLE_CALLBACK_URL: https://localhost:3000/api/users/auth/google/callback
+      CHAT_BACKEND_URL: https://proxy:443/api/chat
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     env_file:
       - users/.env
     volumes:
-      - users_db:/app/database
+      - ./users/database:/app/database
     profiles:
       - prod
 
   users-dev:
     image: oven/bun:1
     working_dir: /app
-    command: sh -c "apt-get update && apt-get install -y --no-install-recommends python3 make g++ && rm -rf /var/lib/apt/lists/* && bun install && ([ -f /app/database/secret-key ] || openssl rand 32 > /app/database/secret-key) && bun run start"
+    command: sh -c "(apt-get update && apt-get install -y --no-install-recommends python3 openssl make g++ && rm -rf /var/lib/apt/lists/* && bun install && openssl rand 32 > /app/database/secret-key) && bun run start"
     ports:
       - "3001:3000"
     environment:
       NODE_ENV: development
-      FRONTEND_URL: http://localhost:3000
-      GOOGLE_CALLBACK_URL: http://localhost:3001/auth/google/callback
-      CHAT_BACKEND_URL: http://chat-dev:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      FRONTEND_URL: https://localhost:3000
+      GOOGLE_CALLBACK_URL: https://localhost:3000/api/users/auth/google/callback
+      CHAT_BACKEND_URL: https://proxy-dev:443/api/chat
     env_file:
       - users/.env
     volumes:
       - ./users:/app:cached
-      - users_node_modules:/app/node_modules
-      - users_db:/app/database
     profiles:
       - dev
 
@@ -104,9 +106,10 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: file:./data/dev.db
-      USERS_SERVICE_URL: http://users:3000
+      USERS_SERVICE_URL: https://proxy:443/api/users
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     volumes:
-      - chat_db:/app/data
+      - ./chat/data:/app/data
     profiles:
       - prod
 
@@ -118,12 +121,11 @@ services:
       - "3003:3000"
     environment:
       NODE_ENV: development
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
       DATABASE_URL: file:./data/dev.db
-      USERS_SERVICE_URL: http://users-dev:3000
+      USERS_SERVICE_URL: https://proxy-dev:443/api/users
     volumes:
       - ./chat:/app:cached
-      - chat_node_modules:/app/node_modules
-      - chat_db:/app/data
     profiles:
       - dev
 
@@ -136,8 +138,9 @@ services:
       - "3002:3000"
     environment:
       NODE_ENV: production
-      USERS_BACKEND_URL: http://users:3000
-      FRONTEND_URL: https://42.pvcordeiro.dev
+      USERS_BACKEND_URL: https://proxy:443/api/users
+      FRONTEND_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     profiles:
       - prod
 
@@ -149,20 +152,12 @@ services:
       - "3002:3000"
     environment:
       NODE_ENV: development
-      USERS_BACKEND_URL: http://users-dev:3000
-      FRONTEND_URL: http://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
+      USERS_BACKEND_URL: https://proxy-dev:443/api/users
+      FRONTEND_URL: https://localhost:3000
     volumes:
       - ./game:/app:cached
       - ./shared:/app/shared:cached
       - ./frontend/public/models:/app/public/models
-      - game_node_modules:/app/node_modules
     profiles:
       - dev
-
-volumes:
-  frontend_node_modules:
-  users_node_modules:
-  game_node_modules:
-  chat_node_modules:
-  users_db:
-  chat_db:

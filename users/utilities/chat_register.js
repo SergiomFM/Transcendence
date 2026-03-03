@@ -10,7 +10,7 @@ const CHAT_BACKEND_URL = process.env.CHAT_BACKEND_URL;
 export async function registerChatUser(user) {
 	if (!CHAT_BACKEND_URL) return;
 
-	const username = user.alias || user.username;
+	const username = user.username || user.alias;
 	if (!username) return;
 
 	try {

@@ -322,11 +322,11 @@ The `GameRoom` class manages a single match:
 
 | Spell             | Type      | Effect                                                                                   | Duration | Cooldown |
 | ----------------- | --------- | ---------------------------------------------------------------------------------------- | -------- | -------- |
-| `ballAngleSwitch` | Offensive | Reflects ball angle (`PI - angle`)                                                       | 1s       | 5s       |
-| `ballShot`        | Offensive | 1.3x speed boost, forces angle to 90/270 degrees                                         | 1s       | 4s       |
-| `ballPortal`      | Offensive | Teleports ball to opposite wall on next bounce                                           | 0.75s    | 6s       |
+| `ballAngleSwitch` | Offensive | Reflects ball angle (`PI - angle`)                                                       | 0.5s     | 5s       |
+| `ballShot`        | Offensive | 1.3x speed boost, forces angle to 90/270 degrees                                         | 0.5s     | 4s       |
+| `ballPortal`      | Offensive | Teleports ball to opposite wall on next bounce                                           | 0.5s     | 6s       |
 | `ballStop`        | Counter   | Freezes ball at current position                                                         | 2s       | 5s       |
-| `ballBack`        | Counter   | Reverses ball direction (`angle + PI`)                                                   | 1s       | 7s       |
+| `ballBack`        | Counter   | Reverses ball direction (`angle + PI`)                                                   | 0.5s     | 7s       |
 | `ballIman`        | Counter   | Magnetically attracts ball toward caster (70 deg/s steering, min 20 deg from horizontal) | 1.2s     | 5s       |
 
 Players cycle through spells within their category using `SWITCH_SPELL`. The offensive cycle is `ballAngleSwitch -> ballShot -> ballPortal`, the counter cycle is `ballStop -> ballBack -> ballIman`.
