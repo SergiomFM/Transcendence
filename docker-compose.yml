@@ -5,7 +5,7 @@ services:
       context: ./nginx
       dockerfile: Dockerfile
     ports:
-      - "3000:80"
+      - "3000:443"
     depends_on:
       - frontend
       - users
@@ -37,7 +37,8 @@ services:
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
-      NEXT_PUBLIC_SITE_URL: https://42.pvcordeiro.dev
+      NEXT_PUBLIC_SITE_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     profiles:
       - prod
 
@@ -65,9 +66,10 @@ services:
       - "3001:3000"
     environment:
       NODE_ENV: production
-      FRONTEND_URL: https://42.pvcordeiro.dev
-      GOOGLE_CALLBACK_URL: https://42.pvcordeiro.dev/api/users/auth/google/callback
-      CHAT_BACKEND_URL: http://chat:3000
+      FRONTEND_URL: https://localhost:3000
+      GOOGLE_CALLBACK_URL: https://localhost:3000/api/users/auth/google/callback
+      CHAT_BACKEND_URL: https://proxy:443/api/chat
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     env_file:
       - users/.env
     volumes:
@@ -104,7 +106,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: file:./data/dev.db
-      USERS_SERVICE_URL: http://users:3000
+      USERS_SERVICE_URL: https://proxy:443/api/users
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     volumes:
       - ./chat/data:/app/data
     profiles:
@@ -135,8 +138,9 @@ services:
       - "3002:3000"
     environment:
       NODE_ENV: production
-      USERS_BACKEND_URL: http://users:3000
-      FRONTEND_URL: https://42.pvcordeiro.dev
+      USERS_BACKEND_URL: https://proxy:443/api/users
+      FRONTEND_URL: https://localhost:3000
+      NODE_TLS_REJECT_UNAUTHORIZED: "0"
     profiles:
       - prod
 
