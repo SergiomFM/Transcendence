@@ -78,10 +78,9 @@ status:
 clean: dev-down prod-down
 
 fclean: clean
-	docker compose --profile dev down -v --rmi all
-	docker compose --profile prod down -v --rmi all
-	docker volume prune -f
-	rm -fr node_modules/
+	docker compose --profile dev down --rmi all
+	docker compose --profile prod down --rmi all
+	rm -rf node_modules/ users/database/ chat/data/
 
 re: fclean all
 	. $$HOME/.nvm/nvm.sh && nvm alias default $(NODE_VERSION)
