@@ -21,6 +21,7 @@ export default async function twoFARoutes(fastify, opts){
 			
 			return reply.code(200).send({
 				username,
+				alias: req.user.alias,
 				id: req.user.id,
 				email: req.user.email,
 			});

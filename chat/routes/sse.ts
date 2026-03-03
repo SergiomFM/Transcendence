@@ -68,7 +68,11 @@ export async function sseRoutes(fastify: FastifyInstance) {
       }
 
       // Ensure the authenticated user matches the requested username (case-insensitive)
-      if (authenticatedUsername.toLowerCase() !== requestedUsername.toLowerCase()) {
+      const requested = requestedUsername.toLowerCase();
+      const matchesAuth =
+        authenticatedUsername.toLowerCase() === requested ||
+        (authData.alias && authData.alias.toLowerCase() === requested);
+      if (!matchesAuth) {
         return reply.code(403).send({ error: "Forbidden - cannot access another user's stream" });
       }
 
