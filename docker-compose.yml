@@ -62,8 +62,6 @@ services:
     build:
       context: .
       dockerfile: users/Dockerfile
-    ports:
-      - "3001:3000"
     environment:
       NODE_ENV: production
       FRONTEND_URL: https://localhost:3000
@@ -81,8 +79,6 @@ services:
     image: oven/bun:1
     working_dir: /app
     command: sh -c "(apt-get update && apt-get install -y --no-install-recommends python3 openssl make g++ && rm -rf /var/lib/apt/lists/* && bun install && openssl rand 32 > /app/database/secret-key) && bun run start"
-    ports:
-      - "3001:3000"
     environment:
       NODE_ENV: development
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
@@ -101,8 +97,6 @@ services:
     build:
       context: .
       dockerfile: chat/Dockerfile
-    ports:
-      - "3003:3000"
     environment:
       NODE_ENV: production
       DATABASE_URL: file:./data/dev.db
@@ -117,8 +111,6 @@ services:
     image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run prisma generate && bun run prisma db push && bun run index.ts"
-    ports:
-      - "3003:3000"
     environment:
       NODE_ENV: development
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
@@ -134,8 +126,6 @@ services:
     build:
       context: .
       dockerfile: game/Dockerfile
-    ports:
-      - "3002:3000"
     environment:
       NODE_ENV: production
       USERS_BACKEND_URL: https://proxy:443/api/users
@@ -148,8 +138,6 @@ services:
     image: oven/bun:1
     working_dir: /app
     command: sh -c "bun install && bun run dev"
-    ports:
-      - "3002:3000"
     environment:
       NODE_ENV: development
       NODE_TLS_REJECT_UNAUTHORIZED: "0"
