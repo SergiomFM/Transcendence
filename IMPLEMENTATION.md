@@ -17,25 +17,26 @@ This document describes the technical implementation of each service in the Tran
 
 ## Architecture Overview
 
-The project is a **microservices-based web application** running entirely on the **Bun** runtime. All services sit behind an **Nginx reverse proxy** that exposes a single entry point on port 3000.
+The project is a **microservices-based web application** running entirely on the **Bun** runtime. All services sit behind an **Nginx reverse proxy** that terminates TLS with a self-signed certificate and exposes a single HTTPS entry point on port 3000.
 
 ```
-                         Port 3000
-                            |
-                     +------v------+
-                     |    NGINX    |
-                     +------+------+
-                            |
-           +--------+-------+-------+--------+
-           |        |               |        |
-     /api/users/  /api/game/   /api/chat/    /
-                  /ws/pong     (SSE)       (catch-all)
-                  /ws/lobby
-           |        |               |        |
-      +----v---+ +--v-----+ +------v--+ +---v-------+
-      | Users  | |  Game  | |  Chat   | | Frontend  |
-      | :3000  | | :3000  | |  :3000  | |  :3000    |
-      +--------+ +--------+ +---------+ +-----------+
+                         Port 3000 (HTTPS)
+                             |
+                      +------v------+
+                      |    NGINX    |
+                      |   (HTTPS)   |
+                      +------+------+
+                             |
+            +--------+-------+-------+--------+
+            |        |               |        |
+      /api/users/  /api/game/   /api/chat/    /
+                   /ws/pong     (SSE)       (catch-all)
+                   /ws/lobby
+            |        |               |        |
+       +----v---+ +--v-----+ +------v--+ +---v-------+
+       | Users  | |  Game  | |  Chat   | | Frontend  |
+       | :3000  | | :3000  | |  :3000  | |  :3000    |
+       +--------+ +--------+ +---------+ +-----------+
 ```
 
 **Key technology choices:**
@@ -54,7 +55,7 @@ The project is a **microservices-based web application** running entirely on the
 | i18n               | `next-intl` -- 5 locales (en, pt, cv, hi, he)      |
 | Containerization   | Docker Compose with `dev` and `prod` profiles      |
 
-Inter-service communication uses Docker DNS hostnames (e.g., `http://users-dev:3000`). There is no API gateway -- Nginx handles path-based routing only.
+Inter-service communication in **dev** uses Docker DNS hostnames (e.g., `https://proxy-dev:443/api/users`). In **prod**, all inter-service calls are routed through the HTTPS Nginx proxy (e.g., `https://proxy:443/api/users`, `https://proxy:443/api/chat`). Services set `NODE_TLS_REJECT_UNAUTHORIZED=0` to accept the self-signed certificate. There is no API gateway -- Nginx handles path-based routing only.
 
 ---
 
@@ -81,6 +82,10 @@ All data access goes through **pre-compiled prepared statements** decorated onto
 
 The database includes migration logic to handle schema evolution: it adds columns (`avatar`, `google_avatar`) if missing, and recreates `match_history` if the old schema had `NOT NULL` constraints on player IDs (to support guest players).
 
+### CORS (`plugins/a-CORS.js`)
+
+CORS is configured with a dynamic origin function that reflects the requesting origin back in the `Access-Control-Allow-Origin` header. This allows the application to work from any domain (localhost, LAN IPs, production domain) without hardcoding allowed origins. Credentials are enabled for cookie-based authentication.
+
 ### Session & Authentication (`plugins/auth.js`)
 
 Sessions use `@fastify/secure-session` with an encrypted cookie (symmetric key from `/app/database/secret-key`). Sessions are **stateless on the server** -- all session data lives in the encrypted cookie on the client.
@@ -88,7 +93,8 @@ Sessions use `@fastify/secure-session` with an encrypted cookie (symmetric key f
 Passport.js is configured with two strategies:
 
 1. **Google OAuth 2.0** (`passport-google-oauth20`):
-   - Configured via `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL` env vars.
+   - Configured via `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` env vars.
+   - The `callbackURL` is set to a placeholder in the strategy constructor and **overridden dynamically per-request** in `passport.authenticate()` (see Google OAuth routes below).
    - On callback: checks for existing user by `google_id`, then by `email` (account linking), or creates a new user.
    - Downloads the Google profile photo, converts it to a base64 data URL, and stores it directly in the database.
    - Blocks disabled accounts (`is_active = 0`).
@@ -101,10 +107,12 @@ Passport.js is configured with two strategies:
 
 #### Google OAuth (`routes/google-auth.js`)
 
+A `getBaseUrl(req)` helper reads the `Host` header from the incoming request to dynamically construct the base URL (e.g., `https://localhost:3000` or `https://42.pvcordeiro.dev`). This ensures OAuth works correctly regardless of the domain or port used to access the application.
+
 | Method | Path                    | Description                                                                                                                                                |
 | ------ | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET`  | `/auth/google`          | Initiates Google OAuth flow (redirects to Google consent screen)                                                                                           |
-| `GET`  | `/auth/google/callback` | OAuth callback. If user has 2FA enabled, sets `session.pending2FA` and redirects to `/auth?2fa=true`. Otherwise completes login and redirects to frontend. |
+| `GET`  | `/auth/google`          | Initiates Google OAuth flow. Dynamically sets `callbackURL` from the request `Host` header.                                                               |
+| `GET`  | `/auth/google/callback` | OAuth callback. Dynamically sets `callbackURL` to match. If user has 2FA enabled, sets `session.pending2FA` and redirects to `/auth?2fa=true`. Otherwise completes login and redirects to the dynamically-derived frontend URL. |
 | `GET`  | `/dashboard`            | Returns authenticated user info (id, email, username, alias, role, avatar, google_id, 2FA status). Used by the frontend to check session validity.         |
 
 #### Local Auth (`routes/local-user-auth.js`)
@@ -181,9 +189,11 @@ Win/loss stats are computed live on each request -- there is no cached aggregate
 
 ### Cross-Service Communication
 
-- **Users -> Chat:** On every successful login/registration, calls `POST CHAT_BACKEND_URL/register` with the username. This is fire-and-forget (failure never blocks login).
-- **Game -> Users:** The `POST /matches` endpoint receives match results from the game server (no authentication on this endpoint).
-- **Chat -> Users:** The chat service calls `POST /auth/verify_auth` to validate session cookies.
+All inter-service calls are routed through the HTTPS Nginx proxy rather than direct container-to-container HTTP:
+
+- **Users -> Chat:** On every successful login/registration, calls `POST <CHAT_BACKEND_URL>/register` with the username (e.g., `https://proxy:443/api/chat/register` in prod). This is fire-and-forget (failure never blocks login).
+- **Game -> Users:** The game server calls `<USERS_BACKEND_URL>/me/profile` and `/dashboard` to resolve player identity, and `POST <USERS_BACKEND_URL>/matches` to report match results.
+- **Chat -> Users:** The chat service calls `POST <USERS_SERVICE_URL>/auth/verify_auth` to validate session cookies.
 
 ---
 
@@ -205,7 +215,7 @@ Uses Prisma ORM with SQLite (`file:./data/dev.db`). Three models:
 
 ### Authentication (`utils/authVerify.ts`)
 
-The chat service has **no session management** of its own. It delegates all authentication to the users service by forwarding the incoming `Cookie` header to `POST USERS_SERVICE_URL/auth/verify_auth`. The response provides `username`, `alias` (fallback for Google OAuth users), `id`, and `email`.
+The chat service has **no session management** of its own. It delegates all authentication to the users service by forwarding the incoming `Cookie` header to `POST USERS_SERVICE_URL/auth/verify_auth` (routed through the HTTPS proxy). The response provides `username`, `alias` (fallback for Google OAuth users), `id`, and `email`.
 
 ### REST Endpoints (`routes/messages.ts`)
 
@@ -337,7 +347,7 @@ Players cycle through spells within their category using `SWITCH_SPELL`. The off
 
 **On connect:**
 
-- Resolves user identity by calling `USERS_BACKEND_URL/me/profile` and `/dashboard` with forwarded session cookies.
+- Resolves user identity by calling `USERS_BACKEND_URL/me/profile` and `/dashboard` with forwarded session cookies (routed through the HTTPS proxy).
 - Unauthenticated users get a procedurally generated guest name (e.g., "ShadowPhoenix42") and a deterministic SVG avatar.
 - Detects duplicate sessions for the same authenticated user -- the old connection receives `SESSION_REPLACED` and is closed.
 
@@ -386,7 +396,7 @@ A separate WebSocket for real-time room list updates. Connected clients receive 
 
 ### Match Reporting
 
-On game over, the server POSTs match results to `USERS_BACKEND_URL/matches` with player IDs, scores, and the winner ID. Guest player IDs are sent as `null`.
+On game over, the server POSTs match results to `USERS_BACKEND_URL/matches` (routed through the HTTPS proxy) with player IDs, scores, and the winner ID. Guest player IDs are sent as `null`.
 
 ### Room ID Generation
 
@@ -541,18 +551,22 @@ Translation files are JSON in `messages/` and loaded server-side via `next-intl`
 
 ### Nginx Configuration (`nginx/nginx.conf`, `nginx/nginx.dev.conf`)
 
-Nginx 1.27 (Alpine) acts as the single entry point on port 3000. Route table:
+Nginx 1.27 (Alpine) acts as the single HTTPS entry point on port 3000. A self-signed certificate is generated at image build time in the `Dockerfile` and used by both dev and prod configurations. The `$http_host` variable is used (instead of `$host`) to preserve the port number in forwarded `Host` headers -- this is critical for dynamic URL construction in backend services.
+
+Route table:
 
 | External Path        | Backend                   | Protocol   | Special Config                                                   |
 | -------------------- | ------------------------- | ---------- | ---------------------------------------------------------------- |
-| `/api/users/`        | `users:3000`              | HTTP       | 2MB upload limit for avatars                                     |
-| `/api/game/`         | `game:3000`               | HTTP       | --                                                               |
+| `/api/users/`        | `users:3000`              | HTTP (upstream) | 2MB upload limit for avatars                                     |
+| `/api/game/`         | `game:3000`               | HTTP (upstream) | --                                                               |
 | `/ws/pong`           | `game:3000/pong`          | WebSocket  | `Upgrade` + `Connection` headers                                 |
 | `/ws/lobby`          | `game:3000/pong/rooms/ws` | WebSocket  | `Upgrade` + `Connection` headers                                 |
 | `/api/chat/`         | `chat:3000`               | HTTP + SSE | `proxy_buffering off`, 24h read timeout, `X-Accel-Buffering: no` |
-| `/_next/webpack-hmr` | `frontend:3000`           | WebSocket  | HMR passthrough (dev)                                            |
-| `/sw.js`             | `frontend:3000/sw.js`     | HTTP       | `Service-Worker-Allowed: /`, no-cache                            |
-| `/`                  | `frontend:3000`           | HTTP       | Aggressive no-cache on HTML                                      |
+| `/_next/webpack-hmr` | `frontend:3000`           | WebSocket  | HMR passthrough (dev only)                                       |
+| `/sw.js`             | `frontend:3000/sw.js`     | HTTP (upstream) | `Service-Worker-Allowed: /`, no-cache                            |
+| `/`                  | `frontend:3000`           | HTTP (upstream) | Aggressive no-cache on HTML                                      |
+
+Note: "HTTP (upstream)" means nginx-to-backend communication is plain HTTP within the Docker network; all external-facing traffic is HTTPS.
 
 The dev config (`nginx.dev.conf`) is identical but routes to `-dev` suffixed service names and is bind-mounted (not baked into the image).
 
@@ -562,6 +576,8 @@ Two profiles: `dev` (hot-reload, bind mounts, `oven/bun:1` base) and `prod` (pre
 
 **Services:** proxy, frontend, users, game, chat (x2 for dev/prod = 10 total service definitions).
 
+**HTTPS everywhere:** The proxy serves all traffic over HTTPS (port 443 internally, mapped to 3000 externally). In production, all inter-service calls are routed through the HTTPS proxy (e.g., `USERS_SERVICE_URL=https://proxy:443/api/users`) rather than direct container-to-container HTTP. All services set `NODE_TLS_REJECT_UNAUTHORIZED=0` to accept the self-signed certificate.
+
 **Persistent volumes:**
 
 - `users_db` (`/app/database`) -- SQLite for users
@@ -570,7 +586,7 @@ Two profiles: `dev` (hot-reload, bind mounts, `oven/bun:1` base) and `prod` (pre
 
 **Dev bind mounts:** All source directories mounted with `:cached` for macOS performance. Shared constants mounted into both frontend and game services.
 
-**Networking:** All services on the default Docker Compose network. Inter-service calls use Docker DNS (e.g., `http://users-dev:3000`). The proxy depends on all other services.
+**Networking:** All services on the default Docker Compose network. In dev, inter-service calls go through `https://proxy-dev:443/api/...`. In prod, through `https://proxy:443/api/...`. The proxy depends on all other services.
 
 ### Makefile
 
