@@ -60,10 +60,11 @@ ft_transcendence is a comprehensive web application that brings the classic Pong
 The application follows a **microservices architecture** with four main services:
 
 ```
-                         Port 3000 (HTTPS via Cloudflare)
+                         Port 3000 (HTTPS)
                                     |
                              +------v------+
                              |    NGINX    |
+                             |   (HTTPS)   |
                              +------+------+
                                     |
                    +--------+-------+-------+--------+
@@ -136,7 +137,7 @@ The application follows a **microservices architecture** with four main services
 
 - **Containerization**: Docker & Docker Compose
 - **Reverse Proxy**: Nginx
-- **SSL/TLS**: Cloudflare (external)
+- **SSL/TLS**: Self-signed certificates (nginx) + Cloudflare (production)
 
 ## Prerequisites
 
@@ -196,7 +197,7 @@ Or without Make:
 docker compose --profile dev up -d
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `https://localhost:3000`
 
 #### Production Mode
 
@@ -238,10 +239,10 @@ make fclean           # Clean everything including volumes and images
 
 ### Service Ports (Development)
 
-- Frontend: http://localhost:3000
-- Users API: http://localhost:3001
-- Game API: http://localhost:3002
-- Chat API: http://localhost:3003
+- Frontend: https://localhost:3000
+- Users API: https://localhost:3001
+- Game API: https://localhost:3002
+- Chat API: https://localhost:3003
 
 ### Hot Reload
 
@@ -255,20 +256,16 @@ Development mode includes hot reload for all services:
 
 ### HTTPS Configuration
 
-The application is designed to run behind an HTTPS-enabled reverse proxy. In production, **HTTPS is handled externally by Cloudflare**, which provides:
+The application uses **HTTPS everywhere** -- both in development and production. Nginx serves all traffic over HTTPS using a self-signed certificate generated at build time.
 
-- SSL/TLS termination
-- DDoS protection
-- CDN capabilities
-- Web Application Firewall (WAF)
+- **Development**: Nginx terminates TLS with a self-signed certificate. Browsers will show a certificate warning on first access.
+- **Production**: A Cloudflare Tunnel connects to the local Nginx over HTTPS (`noTLSVerify: true` in the tunnel config), providing:
+  - Valid SSL/TLS certificates for the public domain
+  - DDoS protection
+  - CDN capabilities
+  - Web Application Firewall (WAF)
 
-The Nginx proxy receives traffic from Cloudflare over HTTP internally, but all external traffic is secured via HTTPS at the Cloudflare edge.
-
-**Important**: If you're deploying without Cloudflare, you must configure SSL/TLS certificates in your Nginx configuration. Options include:
-
-- Let's Encrypt with Certbot
-- Self-signed certificates (for testing only)
-- Commercial SSL certificates
+All inter-service communication in production is routed through the HTTPS Nginx proxy (e.g., `https://proxy:443/api/users`) rather than direct container-to-container HTTP. Services use `NODE_TLS_REJECT_UNAUTHORIZED=0` to accept the self-signed certificate.
 
 ### Building for Production
 
@@ -279,11 +276,9 @@ make prod-buildx      # Build multi-platform images and push to registry
 
 ### Environment Configuration
 
-Update the following environment variables in `docker-compose.yml` for production:
+The application dynamically derives URLs from request headers (e.g., the `Host` header), so there is no need to configure domain-specific environment variables for OAuth callbacks or frontend URLs. The only required environment variables are:
 
-- `NEXT_PUBLIC_SITE_URL`: Your production domain
-- `FRONTEND_URL`: Your production domain
-- `GOOGLE_CALLBACK_URL`: OAuth callback URL
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `users/.env`
 
 ## Security
 
@@ -310,7 +305,8 @@ All user inputs are validated on both frontend and backend:
 
 ### HTTPS Everywhere
 
-- Production traffic secured via Cloudflare HTTPS
+- All traffic (dev and prod) served over HTTPS via Nginx with self-signed certificates
+- Production traffic additionally secured via Cloudflare Tunnel with valid public certificates
 - HTTP-only cookies for session management
 - Secure headers configured in Nginx
 
